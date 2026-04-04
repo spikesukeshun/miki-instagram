@@ -3,7 +3,7 @@ from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 import os
 from datetime import datetime
-from instagram_api import post_image, post_video
+from instagram_api import post_image, post_video, post_carousel
 from drive_helper import get_file_url
 
 load_dotenv()
@@ -74,12 +74,15 @@ def run():
         print(f"行{i}: 投稿中 → {filename}")
 
         try:
-            file_url = get_file_url(filename)
+            filenames = [f.strip() for f in filename.split(",")]
 
-            if is_video(filename):
-                post_id = post_video(file_url, caption)
+            if len(filenames) > 1:
+                image_urls = [get_file_url(f) for f in filenames]
+                post_id = post_carousel(image_urls, caption)
+            elif is_video(filenames[0]):
+                post_id = post_video(get_file_url(filenames[0]), caption)
             else:
-                post_id = post_image(file_url, caption)
+                post_id = post_image(get_file_url(filenames[0]), caption)
 
             sheet.update_cell(i, COL_STATUS + 1, "投稿済み")
             print(f"行{i}: 投稿成功！ post_id={post_id}")
