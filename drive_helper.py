@@ -17,12 +17,27 @@ def get_drive_service():
 def get_file_url(filename: str) -> str:
     """ファイル名からGoogleドライブの公開URLを返す"""
     service = get_drive_service()
+
+    # まずフォルダ内で検索
     results = service.files().list(
         q=f"name='{filename}' and '{FOLDER_ID}' in parents and trashed=false",
-        fields="files(id, name)"
+        fields="files(id, name)",
+        supportsAllDrives=True,
+        includeItemsFromAllDrives=True,
     ).execute()
 
     files = results.get("files", [])
+
+    # フォルダ内で見つからなければ全体で検索
+    if not files:
+        results = service.files().list(
+            q=f"name='{filename}' and trashed=false",
+            fields="files(id, name)",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
+        ).execute()
+        files = results.get("files", [])
+
     if not files:
         raise FileNotFoundError(f"ドライブにファイルが見つかりません: {filename}")
 
