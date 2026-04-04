@@ -130,6 +130,39 @@ def analyze_my_posts(posts):
         avg = type_likes[t] // count if count > 0 else 0
         print(f"  {t}: {count}件（平均いいね数: {avg}）")
 
+    # 時間帯別・曜日別分析
+    hour_likes = {}
+    hour_count = {}
+    weekday_likes = {}
+    weekday_count = {}
+    weekday_names = ["月", "火", "水", "木", "金", "土", "日"]
+
+    for post in posts:
+        ts = post.get("timestamp", "")
+        if not ts:
+            continue
+        dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S%z")
+        # 日本時間に変換（UTC+9）
+        hour = (dt.hour + 9) % 24
+        weekday = dt.weekday()
+        likes = post.get("like_count", 0)
+
+        hour_likes[hour] = hour_likes.get(hour, 0) + likes
+        hour_count[hour] = hour_count.get(hour, 0) + 1
+        weekday_likes[weekday] = weekday_likes.get(weekday, 0) + likes
+        weekday_count[weekday] = weekday_count.get(weekday, 0) + 1
+
+    print("\n⏰ 時間帯別・平均いいね数（上位5）:")
+    hour_avg = {h: hour_likes[h] // hour_count[h] for h in hour_likes if hour_count[h] >= 3}
+    for h, avg in sorted(hour_avg.items(), key=lambda x: x[1], reverse=True)[:5]:
+        print(f"  {h:02d}時台: 平均 {avg}いいね（{hour_count[h]}投稿）")
+
+    print("\n📅 曜日別・平均いいね数:")
+    for w in range(7):
+        if w in weekday_count and weekday_count[w] > 0:
+            avg = weekday_likes[w] // weekday_count[w]
+            print(f"  {weekday_names[w]}曜日: 平均 {avg}いいね（{weekday_count[w]}投稿）")
+
     return sorted_by_likes
 
 
