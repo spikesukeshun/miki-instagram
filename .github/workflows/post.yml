@@ -1,0 +1,36 @@
+name: Instagram自動投稿
+
+on:
+  schedule:
+    # 毎時0分に実行（日本時間に合わせてUTC+9で設定）
+    # 日本時間 9:00 = UTC 0:00
+    # 日本時間 12:00 = UTC 3:00
+    # 日本時間 18:00 = UTC 9:00
+    - cron: "0 0,3,9 * * *"
+  workflow_dispatch:  # 手動実行ボタン（GOの代わり）
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: ライブラリをインストール
+        run: pip install -r requirements.txt
+
+      - name: credentials.jsonを復元
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
+      - name: 自動投稿を実行
+        env:
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+        run: python post_scheduler.py
