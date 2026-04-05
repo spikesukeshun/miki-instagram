@@ -5,3 +5,4 @@ __pycache__/
 content/
 credentials.json
 token.json
+backgrounds/

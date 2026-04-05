@@ -1,13 +1,14 @@
 """
 修正依頼自動処理スクリプト
 スプレッドシートで「修正依頼」ステータスの行を検出し、
-Claude APIを使って自動修正を行い、完了したらLINE通知を送る。
+Gemini APIを使って自動修正を行い、完了したらLINE通知を送る。
 GitHub Actionsで定期実行される。
 """
-import anthropic
 import glob
 import json
 import os
+
+from groq import Groq
 
 from check_revisions import check_and_report, mark_as_revised
 from generate_carousel import generate_with_slides, SLIDES as DEFAULT_SLIDES
@@ -17,9 +18,9 @@ from line_notify import notify_revision_done
 GENERATED_DIR = "generated"
 
 
-def revise_with_claude(item: dict) -> dict:
-    """Claude APIを使って修正内容を生成"""
-    client = anthropic.Anthropic()
+def revise_with_groq(item: dict) -> dict:
+    """Groq APIを使って修正内容を生成"""
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     prompt = f"""あなたはエステサロン「AMRTA六本木」のInstagram投稿の修正担当です。
 以下の修正指示に従って、投稿内容を修正してください。
@@ -50,13 +51,17 @@ def revise_with_claude(item: dict) -> dict:
 - new_slidesはrevise_imagesがtrueの場合のみ、修正後のSLIDES配列全体を入れてください
 """
 
-    message = client.messages.create(
-        model="claude-opus-4-6",
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
         max_tokens=4096,
-        messages=[{"role": "user", "content": prompt}]
     )
-
-    return json.loads(message.content[0].text)
+    raw = response.choices[0].message.content.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    return json.loads(raw)
 
 
 def process_revision(sheet, item: dict):
@@ -64,7 +69,7 @@ def process_revision(sheet, item: dict):
     row_num = item["row_num"]
     print(f"行{row_num}: Claude APIで修正中...")
 
-    result = revise_with_claude(item)
+    result = revise_with_groq(item)
 
     new_caption = result["new_caption"]
     new_hashtags = result["new_hashtags"]
@@ -81,7 +86,7 @@ def process_revision(sheet, item: dict):
 
     print(f"行{row_num}: プレビューを更新中...")
     html = generate_preview_html(filenames, new_caption, new_hashtags, item["datetime"])
-    preview_url = upload_html_to_github(html)
+    preview_url = upload_html_to_github(html, item["datetime"])
 
     mark_as_revised(sheet, row_num, new_caption, new_hashtags, preview_url)
     notify_revision_done(row_num, item["menu_type"], item["instruction"], preview_url)

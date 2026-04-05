@@ -218,17 +218,24 @@ def generate_preview_html(filenames: list, caption: str, hashtags: str, post_dat
 </html>"""
 
 
-def upload_html_to_github(html_content: str) -> str:
-    """HTMLをdocs/index.htmlとしてGitHubにアップロードしてGitHub Pages URLを返す"""
-    content_b64 = base64.b64encode(html_content.encode("utf-8")).decode()
+def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
+    """HTMLをdocs/{slug}/index.htmlとしてGitHubにアップロードして一意のURLを返す"""
+    # 投稿日時からスラッグ生成（例: 2026/04/08 21:00 → 2026-04-08-2100）
+    if post_datetime:
+        slug = post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+    else:
+        slug = datetime.now().strftime("%Y-%m-%d-%H%M")
 
-    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/docs/index.html"
+    content_b64 = base64.b64encode(html_content.encode("utf-8")).decode()
+    html_path = f"docs/{slug}/index.html"
+
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{html_path}"
     headers = _github_headers()
 
     res = requests.get(api_url, headers=headers)
     sha = res.json().get("sha") if res.status_code == 200 else None
 
-    payload = {"message": "プレビューページ更新", "content": content_b64}
+    payload = {"message": f"プレビューページ追加: {slug}", "content": content_b64}
     if sha:
         payload["sha"] = sha
 
@@ -236,8 +243,9 @@ def upload_html_to_github(html_content: str) -> str:
     if res.status_code not in (200, 201):
         raise Exception(f"HTMLアップロード失敗: {res.json()}")
 
+    preview_url = f"{GITHUB_PAGES_URL}/{slug}/"
     print(f"  プレビューページをアップロード完了")
-    return GITHUB_PAGES_URL
+    return preview_url
 
 
 def register(
@@ -268,7 +276,7 @@ def register(
     # プレビューHTMLを生成してアップロード
     print("  プレビューページを生成中...")
     html = generate_preview_html(filenames, caption, hashtags, post_datetime)
-    preview_url = upload_html_to_github(html)
+    preview_url = upload_html_to_github(html, post_datetime)
 
     # スプレッドシートに登録
     sheet = get_sheet()

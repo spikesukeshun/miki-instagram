@@ -33,6 +33,6 @@ jobs:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
           LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY2 }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python process_revisions.py
