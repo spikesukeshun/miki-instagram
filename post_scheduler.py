@@ -21,6 +21,7 @@ COL_TEXT      = 3  # D: 投稿文
 COL_HASHTAGS  = 4  # E: ハッシュタグ
 COL_MEMO      = 5  # F: 投稿メモ
 COL_STATUS    = 6  # G: ステータス
+COL_PREVIEW   = 7  # H: プレビューURL
 
 
 def get_sheet():
@@ -54,7 +55,7 @@ def run():
             continue
 
         status = row[COL_STATUS].strip()
-        if status != "未投稿":
+        if status not in ("承認済み", "未投稿"):  # 移行期間は未投稿も許容
             continue
 
         datetime_str = row[COL_DATETIME].strip()
