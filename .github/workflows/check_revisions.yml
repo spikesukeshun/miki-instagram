@@ -1,0 +1,37 @@
+name: 修正依頼チェック
+
+on:
+  schedule:
+    # 日本時間 9時・15時・21時（UTC 0時・6時・12時）
+    - cron: "0 0,6,12 * * *"
+  workflow_dispatch:  # 手動実行用
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: ライブラリをインストール
+        run: pip install -r requirements.txt
+
+      - name: credentials.jsonを復元
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python3 -c "import os,json; json.dump(json.loads(os.environ['GOOGLE_CREDENTIALS']), open('credentials.json','w'))"
+
+      - name: 修正依頼を処理
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
+          LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python process_revisions.py

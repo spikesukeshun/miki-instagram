@@ -1,14 +1,11 @@
 from PIL import Image, ImageDraw, ImageFont
-from drive_helper import get_file_url
-from dotenv import load_dotenv
 import os
-import requests
-from io import BytesIO
-
-load_dotenv()
 
 OUTPUT_DIR = "generated"
+BACKGROUNDS_DIR = "backgrounds"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+W, H = 1080, 1350  # 4:5 縦長サイズ
 
 # スライドの内容定義
 SLIDES = [
@@ -66,14 +63,15 @@ SLIDES = [
 ]
 
 
-def download_image_from_drive(filename: str) -> Image.Image:
-    url = get_file_url(filename)
-    res = requests.get(url)
-    img = Image.open(BytesIO(res.content)).convert("RGBA")
-    return img
+def load_background(filename: str) -> Image.Image:
+    """backgrounds/フォルダから背景画像を読み込む"""
+    path = os.path.join(BACKGROUNDS_DIR, filename)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"背景画像が見つかりません: {path}\nbackgrounds/フォルダに {filename} を置いてください")
+    return Image.open(path).convert("RGBA")
 
 
-def crop_center(img: Image.Image, size=(1080, 1080)) -> Image.Image:
+def crop_center(img: Image.Image, size=(W, H)) -> Image.Image:
     """アスペクト比を保ちながら中央クロップ（歪みなし）"""
     target_w, target_h = size
     orig_w, orig_h = img.size
@@ -119,14 +117,14 @@ def draw_centered(draw, text, font, y, img_width, fill):
     return bbox[3] - bbox[1]
 
 
-def gold_border(draw, size=1080):
-    draw.rectangle([20, 20, size-20, size-20], outline=(212, 175, 55, 255), width=5)
-    draw.rectangle([34, 34, size-34, size-34], outline=(212, 175, 55, 160), width=2)
+def gold_border(draw, w=W, h=H):
+    draw.rectangle([20, 20, w-20, h-20], outline=(212, 175, 55, 255), width=5)
+    draw.rectangle([34, 34, w-34, h-34], outline=(212, 175, 55, 160), width=2)
 
 
 def add_text_bg(img, y, height, color=(255, 255, 255, 180)):
     """テキストの背後に半透明の帯を追加"""
-    band = Image.new("RGBA", (1080, height), color)
+    band = Image.new("RGBA", (W, height), color)
     img.paste(band, (0, y), band)
     return img
 
@@ -143,21 +141,21 @@ def generate_cover(img, slide):
     PINK = (100, 30, 60, 255)
     GOLD = (160, 120, 30, 255)
 
-    # タグの背景帯
-    img = add_text_bg(img, 140, 60, (255, 240, 245, 200))
+    # タグの背景帯（上から1/6あたり）
+    img = add_text_bg(img, 175, 65, (255, 240, 245, 200))
     draw = ImageDraw.Draw(img)
 
     # タグ
-    draw_centered(draw, slide["tag"], font_tag, 152, 1080, GOLD)
+    draw_centered(draw, slide["tag"], font_tag, 188, W, GOLD)
 
-    # タイトルの背景帯
-    img = add_text_bg(img, 360, 200, (255, 245, 248, 210))
+    # タイトルの背景帯（縦中央より少し上）
+    img = add_text_bg(img, 490, 230, (255, 245, 248, 210))
     draw = ImageDraw.Draw(img)
 
     # タイトル
-    y = 375
+    y = 505
     for line in slide["title"].split("\n"):
-        h = draw_centered(draw, line, font_title, y, 1080, PINK)
+        h = draw_centered(draw, line, font_title, y, W, PINK)
         y += h + 15
 
     return img.convert("RGB")
@@ -166,7 +164,7 @@ def generate_cover(img, slide):
 def generate_text_slide(img, slide):
     img = crop_center(img)
     img = add_overlay(img, 80)
-    img = add_text_bg(img, 80, 920, (255, 248, 250, 210))
+    img = add_text_bg(img, 80, H - 160, (255, 248, 250, 210))
     draw = ImageDraw.Draw(img)
     gold_border(draw)
 
@@ -181,10 +179,10 @@ def generate_text_slide(img, slide):
     title_h = 70  # タイトル＋区切り線のスペース
     content_h = len(lines) * LINE_H
     total_h = title_h + 30 + content_h
-    start_y = (1080 - total_h) // 2
+    start_y = (H - total_h) // 2
 
     # タイトル
-    draw_centered(draw, slide["title"], font_title, start_y, 1080, PINK)
+    draw_centered(draw, slide["title"], font_title, start_y, W, PINK)
     line_y = start_y + title_h
     draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
 
@@ -194,7 +192,7 @@ def generate_text_slide(img, slide):
         if line:
             bbox = font_text.getbbox(line)
             w = bbox[2] - bbox[0]
-            x = (1080 - w) // 2
+            x = (W - w) // 2
             draw.text((x, y), line, font=font_text, fill=DARK)
         y += LINE_H
 
@@ -204,7 +202,7 @@ def generate_text_slide(img, slide):
 def generate_list_slide(img, slide):
     img = crop_center(img)
     img = add_overlay(img, 80)
-    img = add_text_bg(img, 80, 920, (255, 248, 250, 210))
+    img = add_text_bg(img, 80, H - 160, (255, 248, 250, 210))
     draw = ImageDraw.Draw(img)
     gold_border(draw)
 
@@ -217,9 +215,9 @@ def generate_list_slide(img, slide):
 
     # 全体の高さを計算して縦中央配置
     total_h = 70 + len(slide["items"]) * ITEM_H + (60 if "footer" in slide else 0)
-    start_y = (1080 - total_h) // 2
+    start_y = (H - total_h) // 2
 
-    draw_centered(draw, slide["title"], font_title, start_y, 1080, PINK)
+    draw_centered(draw, slide["title"], font_title, start_y, W, PINK)
     line_y = start_y + 68
     draw.line([(100, line_y), (980, line_y)], fill=(212, 175, 55, 220), width=2)
 
@@ -230,7 +228,7 @@ def generate_list_slide(img, slide):
 
     if "footer" in slide:
         draw.line([(100, y), (980, y)], fill=(212, 175, 55, 220), width=2)
-        draw_centered(draw, slide["footer"], font_footer, y + 15, 1080, PINK)
+        draw_centered(draw, slide["footer"], font_footer, y + 15, W, PINK)
 
     return img.convert("RGB")
 
@@ -238,7 +236,7 @@ def generate_list_slide(img, slide):
 def generate_cta_slide(img, slide):
     img = crop_center(img)
     img = add_overlay(img, 80)
-    img = add_text_bg(img, 80, 920, (255, 248, 250, 215))
+    img = add_text_bg(img, 80, H - 160, (255, 248, 250, 215))
     draw = ImageDraw.Draw(img)
     gold_border(draw)
 
@@ -248,15 +246,21 @@ def generate_cta_slide(img, slide):
     PINK = (100, 30, 60, 255)
     DARK = (50, 20, 40, 255)
 
-    draw_centered(draw, slide["title"], font_title, 180, 1080, PINK)
-    draw.line([(150, 255), (930, 255)], fill=(212, 175, 55, 220), width=2)
+    # 縦中央に配置（1350px用に調整）
+    body_lines = slide["body"].split("\n")
+    total_h = 70 + 30 + len(body_lines) * 62 + 40 + 55
+    start_y = (H - total_h) // 2
 
-    y = 295
-    for line in slide["body"].split("\n"):
+    draw_centered(draw, slide["title"], font_title, start_y, W, PINK)
+    line_y = start_y + 68
+    draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
+
+    y = line_y + 30
+    for line in body_lines:
         if line:
             bbox = font_body.getbbox(line)
             w = bbox[2] - bbox[0]
-            x = (1080 - w) // 2
+            x = (W - w) // 2
             draw.text((x, y), line, font=font_body, fill=DARK)
         y += 62
 
@@ -264,13 +268,13 @@ def generate_cta_slide(img, slide):
 
     y += 50
     for line in slide["subtitle"].split("\n"):
-        draw_centered(draw, line, font_sub, y, 1080, PINK)
+        draw_centered(draw, line, font_sub, y, W, PINK)
         y += 55
 
     return img.convert("RGB")
 
 
-def crop_top(img: Image.Image, size=(1080, 1080)) -> Image.Image:
+def crop_top(img: Image.Image, size=(W, H)) -> Image.Image:
     """上を優先してクロップ（上部のテキストが切れない）"""
     target_w, target_h = size
     orig_w, orig_h = img.size
@@ -289,6 +293,11 @@ def generate_raw(img, _slide):
 
 
 def generate_all():
+    generate_with_slides(SLIDES)
+
+
+def generate_with_slides(slides: list):
+    """カスタムSLIDESで画像生成（修正処理用）"""
     print("カルーセル画像を生成中...")
     generators = {
         "cover": generate_cover,
@@ -298,15 +307,15 @@ def generate_all():
         "raw": generate_raw,
     }
 
-    for i, slide in enumerate(SLIDES, 1):
-        print(f"  {i}/6枚目を生成中...")
-        bg = download_image_from_drive(slide["filename"])
+    for i, slide in enumerate(slides, 1):
+        print(f"  {i}/{len(slides)}枚目を生成中...")
+        bg = load_background(slide["filename"])
         result = generators[slide["type"]](bg, slide)
         output_path = os.path.join(OUTPUT_DIR, f"carousel_{i:02d}.jpg")
         result.save(output_path, "JPEG", quality=95)
         print(f"  保存: {output_path}")
 
-    print(f"\n完了！{OUTPUT_DIR}/ フォルダに6枚保存されました")
+    print(f"\n完了！{OUTPUT_DIR}/ フォルダに{len(slides)}枚保存されました")
 
 
 if __name__ == "__main__":
