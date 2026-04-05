@@ -1,4 +1,3 @@
-import argparse
 import json
 import os
 
@@ -99,17 +98,9 @@ def generate_content(theme: str, menu: str, notes: str = "") -> dict:
     return json.loads(raw)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Claude APIでInstagram投稿を自動生成・登録")
-    parser.add_argument("--theme", required=True, help="投稿テーマ・訴求したい内容")
-    parser.add_argument("--menu", required=True, help="メニュー種別（例: ご褒美エステ）")
-    parser.add_argument("--datetime", required=True, dest="post_datetime",
-                        help='投稿予定日時（例: "2026/04/09 21:00"）')
-    parser.add_argument("--notes", default="", help="追加の方向性・トーンの指示（省略可）")
-    args = parser.parse_args()
-
+def run(theme: str, menu: str, post_datetime: str, notes: str = ""):
     # コンテンツ生成
-    result = generate_content(args.theme, args.menu, args.notes)
+    result = generate_content(theme, menu, notes)
 
     print(f"\n生成完了！スライド数: {len(result['slides'])}枚")
     print(f"メモ: {result['memo']}")
@@ -121,8 +112,8 @@ def main():
     # GitHubアップロード＆スプレッドシート登録
     print("\nスプレッドシートに登録中...")
     register(
-        post_datetime=args.post_datetime,
-        menu_type=args.menu,
+        post_datetime=post_datetime,
+        menu_type=menu,
         caption=result["caption"],
         hashtags=result["hashtags"],
         memo=result["memo"],
@@ -130,4 +121,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run(
+        theme="ここにテーマを書く",
+        menu="ご褒美エステ",  # ブライダルエステ / ご褒美エステ / サロン紹介 など
+        post_datetime="2026/04/09 21:00",
+        notes="",  # 追加の方向性（省略OK）
+    )
