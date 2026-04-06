@@ -1,5 +1,13 @@
+import unicodedata
 from PIL import Image, ImageDraw, ImageFont
 import os
+
+
+def normalize_text(text: str) -> str:
+    """Unicode NFC正規化＋フォントで描画できない可能性のある文字を除去"""
+    text = unicodedata.normalize("NFC", text)
+    # サロゲートペアなど壊れた文字を除去
+    return text.encode("utf-8", errors="ignore").decode("utf-8")
 
 OUTPUT_DIR = "generated"
 BACKGROUNDS_DIR = "backgrounds"
@@ -146,7 +154,7 @@ def generate_cover(img, slide):
     draw = ImageDraw.Draw(img)
 
     # タグ
-    draw_centered(draw, slide["tag"], font_tag, 188, W, GOLD)
+    draw_centered(draw, normalize_text(slide["tag"]), font_tag, 188, W, GOLD)
 
     # タイトルの背景帯（縦中央より少し上）
     img = add_text_bg(img, 490, 230, (255, 245, 248, 210))
@@ -154,7 +162,7 @@ def generate_cover(img, slide):
 
     # タイトル
     y = 505
-    for line in slide["title"].split("\n"):
+    for line in normalize_text(slide["title"]).split("\n"):
         h = draw_centered(draw, line, font_title, y, W, PINK)
         y += h + 15
 
@@ -175,14 +183,14 @@ def generate_text_slide(img, slide):
     DARK = (50, 20, 40, 255)
 
     # 本文の行数から全体の高さを計算して縦中央に配置
-    lines = slide["text"].split("\n")
+    lines = normalize_text(slide["text"]).split("\n")
     title_h = 70  # タイトル＋区切り線のスペース
     content_h = len(lines) * LINE_H
     total_h = title_h + 30 + content_h
     start_y = (H - total_h) // 2
 
     # タイトル
-    draw_centered(draw, slide["title"], font_title, start_y, W, PINK)
+    draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)
     line_y = start_y + title_h
     draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
 
@@ -217,18 +225,18 @@ def generate_list_slide(img, slide):
     total_h = 70 + len(slide["items"]) * ITEM_H + (60 if "footer" in slide else 0)
     start_y = (H - total_h) // 2
 
-    draw_centered(draw, slide["title"], font_title, start_y, W, PINK)
+    draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)
     line_y = start_y + 68
     draw.line([(100, line_y), (980, line_y)], fill=(212, 175, 55, 220), width=2)
 
     y = line_y + 20
     for item in slide["items"]:
-        draw.text((90, y), item, font=font_item, fill=DARK)
+        draw.text((90, y), normalize_text(item), font=font_item, fill=DARK)
         y += ITEM_H
 
     if "footer" in slide:
         draw.line([(100, y), (980, y)], fill=(212, 175, 55, 220), width=2)
-        draw_centered(draw, slide["footer"], font_footer, y + 15, W, PINK)
+        draw_centered(draw, normalize_text(slide["footer"]), font_footer, y + 15, W, PINK)
 
     return img.convert("RGB")
 
@@ -247,16 +255,17 @@ def generate_cta_slide(img, slide):
     DARK = (50, 20, 40, 255)
 
     # 縦中央に配置（1350px用に調整）
-    body_lines = slide["body"].split("\n")
+    body_lines = normalize_text(slide["body"]).split("\n")
     total_h = 70 + 30 + len(body_lines) * 62 + 40 + 55
     start_y = (H - total_h) // 2
 
-    draw_centered(draw, slide["title"], font_title, start_y, W, PINK)
+    draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)
     line_y = start_y + 68
     draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
 
     y = line_y + 30
     for line in body_lines:
+        line = normalize_text(line)
         if line:
             bbox = font_body.getbbox(line)
             w = bbox[2] - bbox[0]
@@ -267,7 +276,7 @@ def generate_cta_slide(img, slide):
     draw.line([(150, y + 20), (930, y + 20)], fill=(212, 175, 55, 220), width=2)
 
     y += 50
-    for line in slide["subtitle"].split("\n"):
+    for line in normalize_text(slide["subtitle"]).split("\n"):
         draw_centered(draw, line, font_sub, y, W, PINK)
         y += 55
 
