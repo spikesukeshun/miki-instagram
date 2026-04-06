@@ -51,16 +51,16 @@ SYSTEM_PROMPT = """あなたはエステティシャンMIKIのInstagram投稿コ
 - スライドタイプと必須フィールド:
 
 cover（表紙）:
-  {"filename": "bg01.jpg", "type": "cover", "title": "タイトル（改行は\\nで）", "tag": "- サブタイトル -", "bg_strategy": "reuse|generate", "reuse_index": 番号}
+  {"filename": "bg01.jpg", "type": "cover", "title": "タイトル（改行は\\nで）", "tag": "- サブタイトル -", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 text（テキスト）:
-  {"filename": "bg02.jpg", "type": "text", "title": "セクションタイトル", "text": "本文（改行は\\nで）", "bg_strategy": "reuse|generate", "reuse_index": 番号}
+  {"filename": "bg02.jpg", "type": "text", "title": "セクションタイトル", "text": "本文（改行は\\nで）", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 list（リスト）:
-  {"filename": "bg03.jpg", "type": "list", "title": "タイトル", "items": ["項目1", "項目2", ...], "footer": "締めの一言（省略可）", "bg_strategy": "reuse|generate", "reuse_index": 番号}
+  {"filename": "bg03.jpg", "type": "list", "title": "タイトル", "items": ["項目1", "項目2", ...], "footer": "締めの一言（省略可）", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 cta（コールトゥアクション）:
-  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  初回限定20%OFF", "body": "本文（改行は\\nで）", "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ", "bg_strategy": "reuse|generate", "reuse_index": 番号}
+  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  初回限定20%OFF", "body": "本文（改行は\\nで）", "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 ## bg_strategyの判断基準
 各スライドに bg_strategy を必ず指定してください。
@@ -303,8 +303,8 @@ def generate_content(theme: str, menu: str, notes: str = "",
 
 {img_list}
 
-各スライドのbg_strategyを "reuse"（転用）または "generate"（新規生成）で指定し、
-"reuse"の場合はreuse_indexで上記の番号を指定してください。
+各スライドのbg_strategyを "reuse"（転用）"edit"（PIL加工転用）"generate"（新規生成）で指定し、
+"reuse"/"edit"の場合はreuse_indexで上記の番号を指定してください。
 """
     else:
         system += "\n## 注意\n過去投稿画像は取得できませんでした。全スライドbg_strategy=\"generate\"にしてください。\n"
@@ -328,6 +328,9 @@ def generate_content(theme: str, menu: str, notes: str = "",
         raw = raw.split("```")[1]
         if raw.startswith("json"):
             raw = raw[4:]
+    # 不正な制御文字（タブ・改行以外）を除去
+    import re
+    raw = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', raw)
     return json.loads(raw)
 
 

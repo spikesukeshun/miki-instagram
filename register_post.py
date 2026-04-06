@@ -278,11 +278,24 @@ def register(
     html = generate_preview_html(filenames, caption, hashtags, post_datetime)
     preview_url = upload_html_to_github(html, post_datetime)
 
-    # スプレッドシートに登録
+    # スプレッドシートに登録（同じ日時の行があれば上書き、なければ追加）
     sheet = get_sheet()
     files_str = ",".join(filenames)
     row = [post_datetime, menu_type, files_str, caption, hashtags, memo, "確認待ち", preview_url]
-    sheet.append_row(row)
+
+    all_values = sheet.get_all_values()
+    target_row_num = None
+    for i, r in enumerate(all_values[1:], start=2):  # ヘッダー行スキップ
+        if r and r[0] == post_datetime:
+            target_row_num = i
+            break
+
+    if target_row_num:
+        sheet.update(f"A{target_row_num}:H{target_row_num}", [row])
+        print(f"\nスプレッドシートを上書き更新しました（行{target_row_num}）！")
+    else:
+        sheet.append_row(row)
+        print(f"\nスプレッドシートに新規登録しました！")
 
     print(f"\nスプレッドシートに登録完了！")
     print(f"  投稿日時: {post_datetime}")
