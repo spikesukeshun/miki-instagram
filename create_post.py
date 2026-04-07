@@ -409,18 +409,24 @@ def _sanitize_json(raw: str) -> str:
     return ''.join(result)
 
 
-def run(theme: str, menu: str, post_datetime: str, notes: str = ""):
-    # 過去のInstagram投稿を取得
+def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file: str = None):
+    # 過去のInstagram投稿を取得（コンテンツファイル指定時も背景画像選択に使用）
     print("過去のInstagram投稿を取得中...")
     past_posts = fetch_instagram_posts(limit=30)
 
-    # 過去画像URLを一覧化（Groqへの参考情報 + ダウンロード用）
+    # 過去画像URLを一覧化（背景選択参考 + ダウンロード用）
     available_images = collect_available_images(past_posts) if past_posts else []
     if available_images:
         print(f"  利用可能な過去画像: {len(available_images)}枚")
 
-    # コンテンツ生成（過去キャプションを文体参考、過去画像リストを背景選択参考に）
-    result = generate_content(theme, menu, notes, past_posts, available_images)
+    if content_file:
+        # Claude Codeが生成したコンテンツを読み込む（Groq呼び出しスキップ）
+        print(f"コンテンツファイルを読み込みます: {content_file}")
+        with open(content_file, "r", encoding="utf-8") as f:
+            result = json.load(f)
+    else:
+        # Groqでコンテンツ生成（GitHub Actions等の自動化・旧来の動作）
+        result = generate_content(theme, menu, notes, past_posts, available_images)
 
     num_slides = len(result["slides"])
     print(f"\n生成完了！スライド数: {num_slides}枚")
@@ -452,9 +458,15 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = ""):
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Instagram投稿コンテンツを生成・登録する")
+    parser.add_argument("--content-file", help="Claude Codeが生成したcontent.jsonのパス（指定時はGroq生成をスキップ）")
+    args = parser.parse_args()
+
     run(
         theme="休みの日に一人でエステに行くことへの背中押し。疲れた体のリセット・リフレッシュ、首・肩・背中の凝りを解消し巡りを良くしてQOL向上",
         menu="ご褒美エステ",  # ブライダルエステ / ご褒美エステ / サロン紹介 など
         post_datetime="2026/04/08 21:00",
         notes="車やスマホも定期メンテが必要なように体も同じ、という実用的な切り口で。一人で行くことへの敷居の低さも伝える。",
+        content_file=args.content_file,
     )
