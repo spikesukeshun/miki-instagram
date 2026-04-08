@@ -25,6 +25,7 @@ COL_MEMO       = 5  # F: 投稿メモ
 COL_STATUS     = 6  # G: ステータス
 COL_PREVIEW    = 7  # H: プレビューURL
 COL_REVISION   = 8  # I: 修正指示
+COL_SEED       = 9  # J: 画像生成seed（同構図で再生成するために保存）
 
 
 def get_sheet():
@@ -45,6 +46,7 @@ def check_and_report():
         status = row[COL_STATUS].strip()
         if status == "修正依頼":
             instruction = row[COL_REVISION].strip() if len(row) > COL_REVISION else ""
+            seed_val = row[COL_SEED].strip() if len(row) > COL_SEED else ""
             pending.append({
                 "row_num": i,
                 "datetime": row[COL_DATETIME],
@@ -54,6 +56,7 @@ def check_and_report():
                 "files": row[COL_FILES],
                 "preview_url": row[COL_PREVIEW] if len(row) > COL_PREVIEW else "",
                 "instruction": instruction,
+                "seed": int(seed_val) if seed_val.isdigit() else None,
             })
 
     return sheet, pending

@@ -120,7 +120,9 @@ def process_revision(sheet, item: dict):
     if result.get("slides"):
         print(f"行{row_num}: 背景画像を準備中...")
         bg_prompt = result.get("bg_prompt", "Japanese esthetic salon, soft pink, elegant, luxury spa")
-        resolve_backgrounds(result["slides"], available_images, bg_prompt)
+        original_seed = item.get("seed")  # 元の投稿のseed（同構図で再生成）
+        resolve_backgrounds(result["slides"], available_images, bg_prompt,
+                            global_seed=original_seed)
 
         # 末尾2枚を固定追加
         result["slides"].append({"filename": "slide8.jpg", "type": "raw"})

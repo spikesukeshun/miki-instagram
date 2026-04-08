@@ -4,5 +4,6 @@ gspread==6.0.0
 google-auth==2.27.0
 APScheduler==3.10.4
 google-api-python-client==2.118.0
+google-auth-httplib2==0.2.0
 groq==1.0.0
 Pillow==10.2.0

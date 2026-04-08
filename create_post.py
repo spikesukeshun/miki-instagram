@@ -1,7 +1,5 @@
 import json
 import os
-import random
-import urllib.parse
 from datetime import datetime
 
 import requests
@@ -245,70 +243,96 @@ def apply_edit_effect(img_path: str, slide_type: str) -> None:
     img.save(img_path, "JPEG", quality=90)
 
 
-def generate_pollinations(bg_prompt: str, filename: str) -> bool:
-    """Pollinations.aiで背景画像を1枚生成してbackgrounds/に保存"""
-    full_prompt = f"{bg_prompt}, soft light, elegant, minimal background, no text, no watermark, photography"
-    encoded = urllib.parse.quote(full_prompt)
-    seed = random.randint(1000, 99999)
-    url = f"https://image.pollinations.ai/prompt/{encoded}?width=1080&height=1350&nologo=true&seed={seed}"
+def generate_image_hf(bg_prompt: str, filename: str, seed: int = None) -> tuple:
+    """HF FLUX.1-schnell で背景画像を生成して backgrounds/ に保存
+    Returns: (成功したか, 使用したseed)
+    """
+    from hf_generator import generate_image
     path = os.path.join("backgrounds", filename)
     try:
-        res = requests.get(url, timeout=120)
-        if res.status_code == 200 and len(res.content) > 10000:
-            with open(path, "wb") as f:
-                f.write(res.content)
-            return True
-    except Exception:
-        pass
-    return False
+        _, used_seed = generate_image(prompt=bg_prompt, seed=seed, output_path=path)
+        return True, used_seed
+    except Exception as e:
+        print(f"    HF生成失敗: {e}")
+        return False, seed or 0
 
 
-def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str) -> None:
-    """各スライドのbg_strategyに従って背景ファイルを決定しfilenameを更新"""
+def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
+                        global_seed: int = None) -> int:
+    """各スライドのbg_strategyに従って背景ファイルを決定しfilenameを更新
+    Returns: 最後に使用したseed（generate時）
+    """
+    from PIL import Image as _Img, ImageFilter as _IF
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    generate_count = 0
+    last_seed = global_seed
 
     print("\n背景画像を準備中...")
     for i, slide in enumerate(slides):
         strategy = slide.get("bg_strategy", "generate")
+        reuse_source = slide.get("reuse_source", "instagram")
         reuse_index = slide.get("reuse_index", 0)
         filename = f"bg_{timestamp}_{i+1:02d}.jpg"
+        path = os.path.join("backgrounds", filename)
 
-        if strategy == "reuse" and available_images and reuse_index < len(available_images):
+        # --- Drive 画像を使用 ---
+        if strategy in ("reuse", "edit") and reuse_source == "drive":
+            from drive_manager import list_drive_images, download_drive_image
+            theme = slide.get("reuse_theme", "reward")
+            drive_files = list_drive_images(theme)
+            if drive_files and reuse_index < len(drive_files):
+                file_id = drive_files[reuse_index]["id"]
+                name = drive_files[reuse_index]["name"]
+                print(f"  スライド{i+1}: Drive画像を使用（{theme}/{name}）")
+                success = download_drive_image(file_id, path)
+                if success:
+                    if strategy == "edit":
+                        apply_edit_effect(path, slide.get("type", "text"))
+                    else:
+                        _bg = _Img.open(path).convert("RGB")
+                        _bg = _bg.filter(_IF.GaussianBlur(radius=4))
+                        _bg.save(path, "JPEG", quality=90)
+                    slide["filename"] = filename
+                    continue
+            print(f"    → Drive画像の取得失敗、HFで代替生成")
+
+        # --- Instagram 過去投稿を使用 ---
+        elif strategy == "reuse" and available_images and reuse_index < len(available_images):
             img = available_images[reuse_index]
             print(f"  スライド{i+1}: 過去投稿を転用（いいね{img['like_count']}件）")
             success = download_image(img["url"], filename)
             if success:
-                # 元画像のテキスト・UI要素を目立たなくするため軽くブラー
-                from PIL import Image as _Img, ImageFilter as _IF
-                _path = os.path.join("backgrounds", filename)
-                _bg = _Img.open(_path).convert("RGB")
+                _bg = _Img.open(path).convert("RGB")
                 _bg = _bg.filter(_IF.GaussianBlur(radius=4))
-                _bg.save(_path, "JPEG", quality=90)
+                _bg.save(path, "JPEG", quality=90)
                 slide["filename"] = filename
                 continue
-            print(f"    → ダウンロード失敗、Pollinations.aiで代替生成")
+            print(f"    → ダウンロード失敗、HFで代替生成")
 
         elif strategy == "edit" and available_images and reuse_index < len(available_images):
             img_info = available_images[reuse_index]
             print(f"  スライド{i+1}: 過去投稿をPIL加工して使用（いいね{img_info['like_count']}件）")
             success = download_image(img_info["url"], filename)
             if success:
-                apply_edit_effect(os.path.join("backgrounds", filename), slide.get("type", "text"))
+                apply_edit_effect(path, slide.get("type", "text"))
                 slide["filename"] = filename
                 continue
-            print(f"    → ダウンロード失敗、Pollinations.aiで代替生成")
+            print(f"    → ダウンロード失敗、HFで代替生成")
 
-        # generate または reuse失敗時
-        generate_count += 1
-        print(f"  スライド{i+1}: Pollinations.aiで生成中...")
-        success = generate_pollinations(bg_prompt, filename)
+        # --- HF で新規生成（generate または上記失敗時） ---
+        slide_seed = slide.get("seed") or global_seed
+        print(f"  スライド{i+1}: HFで生成中...")
+        success, used_seed = generate_image_hf(bg_prompt, filename, seed=slide_seed)
         if success:
             slide["filename"] = filename
+            last_seed = used_seed
+            if not slide.get("seed"):
+                slide["seed"] = used_seed
         else:
             fallback = f"slide{(i % 6) + 1}.jpg"
             slide["filename"] = fallback
             print(f"    → 生成失敗、フォールバック: {fallback}")
+
+    return last_seed
 
 
 def generate_content(theme: str, menu: str, notes: str = "",
@@ -434,7 +458,9 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
 
     # 各スライドの背景をbg_strategyに従って解決
     bg_prompt = result.get("bg_prompt", "Japanese esthetic salon, soft pink, elegant, luxury spa")
-    resolve_backgrounds(result["slides"], available_images, bg_prompt)
+    global_seed = result.get("seed")
+    last_seed = resolve_backgrounds(result["slides"], available_images, bg_prompt,
+                                    global_seed=global_seed)
 
     # slide8.jpg → slide7.jpg（MIKIプロフィール）を末尾2枚として自動追加
     result["slides"].append({"filename": "slide8.jpg", "type": "raw"})
@@ -454,6 +480,7 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
         caption=result["caption"],
         hashtags=result["hashtags"],
         memo=result["memo"],
+        seed=last_seed,
     )
 
 

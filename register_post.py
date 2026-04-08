@@ -254,6 +254,7 @@ def register(
     caption: str,
     hashtags: str,
     memo: str = "",
+    seed: int = None,
 ):
     """generatedフォルダの画像をGitHubにアップロードしてスプレッドシートに登録"""
 
@@ -279,9 +280,11 @@ def register(
     preview_url = upload_html_to_github(html, post_datetime)
 
     # スプレッドシートに登録（同じ日時の行があれば上書き、なければ追加）
+    # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL I=修正指示 J=seed
     sheet = get_sheet()
     files_str = ",".join(filenames)
-    row = [post_datetime, menu_type, files_str, caption, hashtags, memo, "確認待ち", preview_url]
+    row = [post_datetime, menu_type, files_str, caption, hashtags, memo,
+           "確認待ち", preview_url, "", str(seed) if seed else ""]
 
     all_values = sheet.get_all_values()
     target_row_num = None
@@ -291,7 +294,7 @@ def register(
             break
 
     if target_row_num:
-        sheet.update(f"A{target_row_num}:H{target_row_num}", [row])
+        sheet.update(f"A{target_row_num}:J{target_row_num}", [row])
         print(f"\nスプレッドシートを上書き更新しました（行{target_row_num}）！")
     else:
         sheet.append_row(row)
