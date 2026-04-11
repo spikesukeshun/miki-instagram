@@ -26,9 +26,17 @@ from register_post import generate_preview_html, upload_html_to_github, upload_t
 from line_notify import notify_revision_done
 
 GENERATED_DIR = "generated"
-
+CONTENT_JSON_PATH = "content.json"
 
 IMAGE_KEYWORDS = ["背景", "画像", "スライド", "枚", "表紙", "構図", "bg_prompt", "generate", "reuse", "edit"]
+
+
+def load_content_json() -> dict | None:
+    """content.jsonが存在すればロードして返す（Claude Codeの最新修正版）"""
+    if os.path.exists(CONTENT_JSON_PATH):
+        with open(CONTENT_JSON_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    return None
 
 
 def is_text_only_revision(instruction: str) -> bool:
@@ -136,9 +144,17 @@ def revise_with_groq(item: dict) -> dict:
     else:
         system += "\n## 注意\n過去投稿画像は取得できませんでした。全スライドbg_strategy=\"generate\"にしてください。\n"
 
-    user_message = f"""以下の投稿内容を修正指示に従って修正してください。
+    current_slides_json = ""
+    if item.get("slides"):
+        current_slides_json = f"""
+【現在のスライド構成（Claude Codeによる最新版）】
+{json.dumps(item["slides"], ensure_ascii=False, indent=2)}
 
-【現在のキャプション】
+"""
+
+    user_message = f"""以下の投稿内容を修正指示に従って修正してください。
+{current_slides_json}
+【現在のキャプション（Claude Codeによる最新版）】
 {item['caption']}
 
 【現在のハッシュタグ】
@@ -149,6 +165,7 @@ def revise_with_groq(item: dict) -> dict:
 
 修正後はSYSTEM_PROMPTのJSON形式（slides/caption/hashtags/memo/bg_prompt）で返してください。
 修正が不要なフィールドは現在の値をそのまま維持してください。
+スライド構成が提示されている場合は、それを基に修正してください（ゼロから作り直さないこと）。
 """
 
     response = client.chat.completions.create(
@@ -171,6 +188,17 @@ def revise_with_groq(item: dict) -> dict:
 def process_revision(sheet, item: dict):
     """1件の修正依頼を処理"""
     row_num = item["row_num"]
+
+    # content.jsonが存在する場合、スプレッドシートの古い内容より優先する
+    # （Claude Codeがステップ2で修正した内容を引き継ぐ）
+    content = load_content_json()
+    if content:
+        print(f"行{row_num}: content.jsonを検出 → Claude Code最新版を修正ベースとして使用")
+        item["caption"] = content.get("caption", item["caption"])
+        item["hashtags"] = content.get("hashtags", item["hashtags"])
+        item["slides"] = content.get("slides", [])
+    else:
+        print(f"行{row_num}: content.jsonなし → スプレッドシートの内容を使用")
 
     if is_text_only_revision(item["instruction"]):
         print(f"行{row_num}: テキストのみ修正（画像再生成なし）...")
