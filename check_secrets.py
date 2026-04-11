@@ -17,7 +17,7 @@ REQUIRED_SECRETS = {
         "LINE_CHANNEL_ACCESS_TOKEN",
         "LINE_USER_ID_SHUNSUKE",
         "LINE_USER_ID_MIKI",
-        "GROQ_API_KEY2",
+        "GROQ_API_KEY",
     ],
     "post.yml": [
         "GOOGLE_CREDENTIALS",
