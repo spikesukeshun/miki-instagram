@@ -195,7 +195,7 @@ def generate_text_slide(img, slide):
     draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
 
     # 本文
-    y = line_y + 30
+    y = line_y + 100
     for line in lines:
         if line:
             bbox = font_text.getbbox(line)
@@ -229,7 +229,7 @@ def generate_list_slide(img, slide):
     line_y = start_y + 68
     draw.line([(100, line_y), (980, line_y)], fill=(212, 175, 55, 220), width=2)
 
-    y = line_y + 20
+    y = line_y + 45
     for item in slide["items"]:
         draw.text((90, y), normalize_text(item), font=font_item, fill=DARK)
         y += ITEM_H
@@ -263,7 +263,7 @@ def generate_cta_slide(img, slide):
     line_y = start_y + 68
     draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
 
-    y = line_y + 30
+    y = line_y + 60
     for line in body_lines:
         line = normalize_text(line)
         if line:
