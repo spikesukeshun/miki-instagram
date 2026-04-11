@@ -25,7 +25,7 @@ jobs:
       - name: credentials.jsonを復元
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python3 -c "import os,json; json.dump(json.loads(os.environ['GOOGLE_CREDENTIALS']), open('credentials.json','w'))"
+        run: echo "$GOOGLE_CREDENTIALS" > credentials.json
 
       - name: 修正依頼を処理
         env:
