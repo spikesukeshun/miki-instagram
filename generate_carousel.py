@@ -186,7 +186,7 @@ def generate_text_slide(img, slide):
     lines = normalize_text(slide["text"]).split("\n")
     title_h = 70  # タイトル＋区切り線のスペース
     content_h = len(lines) * LINE_H
-    total_h = title_h + 30 + content_h
+    total_h = title_h + 100 + content_h
     start_y = (H - total_h) // 2
 
     # タイトル
@@ -256,7 +256,7 @@ def generate_cta_slide(img, slide):
 
     # 縦中央に配置（1350px用に調整）
     body_lines = normalize_text(slide["body"]).split("\n")
-    total_h = 70 + 30 + len(body_lines) * 62 + 40 + 55
+    total_h = 70 + 60 + len(body_lines) * 62 + 40 + 55
     start_y = (H - total_h) // 2
 
     draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)

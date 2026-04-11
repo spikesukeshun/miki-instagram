@@ -1,0 +1,61 @@
+{
+  "slides": [
+    {
+      "filename": "bg01.jpg",
+      "type": "cover",
+      "title": "休みの日こそ\nご褒美エステ",
+      "tag": "- 疲れた体のリセット・リフレッシュ -",
+      "bg_strategy": "generate",
+      "bg_prompt": "Luxury spa still life, white pillar candles, neatly folded white towels, scattered rose petals, glass aroma oil bottles, green eucalyptus leaves, soft warm golden light, marble surface, no people, no skin exposure, no revealing clothing, elegant esthetic salon, flat lay composition, no text, no watermark, 4k photography"
+    },
+    {
+      "filename": "bg02.jpg",
+      "type": "text",
+      "title": "なぜ休みにエステなのか",
+      "text": "車もスマホも定期メンテナンスが必要なように、\n私たちの体も同じです。\n\n疲れを溜め込むと巡りが悪くなり、\n肌荒れ・だるさ・免疫の低下につながります。\n\n休みの日にエステで体をリセットすることは、\n消費ではなく、体への投資。\nそう思ってほしいのです。",
+      "bg_strategy": "generate",
+      "bg_prompt": "Elegant Japanese spa lounge interior, soft pink and ivory tones, fresh white peonies in a vase, warm ambient lighting, clean minimal design, no people, no skin exposure, no text, photography"
+    },
+    {
+      "filename": "bg03.jpg",
+      "type": "list",
+      "title": "おすすめの3つのケア",
+      "items": [
+        "アロマオイルマッサージ｜全身の巡りを整える",
+        "フェイシャルエステ｜肌をリセットして透明感アップ",
+        "ヘッドマッサージ｜頭と心のデトックス"
+      ],
+      "footer": "あなたに合ったケアをご提案します。",
+      "bg_strategy": "generate",
+      "bg_prompt": "Luxury spa treatment accessories flat lay, aroma oil bottles, jade roller, white facial towel, rose quartz, soft pastel background, warm light, no people, no skin exposure, no text, photography"
+    },
+    {
+      "filename": "bg04.jpg",
+      "type": "list",
+      "title": "こんな方にオススメです",
+      "items": [
+        "仕事終わりの疲れが取れなくなってきた",
+        "週末くらいは自分のために時間を使いたい",
+        "ご褒美に罪悪感を感じてしまう",
+        "一人でエステに行ったことがない"
+      ],
+      "footer": "初めてでも、一人でも、大丈夫です。",
+      "bg_strategy": "generate",
+      "bg_prompt": "Cozy Japanese esthetic salon waiting area, comfortable beige sofa, soft cushions, orchid flowers, warm candlelight, peaceful atmosphere, no people, no skin exposure, no text, photography"
+    },
+    {
+      "filename": "bg05.jpg",
+      "type": "cta",
+      "title": "MIKI指名  初回限定20%OFF",
+      "body": "休みの日は、ちゃんと休む。\n自分の体に向き合う時間を作る。\n今週頑張ったあなたと一緒に\n疲れを癒しに変えましょう。",
+      "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
+      "bg_strategy": "generate",
+      "bg_prompt": "Luxury esthetic salon entrance, elegant floral arrangement with pink roses, soft gold and pink accents, warm welcoming atmosphere, no people, no skin exposure, no text, photography"
+    }
+  ],
+  "caption": "MIKIです。\n\n休みの日、あなたはどんな過ごし方をしていますか？\n\n家でゆっくり過ごすのもいい。でも、疲れた体をどこかでちゃんとリセットしたい。そんな気持ちになったことがある方に、今日はご褒美エステの話をさせてください。\n\n車もスマホも、定期的なメンテナンスなしには長くは動きません。私たちの体も同じ。疲れを溜め込むと巡りが悪くなり、肌荒れ・だるさ・免疫の低下につながります。休みの日にエステで体をリセットすることは、贅沢でも浪費でもなく、体への投資だと思っています。\n\n私がオススメしている3つのケアをご紹介しますね。\n\n一つ目は、アロマオイルマッサージです。\n\n日常のストレスや疲れは、血行・リンパの流れを滞らせます。全身をアロマオイルでほぐすことで巡りが促され、だるさが抜けて、翌日の疲れのたまり方が明らかに変わります。「体が軽い」と感じる瞬間、いつも嬉しくなります。\n\n二つ目は、フェイシャルエステです。\n\n毛穴の詰まりや乾燥をケアすると、普段のスキンケアの吸収率が格段に上がります。疲れ顔・くすみがちな肌が、ひと施術でリセットされる感覚を、ぜひ体感してほしいです。鏡を見るたびに自信につながっていくのが、私の一番の喜びです。\n\n三つ目は、ヘッドマッサージです。\n\n長時間のPC作業や目の疲れからくる頭の重さをほぐすのに効果的で、施術中に眠ってしまう方も多いです。目が覚めたときのスッキリ感が「来てよかった」につながっています。心も体も、ふっと軽くなる体験です。\n\nこんな方に特にオススメしたいです。\n\n仕事終わりの疲れが取れなくなってきた方、週末くらいは自分のために時間を使いたい方、ご褒美に罪悪感を感じてしまう方、そして一人でエステに行ったことがない方。\n\n初めての方、大歓迎です。丁寧にご説明しながら、リラックスしていただけるよう全力でサポートします。「エステって、こんなに気持ちいいんだ」という体験を、一度してみてください。\n\n休みの日は、ちゃんと休む。そして、自分の体に向き合う時間を作る。それが結果的に、仕事も毎日の生活も充実させてくれると思っています。\n\nあなたの「今週よく頑張った」を、一緒に癒しに変えましょう💖\n\n---\n\n✨ MIKI指名　初回限定20%OFF ✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
+  "hashtags": "#ご褒美エステ #休日の楽しみ #リラックスタイム #身体のリセット #リフレッシュ #QOL向上 #ご褒美時間 #大人の休日 #アラサーの休日",
+  "memo": "3大施術（アロマ・フェイシャル・ヘッドマッサージ）をリスト1枚に統合。全5枚（固定2枚含め7枚）に削減。表紙は人物なしの静物写真に変更。",
+  "drive_theme": "reward",
+  "bg_prompt": "Luxury spa still life, candles, white towels, rose petals, aroma oils, no people, elegant esthetic salon, no text"
+}
