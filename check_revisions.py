@@ -5,11 +5,11 @@ GitHub Actionsで1日3回（9時・15時・21時 JST）実行される。
 """
 import gspread
 from google.oauth2.service_account import Credentials
-from dotenv import load_dotenv
 import os
 import sys
 
-load_dotenv()
+from load_env import load_from_zshrc
+load_from_zshrc()
 
 SCOPES = [
     "https://spreadsheets.google.com/feeds",
@@ -38,12 +38,14 @@ def check_and_report():
     """修正依頼を探してリストで返す"""
     sheet = get_sheet()
     rows = sheet.get_all_values()
+    print(f"[DEBUG] シート読み込み: {len(rows)}行")
 
     pending = []
     for i, row in enumerate(rows[1:], start=2):  # 2行目から（ヘッダーをスキップ）
         if len(row) <= COL_STATUS:
             continue
         status = row[COL_STATUS].strip()
+        print(f"[DEBUG] 行{i}: ステータス='{status}' (len={len(status)})")
         if status == "修正依頼":
             instruction = row[COL_REVISION].strip() if len(row) > COL_REVISION else ""
             seed_val = row[COL_SEED].strip() if len(row) > COL_SEED else ""
