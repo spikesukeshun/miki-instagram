@@ -36,6 +36,8 @@ def send_line_message(message: str, user_ids: list = None):
         )
         if res.status_code != 200:
             print(f"LINE送信失敗 ({user_id}): {res.json()}")
+        else:
+            print(f"LINE送信成功 ({user_id[:8]}...)")
 
 
 def notify_revision_done(row_num: int, menu_type: str, instruction: str, preview_url: str):
