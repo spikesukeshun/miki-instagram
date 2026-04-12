@@ -294,9 +294,18 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             from drive_manager import list_drive_images, download_drive_image
             theme = slide.get("reuse_theme", "reward")
             drive_files = list_drive_images(theme)
-            if drive_files and reuse_index < len(drive_files):
-                file_id = drive_files[reuse_index]["id"]
-                name = drive_files[reuse_index]["name"]
+            # reuse_filename（ファイル名指定）を優先、なければreuse_indexで番号指定
+            reuse_filename = slide.get("reuse_filename")
+            matched_file = None
+            if reuse_filename:
+                matched_file = next((f for f in drive_files if f["name"] == reuse_filename), None)
+                if not matched_file:
+                    print(f"    → Drive画像 '{reuse_filename}' が見つからない、インデックスで代替")
+            if not matched_file and drive_files and reuse_index < len(drive_files):
+                matched_file = drive_files[reuse_index]
+            if matched_file:
+                file_id = matched_file["id"]
+                name = matched_file["name"]
                 print(f"  スライド{i+1}: Drive画像を使用（{theme}/{name}）")
                 success = download_drive_image(file_id, path)
                 if success:

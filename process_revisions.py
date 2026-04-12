@@ -119,7 +119,7 @@ def revise_with_groq(item: dict) -> dict:
 {top_captions[0]}
 """
 
-    # 利用可能な過去画像の一覧をGroqに渡す
+    # 利用可能な過去投稿画像の一覧をGroqに渡す
     if available_images:
         img_list = "\n".join([
             f"- index {i}: いいね{img['like_count']}件, 内容「{img['caption_snippet']}」"
@@ -136,6 +136,31 @@ def revise_with_groq(item: dict) -> dict:
 """
     else:
         system += "\n## 注意\n過去投稿画像は取得できませんでした。全スライドbg_strategy=\"generate\"にしてください。\n"
+
+    # Google Driveの画像一覧をGroqに渡す
+    try:
+        from drive_manager import collect_drive_images_all
+        drive_images = collect_drive_images_all()
+        drive_lines = []
+        for theme, files in drive_images.items():
+            if files:
+                names = ", ".join(f["name"] for f in files[:20])
+                drive_lines.append(f"- {theme}: {names}")
+        if drive_lines:
+            system += f"""
+## Google Driveの利用可能な画像（ファイル名指定用）
+修正指示で特定の画像名が指定された場合は、以下のファイル名を使用してください。
+
+{chr(10).join(drive_lines)}
+
+Drive画像を使う場合は各スライドに以下を指定してください：
+  "bg_strategy": "reuse" または "edit"
+  "reuse_source": "drive"
+  "reuse_theme": テーマ名（bridal/reward/menu/lifestyle）
+  "reuse_filename": 上記のファイル名
+"""
+    except Exception as e:
+        print(f"  Drive画像リスト取得スキップ: {e}")
 
     current_slides_json = ""
     if item.get("slides"):
