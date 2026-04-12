@@ -309,6 +309,18 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                     continue
             print(f"    → Drive画像の取得失敗、HFで代替生成")
 
+        # --- ローカルファイルを直接使用 ---
+        elif strategy == "local":
+            import shutil
+            local_path = slide.get("local_path", "")
+            if local_path and os.path.exists(local_path):
+                shutil.copy(local_path, path)
+                apply_edit_effect(path, slide.get("type", "text"))
+                slide["filename"] = filename
+                print(f"  スライド{i+1}: ローカルファイルを使用（{local_path}）")
+                continue
+            print(f"    → ローカルファイルが見つからない ({local_path})、HFで代替生成")
+
         # --- Instagram 過去投稿を使用 ---
         elif strategy == "reuse" and available_images and reuse_index < len(available_images):
             img = available_images[reuse_index]
@@ -573,7 +585,7 @@ if __name__ == "__main__":
     run(
         theme="休みの日に一人でエステに行くことへの背中押し。疲れた体のリセット・リフレッシュ、首・肩・背中の凝りを解消し巡りを良くしてQOL向上",
         menu="ご褒美エステ",  # ブライダルエステ / ご褒美エステ / サロン紹介 など
-        post_datetime="2026/04/08 21:00",
+        post_datetime="2026/04/12 21:00",
         notes="車やスマホも定期メンテが必要なように体も同じ、という実用的な切り口で。一人で行くことへの敷居の低さも伝える。",
         content_file=args.content_file,
     )

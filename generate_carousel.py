@@ -222,14 +222,14 @@ def generate_list_slide(img, slide):
     DARK = (50, 20, 40, 255)
 
     # 全体の高さを計算して縦中央配置
-    total_h = 70 + len(slide["items"]) * ITEM_H + (60 if "footer" in slide else 0)
+    total_h = 70 + 70 + len(slide["items"]) * ITEM_H + (60 if "footer" in slide else 0)
     start_y = (H - total_h) // 2
 
     draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)
     line_y = start_y + 68
     draw.line([(100, line_y), (980, line_y)], fill=(212, 175, 55, 220), width=2)
 
-    y = line_y + 45
+    y = line_y + 70
     for item in slide["items"]:
         draw.text((90, y), normalize_text(item), font=font_item, fill=DARK)
         y += ITEM_H
