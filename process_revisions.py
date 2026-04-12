@@ -23,7 +23,7 @@ from create_post import (
 )
 from generate_carousel import generate_with_slides
 from register_post import generate_preview_html, upload_html_to_github, upload_to_github
-from line_notify import notify_revision_done
+from line_notify import notify_revision_done, notify_revision_found, send_line_message
 
 GENERATED_DIR = "generated"
 CONTENT_JSON_PATH = "content.json"
@@ -86,11 +86,10 @@ def revise_text_only_with_groq(item: dict) -> dict:
         ],
         max_tokens=2048,
     )
+    import re
     raw = response.choices[0].message.content.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
+    raw = re.sub(r"^```[a-z]*\n?", "", raw)
+    raw = re.sub(r"\n?```$", "", raw).strip()
     return json.loads(raw)
 
 
@@ -176,11 +175,10 @@ def revise_with_groq(item: dict) -> dict:
         ],
         max_tokens=4096,
     )
+    import re
     raw = response.choices[0].message.content.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
+    raw = re.sub(r"^```[a-z]*\n?", "", raw)
+    raw = re.sub(r"\n?```$", "", raw).strip()
     result = json.loads(raw)
     return result, available_images
 
@@ -256,11 +254,18 @@ def run():
     print(f"{len(pending)}件の修正依頼を処理します")
 
     for item in pending:
+        notify_revision_found(item["row_num"], item["menu_type"], item["instruction"])
         try:
             process_revision(sheet, item)
         except Exception as e:
             print(f"行{item['row_num']}: 修正失敗 → {e}")
             traceback.print_exc()
+            send_line_message(
+                f"❌ 修正依頼の処理に失敗しました\n"
+                f"\n"
+                f"📋 {item['menu_type']}（{item['row_num']}行目）\n"
+                f"エラー: {str(e)[:200]}"
+            )
 
 
 if __name__ == "__main__":
