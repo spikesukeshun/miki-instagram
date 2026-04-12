@@ -6,3 +6,5 @@ content/
 credentials.json
 token.json
 backgrounds/
+!backgrounds/slide7.jpg
+!backgrounds/slide8.jpg
