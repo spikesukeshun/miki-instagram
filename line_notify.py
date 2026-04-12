@@ -6,20 +6,20 @@ load_dotenv()
 
 def _get_user_ids() -> list:
     ids = []
-    if os.getenv("LINE_USER_ID_SHUNSUKE"):
-        ids.append(os.getenv("LINE_USER_ID_SHUNSUKE"))
-    if os.getenv("LINE_USER_ID_MIKI"):
-        ids.append(os.getenv("LINE_USER_ID_MIKI"))
+    for key in ("LINE_USER_ID_SHUNSUKE", "LINE_USER_ID_MIKI"):
+        val = (os.getenv(key) or "").strip()
+        if val:
+            ids.append(val)
     return ids
 
 def send_line_message(message: str, user_ids: list = None):
     """LINEに通知を送る。user_ids省略時は.envの全ユーザーに送信"""
-    token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+    token = (os.getenv("LINE_CHANNEL_ACCESS_TOKEN") or "").strip()
     if not token:
         print("LINE_CHANNEL_ACCESS_TOKEN が設定されていません")
         return
 
-    targets = user_ids or _get_user_ids()
+    targets = [uid.strip() for uid in (user_ids or _get_user_ids()) if uid and uid.strip()]
     if not targets:
         print("送信先のLINEユーザーIDが設定されていません")
         return
@@ -58,7 +58,7 @@ def notify_revision_done(row_num: int, menu_type: str, instruction: str, preview
 
 def notify_revision_found(row_num: int, menu_type: str, instruction: str):
     """修正依頼を検知した通知（Shunsukeのみ）"""
-    shunsuke_id = os.getenv("LINE_USER_ID_SHUNSUKE")
+    shunsuke_id = (os.getenv("LINE_USER_ID_SHUNSUKE") or "").strip()
     if not shunsuke_id:
         return
     message = (
