@@ -48,19 +48,18 @@ def revise_text_only_with_groq(item: dict) -> dict:
     """テキストのみ修正：Groqにcaption/hashtagsだけを返させる"""
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-    past_posts = fetch_instagram_posts(limit=30)
+    past_posts = fetch_instagram_posts(limit=10)
     system = SYSTEM_PROMPT
 
     if past_posts:
         top_captions = [
-            p["caption"] for p in past_posts[:10]
+            p["caption"][:400] for p in past_posts[:5]
             if p.get("caption") and len(p["caption"]) > 100
-        ][:3]
+        ][:1]
         if top_captions:
-            captions_text = "\n\n---\n\n".join(top_captions)
             system += f"""
-## MIKIの実際の過去投稿（文体・言い回し・テンポの参考）
-{captions_text}
+## MIKIの実際の過去投稿（文体参考・抜粋）
+{top_captions[0]}
 """
 
     user_message = f"""以下の投稿のキャプションとハッシュタグを修正指示に従って修正してください。
@@ -84,7 +83,7 @@ def revise_text_only_with_groq(item: dict) -> dict:
             {"role": "system", "content": system},
             {"role": "user", "content": user_message},
         ],
-        max_tokens=8192,
+        max_tokens=4096,
     )
     import re
     raw = response.choices[0].message.content.strip()
@@ -106,30 +105,25 @@ def revise_with_groq(item: dict) -> dict:
         system += BRIDAL_ADDON
 
     # 過去の高反応投稿キャプションを文体参考として追加
-    past_posts = fetch_instagram_posts(limit=30)
+    past_posts = fetch_instagram_posts(limit=10)
     available_images = collect_available_images(past_posts) if past_posts else []
 
     if past_posts:
         top_captions = [
-            p["caption"] for p in past_posts[:10]
+            p["caption"][:400] for p in past_posts[:5]
             if p.get("caption") and len(p["caption"]) > 100
-        ][:3]
+        ][:1]
         if top_captions:
-            captions_text = "\n\n---\n\n".join(top_captions)
             system += f"""
-## MIKIの実際の過去投稿（文体・言い回し・テンポの参考）
-以下はMIKIの実際のInstagram投稿キャプションです。
-言い回し・文体・特徴・テンポをよく読み、今回のテーマに合わせた内容を生成してください。
-内容をそのまま使用したり、似た投稿を作ることはしないこと。
-
-{captions_text}
+## MIKIの実際の過去投稿（文体参考・抜粋）
+{top_captions[0]}
 """
 
     # 利用可能な過去画像の一覧をGroqに渡す
     if available_images:
         img_list = "\n".join([
             f"- index {i}: いいね{img['like_count']}件, 内容「{img['caption_snippet']}」"
-            for i, img in enumerate(available_images[:20])
+            for i, img in enumerate(available_images[:8])
         ])
         system += f"""
 ## 利用可能な過去投稿画像（bg_strategy指定用）
@@ -173,7 +167,7 @@ def revise_with_groq(item: dict) -> dict:
             {"role": "system", "content": system},
             {"role": "user", "content": user_message},
         ],
-        max_tokens=8192,
+        max_tokens=6000,
     )
     import re
     raw = response.choices[0].message.content.strip()
