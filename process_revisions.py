@@ -84,7 +84,7 @@ def revise_text_only_with_groq(item: dict) -> dict:
             {"role": "system", "content": system},
             {"role": "user", "content": user_message},
         ],
-        max_tokens=2048,
+        max_tokens=8192,
     )
     import re
     raw = response.choices[0].message.content.strip()
@@ -173,7 +173,7 @@ def revise_with_groq(item: dict) -> dict:
             {"role": "system", "content": system},
             {"role": "user", "content": user_message},
         ],
-        max_tokens=4096,
+        max_tokens=8192,
     )
     import re
     raw = response.choices[0].message.content.strip()
