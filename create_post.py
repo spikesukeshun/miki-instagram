@@ -277,6 +277,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
     Returns: 最後に使用したseed（generate時）
     """
     from PIL import Image as _Img, ImageFilter as _IF
+    os.makedirs("backgrounds", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     last_seed = global_seed
 

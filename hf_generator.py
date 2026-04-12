@@ -153,6 +153,7 @@ def _fallback_pollinations(prompt: str, seed: int, output_path: str) -> tuple:
     encoded = urllib.parse.quote(full_prompt)
     url = f"https://image.pollinations.ai/prompt/{encoded}?width=1080&height=1350&nologo=true&seed={seed}"
     try:
+        os.makedirs(os.path.dirname(output_path) or "backgrounds", exist_ok=True)
         res = requests.get(url, timeout=120)
         if res.status_code == 200 and len(res.content) > 10000:
             with open(output_path, "wb") as f:
