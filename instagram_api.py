@@ -1,12 +1,45 @@
 import requests
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from load_env import load_from_zshrc
+load_from_zshrc()
 
-ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
+_USER_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
 ACCOUNT_ID = os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID")
-API_BASE = "https://graph.instagram.com/v19.0"
+API_BASE = "https://graph.facebook.com/v19.0"
+
+_page_token_cache = None
+
+
+def _get_access_token() -> str:
+    """Instagram Content Publishing に必要な Page Access Token を返す。
+    環境変数 INSTAGRAM_ACCESS_TOKEN（ユーザートークン）から
+    紐づくページトークンを Graph API 経由で取得してキャッシュする。
+    .env への書き込みや永続化は行わない。"""
+    global _page_token_cache
+    if _page_token_cache:
+        return _page_token_cache
+
+    res = requests.get(
+        f"{API_BASE}/me/accounts",
+        params={"access_token": _USER_TOKEN}
+    )
+    pages = res.json().get("data", [])
+    for page in pages:
+        ig_res = requests.get(
+            f"{API_BASE}/{page['id']}",
+            params={"fields": "instagram_business_account", "access_token": page["access_token"]}
+        )
+        ig_id = ig_res.json().get("instagram_business_account", {}).get("id")
+        if ig_id == ACCOUNT_ID:
+            _page_token_cache = page["access_token"]
+            return _page_token_cache
+
+    if pages:
+        _page_token_cache = pages[0]["access_token"]
+        return _page_token_cache
+
+    return _USER_TOKEN
 
 
 def create_image_container(image_url: str, caption: str) -> str:
@@ -15,7 +48,7 @@ def create_image_container(image_url: str, caption: str) -> str:
     params = {
         "image_url": image_url,
         "caption": caption,
-        "access_token": ACCESS_TOKEN
+        "access_token": _get_access_token()
     }
     res = requests.post(url, params=params)
     data = res.json()
@@ -31,7 +64,7 @@ def create_video_container(video_url: str, caption: str) -> str:
         "media_type": "REELS",
         "video_url": video_url,
         "caption": caption,
-        "access_token": ACCESS_TOKEN
+        "access_token": _get_access_token()
     }
     res = requests.post(url, params=params)
     data = res.json()
@@ -45,7 +78,7 @@ def publish_container(container_id: str) -> str:
     url = f"{API_BASE}/{ACCOUNT_ID}/media_publish"
     params = {
         "creation_id": container_id,
-        "access_token": ACCESS_TOKEN
+        "access_token": _get_access_token()
     }
     res = requests.post(url, params=params)
     data = res.json()
@@ -74,7 +107,7 @@ def create_carousel_item(image_url: str) -> str:
     params = {
         "image_url": image_url,
         "is_carousel_item": "true",
-        "access_token": ACCESS_TOKEN
+        "access_token": _get_access_token()
     }
     res = requests.post(url, params=params)
     data = res.json()
@@ -85,26 +118,23 @@ def create_carousel_item(image_url: str) -> str:
 
 def post_carousel(image_urls: list, caption: str) -> str:
     """カルーセル（複数画像）を投稿してpost_idを返す"""
-    # 各画像のコンテナを作成
     item_ids = []
     for i, url in enumerate(image_urls, 1):
         print(f"  カルーセルアイテム {i}/{len(image_urls)} 作成中...")
         item_id = create_carousel_item(url)
         item_ids.append(item_id)
 
-    # カルーセルコンテナを作成
     url = f"{API_BASE}/{ACCOUNT_ID}/media"
     params = {
         "media_type": "CAROUSEL",
         "children": ",".join(item_ids),
         "caption": caption,
-        "access_token": ACCESS_TOKEN
+        "access_token": _get_access_token()
     }
     res = requests.post(url, params=params)
     data = res.json()
     if "id" not in data:
         raise Exception(f"カルーセルコンテナ作成失敗: {data}")
 
-    # 公開
     post_id = publish_container(data["id"])
     return post_id
