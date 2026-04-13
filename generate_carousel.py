@@ -56,7 +56,7 @@ SLIDES = [
     {
         "filename": "slide6.jpg",
         "type": "cta",
-        "title": "MIKI指名  初回限定20%OFF",
+        "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
         "body": "美容と健康に興味がある。\n素直に自分と向き合える。\nそんな花嫁様、ぜひ会いに来てください",
         "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
     },
@@ -117,6 +117,61 @@ def get_font(size: int):
     return ImageFont.load_default()
 
 
+def get_emoji_font(size: int):
+    """絵文字フォントを取得（macOS: Apple Color Emoji / Linux: NotoColorEmoji）"""
+    emoji_font_paths = [
+        "/System/Library/Fonts/Apple Color Emoji.ttc",   # macOS
+        "/System/Library/Fonts/AppleColorEmoji.ttf",     # macOS (別パス)
+        "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",  # Linux
+        "/usr/share/fonts/noto/NotoColorEmoji.ttf",           # Linux (別パス)
+    ]
+    for path in emoji_font_paths:
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except:
+                continue
+    return None
+
+
+def draw_with_emoji_suffix(draw, text, suffix_emoji, font, emoji_font, y, img_width, fill):
+    """テキスト本文を中央揃えで描画し、末尾に絵文字を追加する。
+    絵文字フォントが利用可能な場合は絵文字を別フォントで描画する。"""
+    # テキスト部分の幅
+    main_bbox = font.getbbox(text)
+    main_w = main_bbox[2] - main_bbox[0]
+    main_h = main_bbox[3] - main_bbox[1]
+
+    # 絵文字部分の幅
+    if emoji_font is not None:
+        try:
+            emo_bbox = emoji_font.getbbox(suffix_emoji)
+            emo_w = emo_bbox[2] - emo_bbox[0]
+        except Exception:
+            emo_w = main_h  # 高さを幅の目安に
+    else:
+        emo_w = main_h
+
+    total_w = main_w + 8 + emo_w  # 8px gap
+    start_x = (img_width - total_w) // 2
+
+    # テキスト本文（シャドウ付き）
+    draw.text((start_x + 2, y + 2), text, font=font, fill=(0, 0, 0, 60))
+    draw.text((start_x, y), text, font=font, fill=fill)
+
+    # 絵文字
+    emoji_x = start_x + main_w + 8
+    if emoji_font is not None:
+        try:
+            draw.text((emoji_x, y), suffix_emoji, font=emoji_font, fill=fill, embedded_color=True)
+        except TypeError:
+            draw.text((emoji_x, y), suffix_emoji, font=emoji_font, fill=fill)
+    else:
+        draw.text((emoji_x, y), suffix_emoji, font=font, fill=fill)
+
+    return main_h
+
+
 def add_overlay(img: Image.Image, opacity: int = 130) -> Image.Image:
     overlay = Image.new("RGBA", img.size, (255, 255, 255, opacity))
     return Image.alpha_composite(img, overlay)
@@ -129,6 +184,31 @@ def draw_centered(draw, text, font, y, img_width, fill):
     draw.text((x + 2, y + 2), text, font=font, fill=(0, 0, 0, 60))
     draw.text((x, y), text, font=font, fill=fill)
     return bbox[3] - bbox[1]
+
+
+def _calc_title_h(font, title_text, line_gap=10):
+    """タイトルの実際の高さを計算（複数行対応）"""
+    lines = title_text.split("\n")
+    total = 0
+    for line in lines:
+        ref = line if line else "あ"
+        bbox = font.getbbox(ref)
+        total += (bbox[3] - bbox[1]) + line_gap
+    return total
+
+
+def _draw_title(draw, title_text, font, y_start, img_width, fill, line_gap=10):
+    """複数行タイトルを中央揃えで描画し、最終行の下端y座標を返す"""
+    lines = title_text.split("\n")
+    y = y_start
+    for line in lines:
+        if line:
+            h = draw_centered(draw, line, font, y, img_width, fill)
+        else:
+            bbox = font.getbbox("あ")
+            h = bbox[3] - bbox[1]
+        y += h + line_gap
+    return y
 
 
 def gold_border(draw, w=W, h=H):
@@ -149,28 +229,34 @@ def generate_cover(img, slide):
     draw = ImageDraw.Draw(img)
     gold_border(draw)
 
-    font_tag = get_font(30)
+    font_tag = get_font(36)
     font_title = get_font(66)
 
     PINK = (100, 30, 60, 255)
     GOLD = (160, 120, 30, 255)
 
     # タグの背景帯（上から1/6あたり）
-    img = add_text_bg(img, 175, 65, (255, 240, 245, 200))
+    TAG_BAND_Y, TAG_BAND_H = 175, 65
+    img = add_text_bg(img, TAG_BAND_Y, TAG_BAND_H, (255, 240, 245, 200))
     draw = ImageDraw.Draw(img)
 
-    # タグ
-    draw_centered(draw, normalize_text(slide["tag"]), font_tag, 188, W, GOLD)
+    # タグ（帯の中央に配置）
+    tag_text = normalize_text(slide["tag"])
+    tag_bbox = font_tag.getbbox(tag_text)
+    tag_h = tag_bbox[3] - tag_bbox[1]
+    tag_y = TAG_BAND_Y + (TAG_BAND_H - tag_h) // 2
+    draw_centered(draw, tag_text, font_tag, tag_y, W, GOLD)
 
     # タイトルの背景帯（縦中央より少し上）
-    img = add_text_bg(img, 490, 230, (255, 245, 248, 210))
+    TITLE_BAND_Y, TITLE_BAND_H = 490, 230
+    img = add_text_bg(img, TITLE_BAND_Y, TITLE_BAND_H, (255, 245, 248, 210))
     draw = ImageDraw.Draw(img)
 
-    # タイトル
-    y = 505
-    for line in normalize_text(slide["title"]).split("\n"):
-        h = draw_centered(draw, line, font_title, y, W, PINK)
-        y += h + 15
+    # タイトル（帯内で垂直中央配置）
+    title_text = normalize_text(slide["title"])
+    title_h = _calc_title_h(font_title, title_text, line_gap=15)
+    y = TITLE_BAND_Y + (TITLE_BAND_H - title_h) // 2
+    _draw_title(draw, title_text, font_title, y, W, PINK, line_gap=15)
 
     return img.convert("RGB")
 
@@ -188,19 +274,25 @@ def generate_text_slide(img, slide):
     PINK = (100, 30, 60, 255)
     DARK = (50, 20, 40, 255)
 
-    # 本文の行数から全体の高さを計算して縦中央に配置
-    lines = normalize_text(slide["text"]).split("\n")
-    title_h = 70  # タイトル＋区切り線のスペース
+    title_text = normalize_text(slide["title"])
+    body_text = normalize_text(slide["text"])
+
+    # タイトルの実際の高さを計算（複数行対応）
+    title_h = _calc_title_h(font_title, title_text)
+    lines = body_text.split("\n")
     content_h = len(lines) * LINE_H
-    total_h = title_h + 100 + content_h
+    # 合計高さ: タイトル + 区切り線余白(20) + 区切り線(2) + 本文上余白(100) + 本文
+    total_h = title_h + 20 + 2 + 100 + content_h
     start_y = (H - total_h) // 2
 
-    # タイトル
-    draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)
-    line_y = start_y + title_h
+    # タイトル（複数行対応）
+    after_title_y = _draw_title(draw, title_text, font_title, start_y, W, PINK)
+
+    # 区切り線（タイトル末尾から20px下）
+    line_y = after_title_y + 20
     draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
 
-    # 本文
+    # 本文（区切り線から100px下）
     y = line_y + 100
     for line in lines:
         if line:
@@ -221,23 +313,35 @@ def generate_list_slide(img, slide):
     gold_border(draw)
 
     font_title = get_font(46)
-    font_item = get_font(33)
+    font_item = get_font(42)
     font_footer = get_font(34)
-    ITEM_H = 118
+    ITEM_H = 140
     PINK = (100, 30, 60, 255)
     DARK = (50, 20, 40, 255)
 
-    # 全体の高さを計算して縦中央配置
-    total_h = 70 + 70 + len(slide["items"]) * ITEM_H + (60 if "footer" in slide else 0)
+    title_text = normalize_text(slide["title"])
+
+    # タイトルの実際の高さを計算（複数行対応）
+    title_h = _calc_title_h(font_title, title_text)
+    # 合計高さ: タイトル + 区切り線余白(20) + 区切り線(2) + 項目上余白(45) + 項目 + フッター
+    total_h = title_h + 20 + 2 + 45 + len(slide["items"]) * ITEM_H + (60 if "footer" in slide else 0)
     start_y = (H - total_h) // 2
 
-    draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)
-    line_y = start_y + 68
+    # タイトル（複数行対応）
+    after_title_y = _draw_title(draw, title_text, font_title, start_y, W, PINK)
+
+    # 区切り線（タイトル末尾から20px下）
+    line_y = after_title_y + 20
     draw.line([(100, line_y), (980, line_y)], fill=(212, 175, 55, 220), width=2)
 
-    y = line_y + 70
+    # 項目（区切り線から45px下、中央揃え）
+    y = line_y + 45
     for item in slide["items"]:
-        draw.text((90, y), normalize_text(item), font=font_item, fill=DARK)
+        item_text = normalize_text(item)
+        bbox = font_item.getbbox(item_text)
+        iw = bbox[2] - bbox[0]
+        ix = (W - iw) // 2
+        draw.text((ix, y), item_text, font=font_item, fill=DARK)
         y += ITEM_H
 
     if "footer" in slide:
@@ -260,15 +364,23 @@ def generate_cta_slide(img, slide):
     PINK = (100, 30, 60, 255)
     DARK = (50, 20, 40, 255)
 
-    # 縦中央に配置（1350px用に調整）
+    title_text = normalize_text(slide["title"])
     body_lines = normalize_text(slide["body"]).split("\n")
-    total_h = 70 + 60 + len(body_lines) * 62 + 40 + 55
+
+    # タイトルの実際の高さを計算（複数行対応）
+    title_h = _calc_title_h(font_title, title_text)
+    # 合計高さ: タイトル + 区切り線余白(20) + 区切り線(2) + 本文上余白(60) + 本文 + 区切り線余白(60) + サブタイトル
+    total_h = title_h + 20 + 2 + 60 + len(body_lines) * 62 + 60 + 55
     start_y = (H - total_h) // 2
 
-    draw_centered(draw, normalize_text(slide["title"]), font_title, start_y, W, PINK)
-    line_y = start_y + 68
+    # タイトル（複数行対応）
+    after_title_y = _draw_title(draw, title_text, font_title, start_y, W, PINK)
+
+    # 区切り線（タイトル末尾から20px下）
+    line_y = after_title_y + 20
     draw.line([(150, line_y), (930, line_y)], fill=(212, 175, 55, 220), width=2)
 
+    # 本文（区切り線から60px下）
     y = line_y + 60
     for line in body_lines:
         line = normalize_text(line)
@@ -282,8 +394,15 @@ def generate_cta_slide(img, slide):
     draw.line([(150, y + 20), (930, y + 20)], fill=(212, 175, 55, 220), width=2)
 
     y += 50
-    for line in normalize_text(slide["subtitle"]).split("\n"):
-        draw_centered(draw, line, font_sub, y, W, PINK)
+    subtitle_lines = normalize_text(slide["subtitle"]).split("\n")
+    emoji_font = get_emoji_font(32)
+    for i, line in enumerate(subtitle_lines):
+        is_last = (i == len(subtitle_lines) - 1)
+        # 最後の行のみ 💌 を自動付与（まだ含まれていない場合）
+        if is_last and "💌" not in line:
+            draw_with_emoji_suffix(draw, line, "💌", font_sub, emoji_font, y, W, PINK)
+        else:
+            draw_centered(draw, line, font_sub, y, W, PINK)
         y += 55
 
     return img.convert("RGB")
