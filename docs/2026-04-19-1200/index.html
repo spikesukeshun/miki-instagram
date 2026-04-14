@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>投稿プレビュー - MIKI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #FFF9F5;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            color: #3D1F2D;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: linear-gradient(135deg, #E8A0B4, #C9A96E);
+            color: white;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 6px; }
+        .header .meta { font-size: 13px; opacity: 0.9; }
+        .section-title {
+            font-size: 13px;
+            color: #C9A96E;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            padding: 20px 16px 8px;
+            border-bottom: 1px solid #F0D9E0;
+            margin-bottom: 0;
+        }
+        .image-card {
+            position: relative;
+            margin: 12px 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(200,120,130,0.15);
+        }
+        .image-card img {
+            width: 100%;
+            display: block;
+        }
+        .image-num {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .caption-box {
+            margin: 4px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .hashtags {
+            margin: 8px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #5B8FCA;
+            line-height: 1.7;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .approve-box {
+            margin: 20px 16px 0;
+            background: linear-gradient(135deg, #FFF0F5, #FFF8EC);
+            border: 1.5px solid #E8A0B4;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .approve-box p { font-size: 13px; line-height: 1.7; color: #3D1F2D; }
+        .approve-box .step {
+            font-size: 14px;
+            font-weight: bold;
+            color: #C9607A;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #B0969F;
+            margin-top: 24px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 投稿プレビュー</h1>
+        <div class="meta">投稿予定: 2026/04/19 12:00　|　全8枚</div>
+    </div>
+
+    <div class="section-title">▼ 画像確認</div>
+    
+        <div class="image-card">
+            <div class="image-num">1 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_01.jpg?t=202604130811" alt="スライド1" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">2 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_02.jpg?t=202604130811" alt="スライド2" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">3 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_03.jpg?t=202604130811" alt="スライド3" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">4 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_04.jpg?t=202604130811" alt="スライド4" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">5 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_05.jpg?t=202604130811" alt="スライド5" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">6 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_06.jpg?t=202604130811" alt="スライド6" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">7 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_07.jpg?t=202604130811" alt="スライド7" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">8 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-04-19-1200/carousel_08.jpg?t=202604130811" alt="スライド8" loading="lazy">
+        </div>
+
+    <div class="section-title">▼ キャプション</div>
+    <div class="caption-box">ブライダルエステはいつから始めるかで結果が大きく変わります。6ヶ月前から始める逆算ケアをご紹介します。<br><br>MIKIです。<br><br>「もっと早く始めればよかった」<br><br>ブライダルエステのご相談で<br>私が一番よく耳にするお声です。<br><br>式の2週間前に慌てて来てくださった花嫁様もいました。<br>お気持ちはとてもよくわかります。<br>準備が多すぎる中で、エステまで気が回らなかった。<br><br>でもだからこそ、私はお伝えしたいんです。<br>ブライダルケアだけは「早めのスタート」が本当に大切だと。<br><br>---<br><br>私がおすすめする逆算ケアは、大きく3つのフェーズです。<br><br>6ヶ月前からは、土台づくりのフェーズ。<br>体の巡りを整えリンパを流し、肌質そのものを底上げしていきます。<br><br>3ヶ月前からは、集中ケアのフェーズ。<br>毛穴・くすみ・引き締めにアプローチして、変化を加速させます。<br><br>1ヶ月前からは、仕上げのフェーズ。<br>肌のツヤを高め、当日のコンディションを最高の状態に整えます。<br><br>---<br><br>肌も体も、すぐには変わりません。<br><br>ターンオーバーのサイクル、リンパの流れ、体の巡り。<br>これらが整うには、ある程度の時間が必要です。<br><br>「変化を感じたい」なら最低でも3ヶ月。<br>できれば6ヶ月が、私が自信を持っておすすめできる期間です。<br><br>---<br><br>私のブライダルエステは「表面を整えるだけ」ではありません。<br><br>体の奥から巡りを整えてリンパを流し、老廃物をしっかり排出する。<br>そこからアプローチすることで<br>化粧品の浸透が変わり、肌の底力が変わっていきます。<br><br>ドレスに映える背中・デコルテ、写真に残る肌のトーン。<br><br>私と一緒に、式当日の「最高」を作り上げていきましょう。<br><br>---<br><br>✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨<br><br>ご予約・ご相談はプロフィールのDMから<br>お気軽にどうぞ💌</div>
+
+    <div class="section-title">▼ ハッシュタグ</div>
+    <div class="hashtags">#ブライダルエステ&nbsp;#ブライダルエステ東京&nbsp;#ブライダルエステ体験&nbsp;#プレ花嫁2026&nbsp;#大人花嫁&nbsp;#東京花嫁&nbsp;#六本木エステ</div>
+
+    <div class="approve-box">
+        <p>内容を確認したら<br>スプレッドシートで承認してください</p>
+        <div class="step">ステータス欄を「承認済み」に変更 →　GO！</div>
+    </div>
+
+    <div class="footer">
+        <p>プレビュー生成日時: 2026/04/13 08:11</p>
+    </div>
+</body>
+</html>
