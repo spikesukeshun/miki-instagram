@@ -1,0 +1,69 @@
+{
+  "slides": [
+    {
+      "filename": "bg01.jpg",
+      "type": "cover",
+      "title": "GW中盤\n体をリセットする",
+      "tag": "- MIKIがすすめるご褒美エステ -",
+      "bg_strategy": "generate"
+    },
+    {
+      "filename": "bg02.jpg",
+      "type": "text",
+      "title": "MIKIがよく\n聞くお声",
+      "text": "「旅行や外出が続いて\n体が重くなってきた気がする」\n「GW後半もまだまだ楽しみたいのに\n疲れが出てきてしまった」\n\nこういうお声を、施術中に\n私はよく聞きます。\n\n楽しい連休のはずなのに\n体が追いついていない感覚。\n\nそういうときにこそ\nご褒美エステの出番です。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考1.JPG"
+    },
+    {
+      "filename": "bg03.jpg",
+      "type": "list",
+      "title": "MIKIがすすめる\n3つのリセット",
+      "items": [
+        "むくみを流してすっきりする",
+        "肌のトーンを一気に整える",
+        "心の疲れも一緒に手放す"
+      ],
+      "footer": "お一人おひとりの状態に合わせてアプローチします",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考2.jpg"
+    },
+    {
+      "filename": "bg04.jpg",
+      "type": "text",
+      "title": "MIKIが伝える\nリセットの考え方",
+      "text": "「疲れたから行く」ではなく\n「後半をもっと楽しむために整える」。\n\n私がお客様によくお伝えするのは\nそういうご褒美エステの使い方です。\n\nリンパを流してむくみをリセットすると\n体の軽さが全然変わります。\n肌を整えると、鏡を見るのが\n少し楽しくなります。\n\nGW中盤の今こそ\n自分の体と向き合う時間を作ってみてください。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考6.JPG"
+    },
+    {
+      "filename": "bg05.jpg",
+      "type": "text",
+      "title": "MIKIのお客様に\n届いたお声",
+      "text": "「施術後に体がすごく軽くなりました」\n「GW後半が楽しみになりました」\n「なんか気持ちまでリフレッシュした」\n\nこういうお声をいただくたびに\n私はとてもうれしくなります。\n\nはじめての方も、どうぞ気軽にいらしてください。\n一人でいらっしゃる方がほとんどなので\n安心してください。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考5.JPG"
+    },
+    {
+      "filename": "bg06.jpg",
+      "type": "cta",
+      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
+      "body": "GW後半を最高の状態で楽しみたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
+      "bg_strategy": "generate"
+    }
+  ],
+  "caption": "GW中盤の今こそ体をリセットしてほしい、後半をもっと楽しむためのご褒美エステのすすめです。\n\nMIKIです。\n\n「旅行や外出が続いて、体が重くなってきた気がする」\n\nそんなお声を、施術中に私はよく聞きます。\n\n楽しい連休のはずなのに、体が追いついていない感覚。\nGW後半もまだまだ楽しみたいのに、疲れが出てきてしまった。\n\nそういうときにこそ、ご褒美エステの出番だと私は思っています。\n\n---\n\n私がお客様によくお伝えするのは\n「疲れたから行く」だけでなく\n「後半をもっと楽しむために整える」という使い方です。\n\nリンパを流してむくみをリセットする。\n肌のトーンを整えて鏡を見るのを楽しくする。\n心の疲れも一緒に手放してすっきりする。\n\nこういうアプローチをすることで\n体の軽さが変わり、気持ちの切り替えができます。\n\n---\n\n「施術後に体がすごく軽くなりました」\n「GW後半が楽しみになりました」\n「なんか気持ちまでリフレッシュした」\n\nこういうお声をいただくたびに\n私はとてもうれしくなります。\n\n---\n\nはじめての方も、どうぞお気軽にいらしてください。\n\n一人でいらっしゃる方がほとんどなので、安心してください。\n初回はカウンセリングからじっくりと始めます。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
+  "hashtags": "#ご褒美エステ #ご褒美タイム #六本木エステ #エステ体験 #GW #リラクゼーション #自分磨き #むくみケア #リフレッシュ",
+  "alt_text": "白い花とスパストーンが並ぶ、自然光の差し込む清潔感のあるエステルーム",
+  "memo": "5/3 GW中盤（土曜12:00）。旅行・外出が続いて体が重くなってきたタイミングに刺さる訴求。「後半をもっと楽しむために整える」という能動的なご褒美エステの使い方を提案。GW突入（content_07）・GW前（content_05）と角度を変えた3部作の締め。",
+  "bg_prompt": "Japanese esthetic salon interior, fresh white flowers and smooth spa stones on wooden tray, warm white and cream tones, no people, serene and refreshing atmosphere, high quality photo"
+}

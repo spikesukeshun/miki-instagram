@@ -1,0 +1,69 @@
+{
+  "slides": [
+    {
+      "filename": "bg01.jpg",
+      "type": "cover",
+      "title": "GW最初の\nご褒美エステ",
+      "tag": "- MIKIがすすめる連休の整え方 -",
+      "bg_strategy": "generate"
+    },
+    {
+      "filename": "bg02.jpg",
+      "type": "text",
+      "title": "MIKIがよく\n聞くお声",
+      "text": "「GWが始まったのに\nなんか体がだるい気がする」\n「連休になってもテンションが上がらない」\n\nこういうお声を、施術中に\n私はよく聞きます。\n\n忙しい毎日を乗り越えて\nようやく迎えたGW。\n\nでも疲れが残ったままでは\nせっかくの連休も\n体が重いまま始まってしまう。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考1.JPG"
+    },
+    {
+      "filename": "bg03.jpg",
+      "type": "list",
+      "title": "MIKIがすすめる\n3つのケア",
+      "items": [
+        "全身の巡りをほぐしリンパを流す",
+        "フェイシャルで肌をリセット",
+        "ヘッドで頭の緊張を手放す"
+      ],
+      "footer": "お一人おひとりの状態に合わせてアプローチします",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考2.jpg"
+    },
+    {
+      "filename": "bg04.jpg",
+      "type": "text",
+      "title": "MIKIが伝える\nGWの使い方",
+      "text": "「疲れたから行く」だけでなく\n「連休の最初に整えてから楽しむ」。\n\n私がお客様によくお伝えするのは\nそういうご褒美エステの使い方です。\n\n体の巡りを整えてリンパを流すと\n旅行も、家族との時間も\n「体が違う」と感じながら過ごせます。\n\nGWを最初から最高の状態で過ごす。\nそれが私のすすめる連休の整え方です。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考6.JPG"
+    },
+    {
+      "filename": "bg05.jpg",
+      "type": "text",
+      "title": "MIKIのお客様に\n届いたお声",
+      "text": "「GWの最初に来てよかったです」\n「体が軽くなって旅行がもっと楽しくなりました」\n「連休中ずっとコンディションがよかった」\n\nこういうお声をいただくたびに\n私はとてもうれしくなります。\n\nはじめての方も、どうぞお気軽にいらしてください。\n初回はカウンセリングからじっくりと始めます。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考4.PNG"
+    },
+    {
+      "filename": "bg06.jpg",
+      "type": "cta",
+      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
+      "body": "GWを最初から最高の状態で過ごしたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
+      "bg_strategy": "generate"
+    }
+  ],
+  "caption": "GWが始まったら最初にご褒美エステで体を整える、それが私のすすめる連休の使い方です。\n\nMIKIです。\n\n「GWが始まったのに、なんか体がだるい気がする」\n\nそんなお声を、施術中に私はよく聞きます。\n\n忙しい毎日を乗り越えて、ようやく迎えたGW。\nでも疲れが残ったままでは\nせっかくの連休も体が重いまま始まってしまう。\n\n---\n\n私がお客様によくお伝えするのは\n「疲れたから行く」だけでなく\n「連休の最初に整えてから楽しむ」という使い方です。\n\n全身の巡りをほぐしてリンパを流す。\nフェイシャルで肌をリセットする。\n頭の緊張を手放してすっきりする。\n\nこういうアプローチをすることで\n「体が軽い」「気持ちが切り替わった」という感覚が生まれます。\n\n---\n\n旅行も、家族との時間も、ひとりの時間も。\n\n体が整った状態でGWを過ごすと\n全部の時間が少し豊かになる。\n\n私はそれをいつも感じています。\n\n---\n\n「GWの最初に来てよかったです」\n「体が軽くなって、旅行がもっと楽しくなりました」\n「連休中ずっとコンディションがよかったです」\n\nこういうお声をいただくたびに\n私はとてもうれしくなります。\n\n---\n\nはじめての方も、どうぞお気軽にいらしてください。\n\n一人でいらっしゃる方がほとんどなので、安心してください。\n初回はカウンセリングからじっくりと始めます。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
+  "hashtags": "#ご褒美エステ #ご褒美タイム #六本木エステ #エステ体験 #GW #GW旅行 #リラクゼーション #自分磨き #アラサー美容",
+  "alt_text": "白いキャンドルとグリーンが添えられたマーブルテーブル、柔らかい光のエステルーム",
+  "memo": "GW突入初日訴求。「疲れたまま連休を迎えてしまう」という共感から「最初に整えるとGW全体が変わる」という提案。GW前（content_05）と差別化し、すでにGWに入ったタイミングに刺さる内容。",
+  "bg_prompt": "Japanese esthetic salon interior, soft green foliage and white candles on marble table, warm white and cream tones, no people, calm holiday atmosphere, high quality photo"
+}

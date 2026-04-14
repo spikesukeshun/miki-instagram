@@ -1,0 +1,69 @@
+{
+  "slides": [
+    {
+      "filename": "bg01.jpg",
+      "type": "cover",
+      "title": "GW前に\nリセットしたい",
+      "tag": "- MIKIがすすめるご褒美エステ -",
+      "bg_strategy": "generate"
+    },
+    {
+      "filename": "bg02.jpg",
+      "type": "text",
+      "title": "MIKIがよく\n聞くお声",
+      "text": "「GW前になると\nなんか自分のことが気になる」\n「連休前に一度体をリセットしたい」\n\nこういうお声を、施術中に\n私は本当によくいただきます。\n\n日々忙しく頑張っている中で\n連休が近づいてようやく\n自分のことを考えられる気がする。\n\nその感覚は、正直なサインです。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考1.JPG"
+    },
+    {
+      "filename": "bg03.jpg",
+      "type": "list",
+      "title": "MIKIのエステで\n整えること",
+      "items": [
+        "体の巡りを整えてむくみをリセット",
+        "リンパを流して老廃物を排出",
+        "肌のトーンと心の疲れをリセット"
+      ],
+      "footer": "私が一つひとつ丁寧にアプローチします",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考2.jpg"
+    },
+    {
+      "filename": "bg04.jpg",
+      "type": "text",
+      "title": "私が大切にする\nリセットの考え方",
+      "text": "「疲れたから行く」だけでなく\n「整えるために行く」。\n\n私がお客様によくお伝えするのは\nそういうご褒美エステの使い方です。\n\n体の巡りを整えてリンパを流すと\n「体が軽い」「顔色が違う」\n「なんかいい状態」という感覚が生まれます。\n\nその感覚を持ってGWを迎えると\n旅行も、家族との時間も\nひとりの時間も、全部が豊かになります。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考3.JPG"
+    },
+    {
+      "filename": "bg05.jpg",
+      "type": "text",
+      "title": "MIKIのお客様に\n届いたお声",
+      "text": "「GW前に来てよかったです」\n「体が軽くなって、連休が楽しみになりました」\n「なんか顔が明るくなった気がする」\n\nGW前にいらしてくださったお客様から\n私はこういうお声をよくいただきます。\n\n整えてから連休を迎えると\n過ごし方が少し変わります。\n\n私はそれがとてもうれしいんです。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考6.JPG"
+    },
+    {
+      "filename": "bg06.jpg",
+      "type": "cta",
+      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
+      "body": "GWを最高の状態で迎えたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
+      "bg_strategy": "generate"
+    }
+  ],
+  "caption": "GW前のご褒美エステで体をリセット、連休を最高の状態で迎える方法。\n\nMIKIです。\n\n「GW前になると、なんか自分のことが気になる」\n\nそんなお声を、施術中に私はよくいただきます。\n\n日々忙しく頑張っている中で\n連休が近づいてようやく、ほっと一息つける気がする。\n\nそのタイミングで「体を一度リセットしたい」と感じるのは\nとても自然なことだと私は思っています。\n\n---\n\nご褒美エステ、という言葉があります。\n\nでも私がお客様によくお伝えするのは\n「疲れたから行く」だけでなく\n「整えるために行く」という使い方です。\n\nリンパを流して老廃物を排出する。\n体の巡りを整えてむくみをリセットする。\n肌のトーンを上げて、心の疲れも一緒に手放す。\n\nこういうアプローチをすることで\n「体が軽い」「顔色が違う」「なんかいい状態」\nという感覚が生まれてきます。\n\n---\n\n「GW前に来てよかった」\n「体が軽くなって、連休が楽しみになりました」\n「なんか顔が明るくなった気がする」\n\nGW前にいらしてくださったお客様から\n私はこういうお声をよくいただきます。\n\n整えてから連休を迎えると\n旅行も、家族との時間も、ひとりの時間も\n全部が少し豊かになる気がします。\n\nそのことを私はいつも感じています。\n\n---\n\nGWが始まる前の今こそ\nまずはお気軽にDMでご連絡ください。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
+  "hashtags": "#ご褒美エステ #ご褒美タイム #六本木エステ #エステ体験 #GW #リラクゼーション #自分磨き #アラサー美容 #アラフォー美容",
+  "alt_text": "白いキャンドルと花がマーブルテーブルに並ぶ、柔らかなピンクとゴールドトーンの落ち着いたエステルーム",
+  "memo": "GW前の疲れリセット訴求。「疲れたから行く」ではなく「整えるために行く」というご褒美エステの新しい使い方を提案し、保存率を高める。",
+  "bg_prompt": "Japanese esthetic salon interior, luxury spa setting with white flowers and candles on marble table, soft white and gold tones, no people, serene and relaxing atmosphere, high quality photo"
+}
