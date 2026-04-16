@@ -28,10 +28,14 @@ from line_notify import notify_revision_done, notify_revision_found, send_line_m
 GENERATED_DIR = "generated"
 CONTENT_JSON_PATH = "content.json"
 
-IMAGE_KEYWORDS = ["背景", "画像", "スライド", "枚", "表紙", "構図", "bg_prompt", "generate", "reuse", "edit"]
+# 背景画像の変更を明示的に指示するキーワード（誤検知防止のため具体的な表現のみ）
+IMAGE_KEYWORDS = ["背景画像", "背景を変", "背景を差し替", "画像を変", "写真を変", "表紙を変", "構図", "bg_prompt"]
+
+# スライド内テキストの修正を指示するキーワード
+SLIDE_TEXT_KEYWORDS = ["スライド", "枚目", "タイトル", "本文", "items", "リスト", "箇条書き"]
 
 
-def load_content_json() -> dict | None:
+def load_content_json():
     """content.jsonが存在すればロードして返す（Claude Codeの最新修正版）"""
     if os.path.exists(CONTENT_JSON_PATH):
         with open(CONTENT_JSON_PATH, encoding="utf-8") as f:
@@ -39,9 +43,19 @@ def load_content_json() -> dict | None:
     return None
 
 
+def is_image_revision(instruction: str) -> bool:
+    """修正指示が背景画像の変更を含むか判定"""
+    return any(kw in instruction for kw in IMAGE_KEYWORDS)
+
+
+def is_slide_text_revision(instruction: str) -> bool:
+    """修正指示がスライド内テキストの変更を含むか判定"""
+    return any(kw in instruction for kw in SLIDE_TEXT_KEYWORDS)
+
+
 def is_text_only_revision(instruction: str) -> bool:
-    """修正指示が文章・キャプション・ハッシュタグのみか判定"""
-    return not any(kw in instruction for kw in IMAGE_KEYWORDS)
+    """修正指示が文章・キャプション・ハッシュタグのみか判定（画像変更を含まない）"""
+    return not is_image_revision(instruction)
 
 
 def revise_text_only_with_groq(item: dict) -> dict:
@@ -90,6 +104,58 @@ def revise_text_only_with_groq(item: dict) -> dict:
     raw = re.sub(r"^```[a-z]*\n?", "", raw)
     raw = re.sub(r"\n?```$", "", raw).strip()
     return json.loads(raw)
+
+
+def revise_slide_text_only_with_groq(item: dict) -> dict:
+    """スライドテキストのみ修正：bg_strategy等の背景指定は一切変更しない"""
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+    slides_json = json.dumps(item.get("slides", []), ensure_ascii=False, indent=2)
+
+    system = """あなたはInstagram投稿スライドのテキスト修正アシスタントです。
+以下のルールを厳守してください：
+- title / text / body / items / footer フィールドのみ修正する
+- bg_strategy / reuse_source / reuse_theme / reuse_filename / filename / type は絶対に変更しない
+- スライドの枚数・順序は変更しない
+- 修正不要なスライドはそのまま維持する
+
+返答はJSON形式のみ：{"slides": [...修正後のスライド配列...]}
+"""
+
+    user_message = f"""以下のスライド構成のテキストを修正指示に従って修正してください。
+
+【現在のスライド構成】
+{slides_json}
+
+【修正指示】
+{item['instruction']}
+
+bg_strategy / reuse_source / reuse_theme / reuse_filename は絶対に変更しないでください。
+"""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_message},
+        ],
+        max_tokens=4096,
+    )
+    import re
+    raw = response.choices[0].message.content.strip()
+    raw = re.sub(r"^```[a-z]*\n?", "", raw)
+    raw = re.sub(r"\n?```$", "", raw).strip()
+    result = json.loads(raw)
+
+    # 安全策: bg設定が変更されていたら元の値に戻す
+    original_slides = item.get("slides", [])
+    new_slides = result.get("slides", [])
+    for orig, new in zip(original_slides, new_slides):
+        for key in ["bg_strategy", "reuse_source", "reuse_theme", "reuse_filename", "filename", "type"]:
+            if key in orig:
+                new[key] = orig[key]
+
+    return result
 
 
 def revise_with_groq(item: dict) -> dict:
@@ -199,6 +265,16 @@ Drive画像を使う場合は各スライドに以下を指定してください
     raw = re.sub(r"^```[a-z]*\n?", "", raw)
     raw = re.sub(r"\n?```$", "", raw).strip()
     result = json.loads(raw)
+
+    # 安全策: Groq出力でbg設定が変更されていたら元のスライドの値に戻す
+    if item.get("slides") and result.get("slides"):
+        original_slides = item["slides"]
+        new_slides = result["slides"]
+        for orig, new in zip(original_slides, new_slides):
+            for key in ["bg_strategy", "reuse_source", "reuse_theme", "reuse_filename"]:
+                if key in orig:
+                    new[key] = orig[key]
+
     return result, available_images
 
 
@@ -217,13 +293,40 @@ def process_revision(sheet, item: dict):
     else:
         print(f"行{row_num}: content.jsonなし → スプレッドシートの内容を使用")
 
-    if is_text_only_revision(item["instruction"]):
+    if is_text_only_revision(item["instruction"]) and not is_slide_text_revision(item["instruction"]):
+        # フロー1: キャプション・ハッシュタグのみ修正（画像もスライドも変更しない）
         print(f"行{row_num}: テキストのみ修正（画像再生成なし）...")
         result = revise_text_only_with_groq(item)
         new_caption = result.get("caption", item["caption"])
         new_hashtags = result.get("hashtags", item["hashtags"])
         filenames = [f.strip() for f in item["files"].split(",")]
+    elif is_slide_text_revision(item["instruction"]) and not is_image_revision(item["instruction"]):
+        # フロー2: スライド文章のみ修正（背景画像は変更しない・再生成のみ）
+        print(f"行{row_num}: スライドテキストのみ修正（背景指定を維持したまま再生成）...")
+        if item.get("slides"):
+            result = revise_slide_text_only_with_groq(item)
+            new_caption = result.get("caption", item["caption"])
+            new_hashtags = result.get("hashtags", item["hashtags"])
+
+            slides = result.get("slides", item["slides"])
+            slides.append({"filename": "slide8.jpg", "type": "raw"})
+            slides.append({"filename": "slide7.jpg", "type": "raw"})
+
+            print(f"行{row_num}: 既存の背景指定で画像を再生成中...")
+            generate_with_slides(slides)
+
+            files = sorted(glob.glob(os.path.join(GENERATED_DIR, "carousel_*.jpg")))
+            print(f"行{row_num}: {len(files)}枚をGitHubにアップロード中...")
+            filenames = [upload_to_github(f) for f in files]
+        else:
+            # slides情報がない場合はキャプションのみ修正にフォールバック
+            print(f"行{row_num}: スライド情報なし → キャプションのみ修正にフォールバック")
+            result = revise_text_only_with_groq(item)
+            new_caption = result.get("caption", item["caption"])
+            new_hashtags = result.get("hashtags", item["hashtags"])
+            filenames = [f.strip() for f in item["files"].split(",")]
     else:
+        # フロー3: 背景画像を含む全体修正（画像再生成あり）
         print(f"行{row_num}: Groq APIで修正中（画像再生成あり）...")
         result, available_images = revise_with_groq(item)
         new_caption = result["new_caption"] if "new_caption" in result else result.get("caption", item["caption"])
