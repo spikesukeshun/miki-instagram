@@ -1,6 +1,7 @@
 import gspread
 from google.oauth2.service_account import Credentials
 import os
+import requests
 from datetime import datetime, timezone, timedelta
 from instagram_api import post_image, post_video, post_carousel
 from drive_helper import get_file_url
@@ -45,7 +46,56 @@ def is_video(filename: str) -> bool:
     return filename.lower().endswith((".mp4", ".mov"))
 
 
+def check_token_expiry():
+    """INSTAGRAM_ACCESS_TOKEN の有効期限を確認し、7日以内ならLINE通知する"""
+    token = os.getenv("INSTAGRAM_ACCESS_TOKEN")
+    if not token:
+        return
+
+    try:
+        res = requests.get(
+            "https://graph.facebook.com/debug_token",
+            params={"input_token": token, "access_token": token},
+            timeout=10,
+        )
+        data = res.json().get("data", {})
+
+        if not data.get("is_valid", False):
+            send_line_message(
+                "⚠️ INSTAGRAM_ACCESS_TOKEN が無効です\n"
+                "Graph API Explorer でトークンを再発行し、\n"
+                "GitHub Secrets の INSTAGRAM_ACCESS_TOKEN を更新してください。"
+            )
+            print("警告: INSTAGRAM_ACCESS_TOKEN が無効です")
+            return
+
+        expires_at = data.get("expires_at")
+        if not expires_at:
+            # 有効期限なし（無期限トークン）はスキップ
+            return
+
+        now = datetime.now(timezone.utc)
+        expire_dt = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+        days_left = (expire_dt - now).days
+
+        print(f"トークン有効期限: {expire_dt.strftime('%Y/%m/%d')}（残り{days_left}日）")
+
+        if days_left <= 7:
+            send_line_message(
+                f"⚠️ INSTAGRAM_ACCESS_TOKEN があと {days_left} 日で期限切れになります\n"
+                f"期限: {expire_dt.astimezone(JST).strftime('%Y/%m/%d')}\n\n"
+                f"Graph API Explorer でトークンを再発行し、\n"
+                f"GitHub Secrets の INSTAGRAM_ACCESS_TOKEN を更新してください。"
+            )
+            print(f"警告: トークン残り{days_left}日 → LINE通知送信")
+
+    except Exception as e:
+        print(f"トークン有効期限チェックスキップ: {e}")
+
+
 def run():
+    check_token_expiry()
+
     sheet = get_sheet()
     rows = sheet.get_all_values()
     now = datetime.now(JST).replace(tzinfo=None)  # JST時刻で比較（スプレッドシートの記録と統一）
