@@ -1,12 +1,15 @@
 import gspread
 from google.oauth2.service_account import Credentials
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from instagram_api import post_image, post_video, post_carousel
 from drive_helper import get_file_url
+from line_notify import send_line_message
 
 from load_env import load_from_zshrc
 load_from_zshrc()
+
+JST = timezone(timedelta(hours=9))
 
 SCOPES = [
     "https://spreadsheets.google.com/feeds",
@@ -45,9 +48,9 @@ def is_video(filename: str) -> bool:
 def run():
     sheet = get_sheet()
     rows = sheet.get_all_values()
-    now = datetime.now()
+    now = datetime.now(JST).replace(tzinfo=None)  # JST時刻で比較（スプレッドシートの記録と統一）
 
-    print(f"チェック開始: {now.strftime('%Y/%m/%d %H:%M')}")
+    print(f"チェック開始: {now.strftime('%Y/%m/%d %H:%M')} JST")
     posted = 0
 
     for i, row in enumerate(rows[1:], start=2):
@@ -55,7 +58,12 @@ def run():
             continue
 
         status = row[COL_STATUS].strip()
-        if status not in ("承認済み", "未投稿"):  # 移行期間は未投稿も許容
+
+        # 「承認済み」「未投稿」は通常フロー
+        # 「エラー：」は7日以内なら再試行（トークン更新後のリカバリ等）
+        is_normal = status in ("承認済み", "未投稿")
+        is_error_retry = status.startswith("エラー：")
+        if not is_normal and not is_error_retry:
             continue
 
         datetime_str = row[COL_DATETIME].strip()
@@ -64,6 +72,13 @@ def run():
         except ValueError:
             print(f"行{i}: 日時フォーマットエラー → {datetime_str}")
             continue
+
+        # エラー行は7日以内のものだけ再試行
+        if is_error_retry:
+            if post_time < now - timedelta(days=7):
+                print(f"行{i}: エラー行（7日超）スキップ → {datetime_str}")
+                continue
+            print(f"行{i}: エラー行を再試行 → {datetime_str}")
 
         if post_time > now:
             print(f"行{i}: 投稿待機中 → {datetime_str}")
@@ -92,9 +107,19 @@ def run():
         except FileNotFoundError as e:
             print(f"行{i}: ファイルなし → {e}")
             sheet.update_cell(i, COL_STATUS + 1, "エラー：ファイルなし")
+            send_line_message(
+                f"❌ 投稿失敗（ファイルなし）\n"
+                f"📅 {datetime_str}\n"
+                f"エラー: {str(e)[:100]}"
+            )
         except Exception as e:
             print(f"行{i}: 投稿失敗 → {e}")
             sheet.update_cell(i, COL_STATUS + 1, f"エラー：{str(e)[:50]}")
+            send_line_message(
+                f"❌ 投稿失敗\n"
+                f"📅 {datetime_str}\n"
+                f"エラー: {str(e)[:100]}"
+            )
 
     print(f"完了！投稿数: {posted}件")
 
