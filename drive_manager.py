@@ -34,7 +34,7 @@ def load_folder_ids() -> dict:
 
 
 def list_drive_images(theme: str) -> list:
-    """テーマフォルダ内の画像ファイル一覧を返す"""
+    """テーマフォルダ内の画像ファイル一覧を返す（ページネーション対応・全件取得）"""
     folder_ids = load_folder_ids()
     folder_id = folder_ids.get(theme)
     if not folder_id:
@@ -42,15 +42,24 @@ def list_drive_images(theme: str) -> list:
 
     service = _get_service()
     query = f"'{folder_id}' in parents and mimeType contains 'image/' and trashed=false"
-    results = service.files().list(
-        q=query,
-        fields="files(id, name, thumbnailLink, webContentLink)",
-        pageSize=100,
-        orderBy="name",
-    ).execute()
-    files = results.get("files", [])
-    print(f"  Drive '{THEME_NAMES.get(theme, theme)}': {len(files)}枚")
-    return files
+    all_files = []
+    page_token = None
+    while True:
+        kwargs = dict(
+            q=query,
+            fields="nextPageToken, files(id, name, thumbnailLink, webContentLink)",
+            pageSize=100,
+            orderBy="name",
+        )
+        if page_token:
+            kwargs["pageToken"] = page_token
+        results = service.files().list(**kwargs).execute()
+        all_files += results.get("files", [])
+        page_token = results.get("nextPageToken")
+        if not page_token:
+            break
+    print(f"  Drive '{THEME_NAMES.get(theme, theme)}': {len(all_files)}枚")
+    return all_files
 
 
 def download_drive_image(file_id: str, dest_path: str) -> bool:

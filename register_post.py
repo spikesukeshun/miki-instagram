@@ -1,13 +1,13 @@
 import gspread
 from google.oauth2.service_account import Credentials
-from dotenv import load_dotenv
 import os
 import glob
 import base64
 import requests
 from datetime import datetime
 
-load_dotenv()
+from load_env import load_from_zshrc
+load_from_zshrc()
 
 SCOPES = [
     "https://spreadsheets.google.com/feeds",
@@ -15,7 +15,6 @@ SCOPES = [
 ]
 
 SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_OWNER = "spikesukeshun"
 GITHUB_REPO = "miki-instagram"
 GENERATED_DIR = "generated"
@@ -29,17 +28,38 @@ def get_sheet():
     return client.open_by_key(SPREADSHEET_ID).sheet1
 
 
+def _get_github_token() -> str:
+    """GITHUB_TOKEN を環境変数から取得。未設定の場合はgit remoteのURLから抽出"""
+    token = os.getenv("GITHUB_TOKEN")
+    if token:
+        return token
+    try:
+        import subprocess
+        remote = subprocess.check_output(
+            ["git", "remote", "get-url", "origin"], text=True
+        ).strip()
+        # https://user:TOKEN@github.com/... 形式
+        import re
+        m = re.search(r"https://[^:]+:([^@]+)@github\.com", remote)
+        if m:
+            return m.group(1)
+    except Exception:
+        pass
+    return ""
+
+
 def _github_headers():
-    return {"Authorization": f"token {GITHUB_TOKEN}"}
+    return {"Authorization": f"token {_get_github_token()}"}
 
 
-def upload_to_github(filepath: str) -> str:
-    """ファイルをGitHubリポジトリにアップロードしてファイル名を返す"""
+def upload_to_github(filepath: str, subfolder: str = "") -> str:
+    """ファイルをGitHubリポジトリにアップロードして相対パス（subfolder/filename）を返す"""
     filename = os.path.basename(filepath)
     with open(filepath, "rb") as f:
         content = base64.b64encode(f.read()).decode()
 
-    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{GENERATED_DIR}/{filename}"
+    path = f"{GENERATED_DIR}/{subfolder}/{filename}" if subfolder else f"{GENERATED_DIR}/{filename}"
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{path}"
     headers = _github_headers()
 
     res = requests.get(api_url, headers=headers)
@@ -54,7 +74,8 @@ def upload_to_github(filepath: str) -> str:
         raise Exception(f"GitHubアップロード失敗: {res.json()}")
 
     print(f"  アップロード完了: {filename}")
-    return filename
+    # サブフォルダがある場合は "slug/filename" 形式で返す（post_scheduler で正しいURLを組み立てるため）
+    return f"{subfolder}/{filename}" if subfolder else filename
 
 
 def setup_github_pages():
@@ -76,13 +97,21 @@ def setup_github_pages():
         print(f"  GitHub Pages設定スキップ: {res.status_code}")
 
 
-def generate_preview_html(filenames: list, caption: str, hashtags: str, post_datetime: str) -> str:
+def generate_preview_html(filenames: list, caption: str, hashtags: str, post_datetime: str, subfolder: str = "") -> str:
     """スマホで見やすいプレビューHTMLを生成して文字列で返す"""
     generated_at = datetime.now().strftime("%Y/%m/%d %H:%M")
 
     images_html = ""
     for i, filename in enumerate(filenames, 1):
-        img_url = f"{RAW_BASE}/{GENERATED_DIR}/{filename}?t={datetime.now().strftime('%Y%m%d%H%M')}"
+        # filename が "slug/carousel_01.jpg" 形式の場合はそのまま使う
+        # 旧形式（plain filename）の場合は subfolder を付与
+        if "/" in filename:
+            path = f"{GENERATED_DIR}/{filename}"
+        elif subfolder:
+            path = f"{GENERATED_DIR}/{subfolder}/{filename}"
+        else:
+            path = f"{GENERATED_DIR}/{filename}"
+        img_url = f"{RAW_BASE}/{path}?t={datetime.now().strftime('%Y%m%d%H%M')}"
         images_html += f"""
         <div class="image-card">
             <div class="image-num">{i} / {len(filenames)}</div>
@@ -255,6 +284,7 @@ def register(
     hashtags: str,
     memo: str = "",
     seed: int = None,
+    alt_text: str = "",
 ):
     """generatedフォルダの画像をGitHubにアップロードしてスプレッドシートに登録"""
 
@@ -264,11 +294,14 @@ def register(
         print("generated/ フォルダに画像が見つかりません")
         return
 
-    # 画像をGitHubにアップロード
+    # 投稿日時からスラッグ生成（例: 2026/04/14 21:00 → 2026-04-14-2100）
+    slug = post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+
+    # 画像をGitHubにアップロード（投稿ごとのサブフォルダに保存）
     filenames = []
     print(f"\n{len(files)}枚をGitHubにアップロード中...")
     for filepath in files:
-        filename = upload_to_github(filepath)
+        filename = upload_to_github(filepath, subfolder=slug)
         filenames.append(filename)
 
     # GitHub Pages設定（初回のみ有効化）
@@ -276,15 +309,15 @@ def register(
 
     # プレビューHTMLを生成してアップロード
     print("  プレビューページを生成中...")
-    html = generate_preview_html(filenames, caption, hashtags, post_datetime)
+    html = generate_preview_html(filenames, caption, hashtags, post_datetime, subfolder=slug)
     preview_url = upload_html_to_github(html, post_datetime)
 
     # スプレッドシートに登録（同じ日時の行があれば上書き、なければ追加）
-    # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL I=修正指示 J=seed
+    # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL I=修正指示 J=seed K=alt_text
     sheet = get_sheet()
     files_str = ",".join(filenames)
     row = [post_datetime, menu_type, files_str, caption, hashtags, memo,
-           "確認待ち", preview_url, "", str(seed) if seed else ""]
+           "確認待ち", preview_url, "", str(seed) if seed else "", alt_text]
 
     all_values = sheet.get_all_values()
     target_row_num = None
@@ -294,7 +327,7 @@ def register(
             break
 
     if target_row_num:
-        sheet.update(f"A{target_row_num}:J{target_row_num}", [row])
+        sheet.update(f"A{target_row_num}:K{target_row_num}", [row])
         print(f"\nスプレッドシートを上書き更新しました（行{target_row_num}）！")
     else:
         sheet.append_row(row)
@@ -366,7 +399,7 @@ if __name__ == "__main__":
 
 ---
 
-✨ MIKI指名　初回限定20%OFF ✨
+✨ MIKI指名　初回限定20%OFF（VIPコースのみ）✨
 
 ご予約・ご相談はプロフィールのDMから
 お気軽にどうぞ💌""",

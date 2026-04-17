@@ -1,12 +1,12 @@
 import gspread
 from google.oauth2.service_account import Credentials
-from dotenv import load_dotenv
 import os
 from datetime import datetime
 from instagram_api import post_image, post_video, post_carousel
 from drive_helper import get_file_url
 
-load_dotenv()
+from load_env import load_from_zshrc
+load_from_zshrc()
 
 SCOPES = [
     "https://spreadsheets.google.com/feeds",
