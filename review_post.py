@@ -83,7 +83,8 @@ def check_slides(slides: list) -> list[tuple[bool, str]]:
             results.append((True, f"スライド{i}: bg_prompt ✓"))
 
         # 2. スライド本文にMIKIが使われていないか
-        if "MIKI" in body:
+        # CTAスライドは「MIKIにお任せください♪」のようなブランドCTAフレーズを許可
+        if stype != "cta" and "MIKI" in body:
             results.append((False, f"スライド{i}: 本文（text/body）に「MIKI」が含まれています— 「私」に変更してください"))
         if items and any("MIKI" in item for item in items):
             results.append((False, f"スライド{i}: list items に「MIKI」が含まれています"))
