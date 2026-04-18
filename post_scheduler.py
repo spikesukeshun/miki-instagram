@@ -164,11 +164,11 @@ def run():
             )
         except Exception as e:
             print(f"行{i}: 投稿失敗 → {e}")
-            sheet.update_cell(i, COL_STATUS + 1, f"エラー：{str(e)[:50]}")
+            sheet.update_cell(i, COL_STATUS + 1, f"エラー：{str(e)[:100]}")
             send_line_message(
                 f"❌ 投稿失敗\n"
                 f"📅 {datetime_str}\n"
-                f"エラー: {str(e)[:100]}"
+                f"エラー: {str(e)[:300]}"
             )
 
     print(f"完了！投稿数: {posted}件")

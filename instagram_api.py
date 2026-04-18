@@ -1,3 +1,4 @@
+import time
 import requests
 import os
 
@@ -73,8 +74,27 @@ def create_video_container(video_url: str, caption: str) -> str:
     return data["id"]
 
 
+def _wait_for_container_ready(container_id: str, timeout: int = 120, interval: int = 10):
+    """コンテナのstatus_codeがFINISHEDになるまでポーリングする"""
+    url = f"{API_BASE}/{container_id}"
+    params = {"fields": "status_code", "access_token": _get_access_token()}
+    elapsed = 0
+    while elapsed < timeout:
+        res = requests.get(url, params=params)
+        status = res.json().get("status_code", "")
+        print(f"  コンテナステータス: {status}（{elapsed}秒経過）")
+        if status == "FINISHED":
+            return
+        if status == "ERROR":
+            raise Exception(f"コンテナ処理エラー: {res.json()}")
+        time.sleep(interval)
+        elapsed += interval
+    raise Exception(f"コンテナ準備タイムアウト（{timeout}秒）: status={status}")
+
+
 def publish_container(container_id: str) -> str:
     """コンテナを公開してpost_idを返す"""
+    _wait_for_container_ready(container_id)
     url = f"{API_BASE}/{ACCOUNT_ID}/media_publish"
     params = {
         "creation_id": container_id,
@@ -101,6 +121,22 @@ def post_video(video_url: str, caption: str) -> str:
     return post_id
 
 
+def _api_post_with_retry(url: str, params: dict, label: str, max_retries: int = 3) -> dict:
+    """POSTリクエストを最大max_retries回リトライする（指数バックオフ）"""
+    last_exc = None
+    for attempt in range(1, max_retries + 1):
+        res = requests.post(url, params=params)
+        data = res.json()
+        if "id" in data:
+            return data
+        last_exc = data
+        if attempt < max_retries:
+            wait = 5 * (2 ** (attempt - 1))
+            print(f"  {label} 失敗（試行{attempt}/{max_retries}）→ {wait}秒後リトライ: {data}")
+            time.sleep(wait)
+    raise Exception(f"{label}: {last_exc}")
+
+
 def create_carousel_item(image_url: str) -> str:
     """カルーセルの各画像コンテナを作成してidを返す"""
     url = f"{API_BASE}/{ACCOUNT_ID}/media"
@@ -109,10 +145,7 @@ def create_carousel_item(image_url: str) -> str:
         "is_carousel_item": "true",
         "access_token": _get_access_token()
     }
-    res = requests.post(url, params=params)
-    data = res.json()
-    if "id" not in data:
-        raise Exception(f"カルーセルアイテム作成失敗: {data}")
+    data = _api_post_with_retry(url, params, "カルーセルアイテム作成失敗")
     return data["id"]
 
 
@@ -131,10 +164,7 @@ def post_carousel(image_urls: list, caption: str) -> str:
         "caption": caption,
         "access_token": _get_access_token()
     }
-    res = requests.post(url, params=params)
-    data = res.json()
-    if "id" not in data:
-        raise Exception(f"カルーセルコンテナ作成失敗: {data}")
+    data = _api_post_with_retry(url, params, "カルーセルコンテナ作成失敗")
 
     post_id = publish_container(data["id"])
     return post_id

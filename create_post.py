@@ -653,6 +653,19 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
         alt_text=result.get("alt_text", ""),
     )
 
+    # content.jsonに _generated_dir を記録（process_revisions.pyが別投稿と混同しないため）
+    if content_file and os.path.exists(content_file):
+        try:
+            with open(content_file, "r", encoding="utf-8") as f:
+                stored = json.load(f)
+            dt = datetime.strptime(post_datetime, "%Y/%m/%d %H:%M")
+            stored["_generated_dir"] = dt.strftime("%Y-%m-%d-%H%M")
+            with open(content_file, "w", encoding="utf-8") as f:
+                json.dump(stored, f, ensure_ascii=False, indent=2)
+            print(f"content.json に _generated_dir={stored['_generated_dir']} を記録しました")
+        except Exception as e:
+            print(f"content.json の _generated_dir 記録スキップ: {e}")
+
 
 if __name__ == "__main__":
     import argparse

@@ -3,67 +3,61 @@
     {
       "filename": "bg01.jpg",
       "type": "cover",
-      "title": "休みの日\nご褒美エステ",
-      "tag": "- 疲れた体のリセット・リフレッシュ -",
-      "bg_strategy": "local",
-      "local_path": "backgrounds/bg_20260411145911_01.jpg"
+      "title": "式当日\n人生で一番\nきれいでいたい",
+      "tag": "- ブライダルエステ ボディの変化 -",
+      "bg_strategy": "generate",
+      "bg_prompt": "Elegant bridal dressing room, white wedding dress hanging, fresh white roses, soft golden morning light, cream and ivory tones, no people, no text, fine art photography"
     },
     {
       "filename": "bg02.jpg",
       "type": "text",
-      "title": "なぜ休みにエステなのか",
-      "text": "車もスマホも定期メンテナンスが必要なように、\n私たちの体も同じです。\n\n疲れを溜め込むと巡りが悪くなり、\n肌荒れ・だるさ・免疫の低下につながります。\n\n休みの日にエステで体をリセットすることは、\n消費ではなく、体への投資。\nそう思ってほしいのです。",
+      "title": "花嫁様から届いた言葉",
+      "text": "「人生で一番痩せてる！」\n\n「学生の頃の体重に戻りました！\nドレスを着て鏡を見たとき\nこんなに自信を持てるとは\n思っていませんでした」\n\n施術を重ねるごとに\nこういう言葉をいただきます。\n体の変化は、自信に変わります。",
       "bg_strategy": "generate",
-      "bg_prompt": "Luxury Japanese esthetic salon interior, soft candlelight, wooden treatment table, cream and taupe tones, fresh orchid flowers, peaceful and serene atmosphere, no people, no text, no watermark, natural photography"
+      "bg_prompt": "Luxurious Japanese bridal spa treatment room, white marble surface with single white camellia, soft diffused natural light, peaceful and serene, no people, no text, photography"
     },
     {
       "filename": "bg03.jpg",
       "type": "list",
-      "title": "おすすめの3つのケア",
+      "title": "ボディが変わる3つの理由",
       "items": [
-        "アロマオイルマッサージ｜全身の巡りを整える",
-        "フェイシャルエステ｜肌をリセットして透明感アップ",
-        "ヘッドマッサージ｜頭と心のデトックス"
+        "リンパを流し老廃物を排出する",
+        "むくみが取れて体のラインが整う",
+        "代謝が上がり変わりやすい体へ"
       ],
-      "footer": "あなたに合ったケアをご提案します。",
+      "footer": "施術を重ねることで、体が変わっていきます。",
       "bg_strategy": "generate",
-      "bg_prompt": "Spa treatment accessories flat lay, unlabeled amber glass bottles, white rolled towels, dried botanicals, natural stones on cream linen, warm soft diffused light, no people, no text, no branding, no product labels, photography"
+      "bg_prompt": "Japanese spa treatment still life, unlabeled amber glass bottles, white rolled towels, dried botanicals, natural stones on cream linen, warm diffused light, no people, no text, photography"
     },
     {
       "filename": "bg04.jpg",
-      "type": "list",
-      "title": "こんな方にオススメです",
-      "items": [
-        "仕事終わりの疲れが取れなくなってきた",
-        "週末くらいは自分のために時間を使いたい",
-        "エステは贅沢かなと思っていた",
-        "一人でエステに行ったことがない"
-      ],
-      "footer": "初めてでも、一人でも、大丈夫です。",
+      "type": "text",
+      "title": "内側からのアプローチ",
+      "text": "表面を整えるだけでは\n体のラインは変わりません。\n\n全身の巡りを整え\nリンパを流して老廃物を排出する。\n\nそのアプローチが\n「スッキリした」「動きが軽くなった」\nという変化につながっていきます。",
       "bg_strategy": "generate",
-      "bg_prompt": "Elegant Japanese salon waiting room, soft beige sofa with cushions, fresh white flowers in a vase, warm ambient lighting, calm and welcoming atmosphere, no people, no text, photography"
+      "bg_prompt": "Elegant bridal esthetic salon interior, white treatment bed with ivory linen, small white bouquet beside, warm ambient lighting, tranquil and refined, no people, no text, photography"
     },
     {
       "filename": "bg05.jpg",
       "type": "text",
-      "title": "はじめての方へ",
-      "text": "一人でいらっしゃる方がほとんどです。\n\n初回はしっかりカウンセリングをしてから\n施術に入るので、\n不安なことは何でも話してください。\n\n「こんなこと聞いていいの？」\nそんな遠慮は不要です。\nあなたのペースで、ゆっくりどうぞ。",
+      "title": "式まで一緒に整えましょう",
+      "text": "式当日だけ輝くのではなく\n準備期間から体を整えていくことで\n自信を持ってその日を迎えられます。\n\nはじめての方も大歓迎です。\nカウンセリングから丁寧にお話を伺いますので\nお気軽にご相談ください。",
       "bg_strategy": "generate",
-      "bg_prompt": "Cozy Japanese esthetic salon consultation corner, soft pink and ivory tones, fresh peonies, warm candlelight, minimal elegant decor, no people, no text, photography"
+      "bg_prompt": "Bridal preparation setting, white ranunculus flowers on cream background, soft morning light through sheer curtain, elegant and peaceful, no people, no text, photography"
     },
     {
       "filename": "bg06.jpg",
       "type": "cta",
-      "title": "MIKI指名  初回限定20%OFF",
-      "body": "休みの日は、ちゃんと休む。\n自分の体に向き合う時間を作る。\n今週頑張ったあなたと一緒に\n疲れを癒しに変えましょう。",
+      "title": "MIKIにお任せください",
+      "body": "式当日、鏡の前に立ったとき\n「こんなにきれいになった」と\n思っていただけるように。\n一緒に準備しましょう。",
       "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
       "bg_strategy": "generate",
-      "bg_prompt": "Luxury spa entrance with soft pink roses arrangement, warm golden accent lighting, elegant cream and gold interior, inviting and refined atmosphere, no people, no text, photography"
+      "bg_prompt": "Luxury bridal dressing table, white roses arrangement, warm golden hour light, elegant cream and ivory tones, no people, no text, no watermark, fine art photography"
     }
   ],
-  "caption": "MIKIです。\n\n休みの日、あなたはどんな過ごし方をしていますか？\n\n家でゆっくり過ごすのもいい。でも、疲れた体をどこかでちゃんとリセットしたい。そんな気持ちになったことがある方に、今日はご褒美エステの話をさせてください。\n\n車もスマホも、定期的なメンテナンスなしには長くは動きません。私たちの体も同じ。疲れを溜め込むと巡りが悪くなり、肌荒れ・だるさ・免疫の低下につながります。休みの日にエステで体をリセットすることは、贅沢でも浪費でもなく、体への投資だと思っています。\n\n私がオススメしている3つのケアをご紹介しますね。\n\n一つ目は、アロマオイルマッサージです。\n\n日常のストレスや疲れは、血行・リンパの流れを滞らせます。全身をアロマオイルでほぐすことで巡りが促され、だるさが抜けて、翌日の疲れのたまり方が明らかに変わります。\n\n二つ目は、フェイシャルエステです。\n\n毛穴の詰まりや乾燥をケアすると、普段のスキンケアの吸収率が格段に上がります。疲れ顔・くすみがちな肌が、ひと施術でリセットされる感覚を、ぜひ体感してほしいです。\n\n三つ目は、ヘッドマッサージです。\n\n長時間のPC作業や目の疲れからくる頭の重さをほぐすのに効果的で、施術中に眠ってしまう方も多いです。目が覚めたときのスッキリ感が「来てよかった」につながります。\n\nこんな方に特にオススメしたいです。\n\n仕事終わりの疲れが取れなくなってきた方、週末くらいは自分のために時間を使いたい方、「エステって贅沢かな」と思っていた方、一人でエステに行ったことがない方。\n\nはじめての方、大歓迎です。\n\n一人でいらっしゃる方がほとんどなので、安心してください。初回はカウンセリングからじっくり始めるので、「こんなこと聞いていいの？」という遠慮は不要です。あなたのペースで、ゆっくりどうぞ。\n\n休みの日は、ちゃんと休む。そして、自分の体に向き合う時間を作る。それが結果的に、仕事も毎日の生活も充実させてくれると思っています。\n\n今週頑張ったあなたと一緒に、疲れを癒しに変えましょう💖\n\n---\n\n✨ MIKI指名　初回限定20%OFF ✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
-  "hashtags": "#ご褒美エステ #休日の楽しみ #リラックスタイム #身体のリセット #リフレッシュ #QOL向上 #ご褒美時間 #大人の休日 #アラサーの休日",
-  "memo": "6枚構成に拡大。5枚目に「はじめての方へ」スライドを追加し、初回利用への敷居を下げる導線を強化。固定2枚含め計8枚。",
-  "drive_theme": "reward",
-  "bg_prompt": "Luxury spa still life, candles, white towels, rose petals, aroma oils, no people, elegant esthetic salon, no text"
+  "caption": "ブライダルエステで体のラインが変わる花嫁様を、私は何人も目の当たりにしてきました。\n\nMIKIです。\n\n「人生で一番痩せてる！」\n\n式の準備をしていた花嫁様が、施術の途中でそうおっしゃってくださいました。今でも忘れられない言葉です。\n\n「学生の頃の体重に戻りました！ドレスを試着したとき、こんなに背筋が伸びて、自信を持って前を向けたのは久しぶりかもしれない」\n\nそういう言葉をいただくたびに、私はこの仕事をしていて本当によかったと感じます。\n\n---\n\nエステというと「肌をきれいにするもの」というイメージが強いかもしれません。でも実は、全身の巡りを整えることで、体そのものが変わっていくんです。\n\nリンパをしっかり流して老廃物を排出することで、むくみが取れて体のラインが整っていく。施術を重ねるうちに代謝が改善され、体が変わりやすい状態になっていく。\n\n表面だけでなく、体の内側からアプローチすることで、「スッキリした」「ウエストが細くなった」「動きが軽くなった」という変化が、少しずつ積み重なっていきます。\n\n「毎回施術のあと、体が軽くなる感覚がある」という方も多いです。体の変化は外見だけでなく、日常の動きやすさや体の感覚にもあらわれてきます。\n\nアロマオイルを使ったリンパマッサージ、フェイシャル、ヘッドと組み合わせることで、顔から体まで総合的にケアしていきます。式当日に向けて、全身を整えていきましょう。\n\n---\n\n式当日だけ輝くのではなく、準備期間から体を整えていくことで、自信を持ってその日を迎えられるようになります。\n\n「こんなはずじゃなかった」ではなく、「こんなにきれいになった」と、鏡の前で感じてほしい。人生で一番大切な日に、人生で一番きれいでいてほしいのです。\n\nドレスを着てその姿を見たとき、「これが私なんだ」と、心から思えるように。それが私の願いです。\n\n特に、式まで3〜6ヶ月以上ある方は、今から始めることで変化がはっきり出やすくなります。施術の回数を重ねるほど、体が整っていくのを感じていただけます。「まだ早いかな」ではなく、ぜひ早いうちにご相談ください。\n\nはじめての方も大歓迎です。カウンセリングから丁寧にお話を伺いますので、「どんな施術が合うか分からない」という方もお気軽にご相談ください💌\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ",
+  "hashtags": "#ブライダルエステ #ブライダルエステ東京 #プレ花嫁2026 #大人花嫁 #東京花嫁 #花嫁準備 #ブライダルボディ",
+  "memo": "ボディの変化にフォーカスした修正版。「人生で一番痩せてる！」「学生の頃の体重に戻りました！」の体験談を軸に構成。6枚目CTAタイトルを「MIKIにお任せください」に変更。",
+  "alt_text": "白いウェディングドレスと白い薔薇が飾られた静かなブライダルエステルームの情景",
+  "_generated_dir": "2026-04-26-1200"
 }

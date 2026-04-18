@@ -282,14 +282,20 @@ def process_revision(sheet, item: dict):
     """1件の修正依頼を処理"""
     row_num = item["row_num"]
 
-    # content.jsonが存在する場合、スプレッドシートの古い内容より優先する
-    # （Claude Codeがステップ2で修正した内容を引き継ぐ）
+    # content.jsonが存在する場合、スライド構成のみ引き継ぐ
+    # caption/hashtagsはスプレッドシートの値（各投稿の正確な内容）を優先する
+    # content.jsonのcaptionを使うと、別投稿のcaptionで上書きされるバグが起きるため
     content = load_content_json()
-    if content:
-        print(f"行{row_num}: content.jsonを検出 → Claude Code最新版を修正ベースとして使用")
-        item["caption"] = content.get("caption", item["caption"])
-        item["hashtags"] = content.get("hashtags", item["hashtags"])
-        item["slides"] = content.get("slides", [])
+    if content and content.get("slides"):
+        # ファイルパスの投稿日時とcontent.jsonの投稿日時が一致する場合のみslides適用
+        # 一致チェック: item["files"]の先頭にある日付フォルダ vs content.jsonの先頭スライドのbg_strategy
+        item_prefix = item["files"].split("/")[0] if "/" in item["files"] else ""
+        content_prefix = content.get("_generated_dir", "")
+        if content_prefix and item_prefix != content_prefix:
+            print(f"行{row_num}: content.json（{content_prefix}）は別投稿のため無視 → スプレッドシートの内容を使用")
+        else:
+            print(f"行{row_num}: content.jsonを検出 → スライド構成をClaude Code最新版に更新")
+            item["slides"] = content.get("slides", [])
     else:
         print(f"行{row_num}: content.jsonなし → スプレッドシートの内容を使用")
 
@@ -367,7 +373,11 @@ def run():
         print("ローカル環境のためスキップ。修正依頼はClaude Codeで処理してください。")
         return
 
-    sheet, pending = check_and_report()
+    try:
+        sheet, pending = check_and_report()
+    except Exception as e:
+        send_line_message(f"❌ 修正依頼チェック失敗\nスプレッドシート読み込みエラー:\n{str(e)[:200]}")
+        raise
 
     if not pending:
         print("修正依頼はありません")
