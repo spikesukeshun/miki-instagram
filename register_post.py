@@ -277,6 +277,38 @@ def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
     return preview_url
 
 
+def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
+    """指定した投稿日時の行を部分的にバッチ更新する。
+    update_cell() の連続呼び出しはAPIレート制限で失敗するため、
+    スプレッドシートの部分更新は必ずこの関数を使うこと。
+
+    fields キー: status / preview_url / revision / caption / hashtags / memo / alt_text
+    """
+    col_map = {
+        "caption": 4,      # D
+        "hashtags": 5,     # E
+        "memo": 6,         # F
+        "status": 7,       # G
+        "preview_url": 8,  # H
+        "revision": 9,     # I
+        "alt_text": 11,    # K
+    }
+    sheet = get_sheet()
+    rows = sheet.get_all_values()
+    for i, r in enumerate(rows[1:], start=2):
+        if r and r[0] == post_datetime:
+            row_data = list(r) + [""] * max(0, 11 - len(r))
+            for key, val in fields.items():
+                col_idx = col_map.get(key)
+                if col_idx:
+                    row_data[col_idx - 1] = val
+            sheet.update(f"A{i}:K{i}", [row_data[:11]])
+            print(f"スプレッドシート更新完了（行{i}）: {', '.join(f'{k}={repr(v)[:30]}' for k, v in fields.items())}")
+            return True
+    print(f"警告: {post_datetime} の行が見つかりません")
+    return False
+
+
 def register(
     post_datetime: str,
     menu_type: str,
