@@ -63,3 +63,17 @@ jobs:
           INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python process_revisions.py
+
+      - name: 失敗時LINE通知
+        if: failure()
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
+          LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
+        run: |
+          python3 -c "
+          import os, sys
+          sys.path.insert(0, '.')
+          from line_notify import send_line_message
+          send_line_message('❌ GitHub Actions 失敗: check_revisions.yml\n修正依頼の自動処理でエラーが発生しました。\nGitHub Actions のログを確認してください。')
+          "
