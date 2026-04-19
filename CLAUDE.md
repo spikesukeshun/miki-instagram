@@ -284,3 +284,28 @@ def _draw_title(draw, title_text, font, y_start, img_width, fill, line_gap=10):
 
 **教訓**: content.json のタイトルに `\n` を使う場合、コード側が動的高さ計算に対応している必要がある。
 固定値 `title_h = 70` のような定数でタイトル高さを扱わないこと。
+
+## 投稿完了後のクリーンアップ（必須・自動実行）
+
+**create_post.py の実行が完了したら、必ず以下を自動実行すること：**
+
+1. 実行ログから `seed=XXXXXX` の数値を見つける
+2. 以下のコマンドを実行する：
+
+```bash
+# generate 画像がある場合（通常）
+python cleanup_backgrounds.py --seed XXXXXX --force
+
+# generate 画像がなかった場合（reuse/edit のみの回）
+python cleanup_backgrounds.py --no-generate --force
+```
+
+### このスクリプトがやること
+- `backgrounds/` フォルダの画像をすべて削除（reuse / edit / generate 問わず）
+- `generated/` フォルダの完成カルーセル画像（carousel_*.jpg）を削除（GitHub アップ済み前提）
+- seed を `upload_history.json` に記録し、同じ seed の Drive 重複アップを防ぐ
+
+### ルール
+- この手順は**省略不可**。create_post.py 実行のたびに必ず実施すること
+- seed が複数ある場合はスペース区切りで渡す（例：`--seed 111111 222222`）
+- ログに seed が見当たらない場合は `--no-generate` で実行する
