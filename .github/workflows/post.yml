@@ -2,11 +2,11 @@ name: Instagram自動投稿
 
 on:
   schedule:
-    # 毎時0分に実行（日本時間に合わせてUTC+9で設定）
-    # 日本時間 21:00 = UTC 12:00（日・火・木）
-    - cron: "0 12 * * 0,2,4"
-    # 日本時間 12:00 = UTC 3:00（土）
-    - cron: "0 3 * * 6"
+    # 毎日2回チェック（post_scheduler.pyが投稿日時を見て判断する）
+    # 日本時間 21:00 = UTC 12:00（毎日）
+    - cron: "0 12 * * *"
+    # 日本時間 12:00 = UTC 3:00（毎日）
+    - cron: "0 3 * * *"
   workflow_dispatch:  # 手動実行ボタン（GOの代わり）
 
 jobs:
@@ -58,3 +58,17 @@ jobs:
           LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
           LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
         run: python post_scheduler.py
+
+      - name: 失敗時LINE通知
+        if: failure()
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
+          LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
+        run: |
+          python3 -c "
+          import os, sys
+          sys.path.insert(0, '.')
+          from line_notify import send_line_message
+          send_line_message('❌ GitHub Actions 失敗: post.yml\n自動投稿ワークフローでエラーが発生しました。\nGitHub Actions のログを確認してください。')
+          "

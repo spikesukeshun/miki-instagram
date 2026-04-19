@@ -95,7 +95,7 @@ def check_slides(slides: list) -> list[tuple[bool, str]]:
                 if len(item) > 20:
                     results.append((False, f"スライド{i} 項目{j}: {len(item)}文字（全角20文字超え）— 折り返しなし固定幅のため要短縮"))
 
-        # 4. CTAスライドのタイトル恒久ルール
+        # 4. CTAスライドのタイトル恒久ルール + body禁止フレーズ
         if stype == "cta":
             if title not in (CTA_REQUIRED_TITLE, CTA_REQUIRED_TITLE_ALT):
                 results.append(
@@ -105,6 +105,25 @@ def check_slides(slides: list) -> list[tuple[bool, str]]:
                 )
             else:
                 results.append((True, f"スライド{i}（CTA）タイトル ✓"))
+
+            # CTAスライドbodyの禁止フレーズチェック
+            CTA_BANNED_PHRASES = [
+                "MIKIに会いに来てください",
+                "MIKIに会いにきてください",
+                "まずはお気軽にDMでご連絡ください",
+                "お気軽にDMでご連絡ください",
+            ]
+            cta_body = slide.get("body", "")
+            for phrase in CTA_BANNED_PHRASES:
+                if phrase in cta_body:
+                    results.append(
+                        (False, f"スライド{i}（CTA）body: 禁止フレーズ「{phrase}」が含まれています\n"
+                                f"  → 「MIKIにお任せください。」に変更してください")
+                    )
+                    break
+            else:
+                if cta_body:
+                    results.append((True, f"スライド{i}（CTA）body 禁止フレーズなし ✓"))
 
         # 5. タイトルにMIKIを使う場合、幼稚な表現チェック（警告のみ）
         naive_patterns = ["MIKIが大好きな", "MIKIのおすすめ！", "MIKIが癒して", "MIKIのお気に入り"]
