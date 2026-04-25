@@ -2,10 +2,21 @@ name: Instagram自動投稿
 
 on:
   schedule:
-    # 毎時チェック（GitHub Actionsのcron遅延対策）
+    # ===== 12:00 JST 投稿スロット =====
+    # UTC 2:00 = JST 11:00（1時間前）→ GitHub 1h遅延でJST 12:00に実行
+    - cron: "0 2 * * *"
+    # UTC 3:00 = JST 12:00（ちょうど）
+    - cron: "0 3 * * *"
+    # UTC 4:00 = JST 13:00（+1h リトライ）
+    - cron: "0 4 * * *"
+    # ===== 21:00 JST 投稿スロット =====
+    # UTC 11:00 = JST 20:00（1時間前）→ GitHub 1h遅延でJST 21:00に実行
+    - cron: "0 11 * * *"
+    # UTC 12:00 = JST 21:00（ちょうど）
+    - cron: "0 12 * * *"
+    # UTC 13:00 = JST 22:00（+1h リトライ）
+    - cron: "0 13 * * *"
     # post_scheduler.py が post_time <= now で判断するため重複投稿なし
-    # GitHub Actionsのcronは混雑時に1〜6時間遅延するため、毎時実行で遅延を最小化
-    - cron: "0 * * * *"
   workflow_dispatch:  # 手動実行ボタン（GOの代わり）
 
 jobs:
