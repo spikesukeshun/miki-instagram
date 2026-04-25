@@ -152,6 +152,11 @@ def run():
 
             sheet.update_cell(i, COL_STATUS + 1, "投稿済み")
             print(f"行{i}: 投稿成功！ post_id={post_id}")
+            send_line_message(
+                f"✅ Instagram投稿完了\n"
+                f"📅 {datetime_str}\n"
+                f"🆔 post_id={post_id}"
+            )
             posted += 1
 
         except FileNotFoundError as e:

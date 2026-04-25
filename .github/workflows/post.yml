@@ -2,11 +2,10 @@ name: Instagram自動投稿
 
 on:
   schedule:
-    # 毎日2回チェック（post_scheduler.pyが投稿日時を見て判断する）
-    # 日本時間 21:00 = UTC 12:00（毎日）
-    - cron: "0 12 * * *"
-    # 日本時間 12:00 = UTC 3:00（毎日）
-    - cron: "0 3 * * *"
+    # 毎時チェック（GitHub Actionsのcron遅延対策）
+    # post_scheduler.py が post_time <= now で判断するため重複投稿なし
+    # GitHub Actionsのcronは混雑時に1〜6時間遅延するため、毎時実行で遅延を最小化
+    - cron: "0 * * * *"
   workflow_dispatch:  # 手動実行ボタン（GOの代わり）
 
 jobs:
