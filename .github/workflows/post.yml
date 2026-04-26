@@ -2,15 +2,17 @@ name: Instagram自動投稿
 
 on:
   schedule:
-    # GitHub Actionsは実測で1日2バッチ処理（JST 18時台 / JST 1時台）。
+    # GitHub Actionsは実測で設定時刻より約6時間遅れて発火する。
+    # 6時間ずれを逆算して、投稿時刻の6時間前に設定している。
     # post_scheduler.py が post_time <= now で判断するため重複投稿なし。
     #
-    # 12:00 JST スロット用: UTC 3設定 → 実際JST 18時台に発火（当日投稿）
-    - cron: "0 3 * * *"
-    # 21:00 JST スロット用: UTC 10設定 → 実際JST 22〜23時台を狙う（バッチ前半を引く確率を上げる）
-    - cron: "0 10 * * *"
-    # バックアップ（深夜バッチが遅れた場合のリトライ）
-    - cron: "0 14 * * *"
+    # 21:00 JST 投稿用: JST 15:00発火を狙う = UTC 6:00 設定
+    #   UTC 6:00 + 6h遅延 = UTC 12:00 = JST 21:00
+    - cron: "0 6 * * *"
+    #
+    # 12:00 JST 投稿用: JST 6:00発火を狙う = UTC 21:00 設定（前日UTC）
+    #   UTC 21:00 + 6h遅延 = UTC 3:00（翌日）= JST 12:00
+    - cron: "0 21 * * *"
   workflow_dispatch:  # 手動実行ボタン（GOの代わり）
 
 jobs:
