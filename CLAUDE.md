@@ -309,3 +309,9 @@ python cleanup_backgrounds.py --no-generate --force
 - この手順は**省略不可**。create_post.py 実行のたびに必ず実施すること
 - seed が複数ある場合はスペース区切りで渡す（例：`--seed 111111 222222`）
 - ログに seed が見当たらない場合は `--no-generate` で実行する
+
+### プレビューページの自動削除（自動・対応不要）
+- `post_scheduler.py` が投稿成功時に `docs/{slug}/index.html` を GitHub から自動削除する
+- 投稿前承認のためだけに使うプレビューなので、投稿後は不要（Instagram本体・スプレッドシートで内容確認可）
+- 修正依頼で再生成された場合も、最終投稿成功時にまとめて削除される
+- 削除に失敗しても投稿成功フローは止まらない（ログのみ。LINE通知はしない）
