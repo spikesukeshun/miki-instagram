@@ -251,7 +251,7 @@ def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
     """HTMLをdocs/{slug}/index.htmlとしてGitHubにアップロードして一意のURLを返す"""
     # 投稿日時からスラッグ生成（例: 2026/04/08 21:00 → 2026-04-08-2100）
     if post_datetime:
-        slug = post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+        slug = _slug_from_datetime(post_datetime)
     else:
         slug = datetime.now().strftime("%Y-%m-%d-%H%M")
 
@@ -275,6 +275,39 @@ def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
     preview_url = f"{GITHUB_PAGES_URL}/{slug}/"
     print(f"  プレビューページをアップロード完了")
     return preview_url
+
+
+def _slug_from_datetime(post_datetime: str) -> str:
+    """投稿日時文字列（例: '2026/04/14 21:00'）から slug（'2026-04-14-2100'）を生成"""
+    return post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+
+
+def delete_preview_from_github(post_datetime: str) -> bool:
+    """投稿成功後に docs/{slug}/index.html を GitHub から削除する。
+    失敗してもログのみで例外は投げない（投稿成功フローを阻害しないため）。"""
+    slug = _slug_from_datetime(post_datetime)
+    html_path = f"docs/{slug}/index.html"
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{html_path}"
+    headers = _github_headers()
+    try:
+        res = requests.get(api_url, headers=headers, timeout=10)
+        if res.status_code == 404:
+            print(f"  プレビュー削除スキップ（既に存在しない）: {slug}")
+            return False
+        if res.status_code != 200:
+            print(f"  プレビュー削除GET失敗: {res.status_code} {res.text[:200]}")
+            return False
+        sha = res.json().get("sha")
+        payload = {"message": f"プレビューページ削除: {slug}", "sha": sha}
+        res = requests.delete(api_url, headers=headers, json=payload, timeout=10)
+        if res.status_code in (200, 204):
+            print(f"  プレビューページを削除: {slug}")
+            return True
+        print(f"  プレビュー削除失敗: {res.status_code} {res.text[:200]}")
+        return False
+    except Exception as e:
+        print(f"  プレビュー削除でエラー: {e}")
+        return False
 
 
 def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
@@ -327,7 +360,7 @@ def register(
         return
 
     # 投稿日時からスラッグ生成（例: 2026/04/14 21:00 → 2026-04-14-2100）
-    slug = post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+    slug = _slug_from_datetime(post_datetime)
 
     # 画像をGitHubにアップロード（投稿ごとのサブフォルダに保存）
     filenames = []

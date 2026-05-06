@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from instagram_api import post_image, post_video, post_carousel
 from drive_helper import get_file_url
 from line_notify import send_line_message
+from register_post import delete_preview_from_github
 
 from load_env import load_from_zshrc
 load_from_zshrc()
@@ -152,6 +153,7 @@ def run():
 
             sheet.update_cell(i, COL_STATUS + 1, "投稿済み")
             print(f"行{i}: 投稿成功！ post_id={post_id}")
+            delete_preview_from_github(datetime_str)
             send_line_message(
                 f"✅ Instagram投稿完了\n"
                 f"📅 {datetime_str}\n"
