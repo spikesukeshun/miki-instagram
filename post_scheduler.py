@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from instagram_api import post_image, post_video, post_carousel
 from drive_helper import get_file_url
 from line_notify import send_line_message
+from register_post import delete_post_folder_from_github
 
 from load_env import load_from_zshrc
 load_from_zshrc()
@@ -158,6 +159,15 @@ def run():
                 f"🆔 post_id={post_id}"
             )
             posted += 1
+
+            # 投稿済みの画像はInstagram CDNにコピー済みなので、GitHub上のコピーを削除する
+            slug = filenames[0].split("/")[0] if "/" in filenames[0] else ""
+            if slug:
+                try:
+                    n = delete_post_folder_from_github(slug)
+                    print(f"行{i}: GitHub generated/{slug}/ から{n}ファイル削除")
+                except Exception as cleanup_err:
+                    print(f"行{i}: GitHub掃除失敗（投稿は成功扱いを維持）: {cleanup_err}")
 
         except FileNotFoundError as e:
             print(f"行{i}: ファイルなし → {e}")

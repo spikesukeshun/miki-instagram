@@ -8,3 +8,4 @@ token.json
 backgrounds/
 !backgrounds/slide7.jpg
 !backgrounds/slide8.jpg
+generated/carousel_*.jpg

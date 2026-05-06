@@ -78,6 +78,38 @@ def upload_to_github(filepath: str, subfolder: str = "") -> str:
     return f"{subfolder}/{filename}" if subfolder else filename
 
 
+def list_github_folder(slug: str) -> list:
+    """generated/{slug}/ 配下のファイル一覧を返す。各要素は {'path': str, 'sha': str}"""
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{GENERATED_DIR}/{slug}"
+    res = requests.get(api_url, headers=_github_headers())
+    if res.status_code == 404:
+        return []
+    if res.status_code != 200:
+        raise Exception(f"GitHub一覧取得失敗 ({slug}): {res.status_code} {res.text[:200]}")
+    return [{"path": item["path"], "sha": item["sha"]} for item in res.json() if item["type"] == "file"]
+
+
+def delete_post_folder_from_github(slug: str) -> int:
+    """generated/{slug}/ をGitHubから削除する。削除したファイル数を返す"""
+    if not slug:
+        return 0
+    items = list_github_folder(slug)
+    if not items:
+        return 0
+
+    headers = _github_headers()
+    deleted = 0
+    for item in items:
+        api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{item['path']}"
+        payload = {"message": f"投稿済み画像削除: {item['path']}", "sha": item["sha"]}
+        res = requests.delete(api_url, headers=headers, json=payload)
+        if res.status_code in (200, 204):
+            deleted += 1
+        else:
+            print(f"  削除失敗 ({item['path']}): {res.status_code} {res.text[:150]}")
+    return deleted
+
+
 def setup_github_pages():
     """GitHub Pagesを有効化する（初回のみ、以降はスキップ）"""
     api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/pages"
