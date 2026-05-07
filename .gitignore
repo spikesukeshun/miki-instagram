@@ -8,3 +8,10 @@ token.json
 backgrounds/
 !backgrounds/slide7.jpg
 !backgrounds/slide8.jpg
+
+# design_lab sandbox (local-only experiments — see design_lab/README.md)
+design_lab/output/
+design_lab/sample_bg/
+design_lab/fonts/*.ttf
+design_lab/fonts/*.otf
+design_lab/fonts/*.ttc
