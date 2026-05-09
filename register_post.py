@@ -81,12 +81,21 @@ def upload_to_github(filepath: str, subfolder: str = "") -> str:
 def list_github_folder(slug: str) -> list:
     """generated/{slug}/ 配下のファイル一覧を返す。各要素は {'path': str, 'sha': str}"""
     api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{GENERATED_DIR}/{slug}"
-    res = requests.get(api_url, headers=_github_headers())
+    res = requests.get(api_url, headers=_github_headers(), timeout=15)
     if res.status_code == 404:
+        print(f"  [list_github_folder] {slug}: フォルダなし (404)")
         return []
     if res.status_code != 200:
-        raise Exception(f"GitHub一覧取得失敗 ({slug}): {res.status_code} {res.text[:200]}")
-    return [{"path": item["path"], "sha": item["sha"]} for item in res.json() if item["type"] == "file"]
+        raise Exception(
+            f"GitHub一覧取得失敗 ({slug}): HTTP {res.status_code} "
+            f"rate_limit_remaining={res.headers.get('X-RateLimit-Remaining','?')} "
+            f"body={res.text[:300]}"
+        )
+    items = res.json()
+    if isinstance(items, dict):
+        # エラーレスポンスがdictで返ることがある (message フィールドあり)
+        raise Exception(f"GitHub一覧取得で予期しないレスポンス ({slug}): {items}")
+    return [{"path": item["path"], "sha": item["sha"]} for item in items if item["type"] == "file"]
 
 
 def delete_post_folder_from_github(slug: str) -> int:

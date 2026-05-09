@@ -3,6 +3,7 @@ from google.oauth2.service_account import Credentials
 import os
 import requests
 from datetime import datetime, timezone, timedelta
+import time
 from instagram_api import post_image, post_video, post_carousel
 from drive_helper import get_file_url
 from line_notify import send_line_message
@@ -164,11 +165,20 @@ def run():
             # 投稿済みの画像はInstagram CDNにコピー済みなので、GitHub上のコピーを削除する
             slug = filenames[0].split("/")[0] if "/" in filenames[0] else ""
             if slug:
-                try:
-                    n = delete_post_folder_from_github(slug)
-                    print(f"行{i}: GitHub generated/{slug}/ から{n}ファイル削除")
-                except Exception as cleanup_err:
-                    print(f"行{i}: GitHub掃除失敗（投稿は成功扱いを維持）: {cleanup_err}")
+                time.sleep(2)  # プレビュー削除コミット直後の競合を避けるため少し待つ
+                for attempt in range(1, 4):  # 最大3回リトライ
+                    try:
+                        n = delete_post_folder_from_github(slug)
+                        if n > 0:
+                            print(f"行{i}: GitHub generated/{slug}/ から{n}ファイル削除（試行{attempt}）")
+                            break
+                        else:
+                            print(f"行{i}: GitHub generated/{slug}/ にファイルなし（試行{attempt}）")
+                            break
+                    except Exception as cleanup_err:
+                        print(f"行{i}: GitHub掃除失敗（試行{attempt}/3）: {cleanup_err}")
+                        if attempt < 3:
+                            time.sleep(5 * attempt)  # 5秒、10秒と徐々に待つ
 
         except FileNotFoundError as e:
             print(f"行{i}: ファイルなし → {e}")
