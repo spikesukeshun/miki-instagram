@@ -5,6 +5,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 import time
 from instagram_api import post_image, post_video, post_carousel
+from instagram_mixed import post_mixed_carousel
 from drive_helper import get_file_url
 from line_notify import send_line_message
 from register_post import delete_preview_from_github, delete_post_folder_from_github
@@ -145,8 +146,16 @@ def run():
             filenames = [f.strip() for f in filename.split(",")]
 
             if len(filenames) > 1:
-                image_urls = [get_file_url(f) for f in filenames]
-                post_id = post_carousel(image_urls, caption)
+                if any(is_video(f) for f in filenames):
+                    items = [
+                        {"type": "video" if is_video(f) else "image",
+                         "url": get_file_url(f)}
+                        for f in filenames
+                    ]
+                    post_id = post_mixed_carousel(items, caption)
+                else:
+                    image_urls = [get_file_url(f) for f in filenames]
+                    post_id = post_carousel(image_urls, caption)
             elif is_video(filenames[0]):
                 post_id = post_video(get_file_url(filenames[0]), caption)
             else:
