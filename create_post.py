@@ -5,6 +5,14 @@ from datetime import datetime
 import requests
 from groq import Groq
 
+# HEIC画像（MIKIがDriveに追加する参考写真にiPhone由来のHEICが含まれる）を
+# Pillowで開けるようにする。pillow-heif未導入の環境でも他形式は動くよう握りつぶす。
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except Exception:
+    pass
+
 from generate_carousel import generate_with_slides
 from register_post import register
 from load_env import load_from_zshrc
