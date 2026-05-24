@@ -1,0 +1,80 @@
+{
+  "slides": [
+    {
+      "filename": "bg01.jpg",
+      "type": "cover",
+      "title": "最近ふと\n思うこと",
+      "tag": "- MIKIのぼやき① -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "Droom.JPG",
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg02.jpg",
+      "type": "text",
+      "title": "施術中に\nよく聞こえる言葉",
+      "text": "「最近、自分のことを\n全然考えられていなかった気がする」\n\n施術中に、こういう言葉を\nお客様からよく聞きます。\n\n手を動かしながら\n私はいつも少し胸がきゅっとなります。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "elbow.JPG",
+      "slide_photo_h_ratio": 0.5,
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg03.jpg",
+      "type": "list",
+      "title": "こんなこと\nありませんか？",
+      "items": [
+        "寝ても疲れが取れない",
+        "自分を後回しにしている",
+        "何のためか分からなくなる",
+        "誰かのことばかり気にしている"
+      ],
+      "footer": "その感覚、無理しなくていいんです。",
+      "bg_strategy": "generate"
+    },
+    {
+      "filename": "bg04.jpg",
+      "type": "text",
+      "title": "私が感じていること",
+      "text": "それって、別に\n仕方ないことじゃなくて。\n\nもう少しだけ\n自分のことを考えていい、\nって私は思うんです。\n\n「ここに来てよかった」\nそう言ってもらえる瞬間が\n私にはとても嬉しいです。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "Reception.JPG",
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg05.jpg",
+      "type": "text",
+      "title": "気になっている\nあなたへ",
+      "text": "「気になってるけど\nどうすればいいかわからない」\n\nそんな方こそ\nお話を聞かせて\nもらえたら嬉しいです。\n\n緊張しなくて大丈夫。\n初めての方ほど\n安心していらしてくださいね。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "candle.jpg",
+      "focus_y": 0.6
+    },
+    {
+      "filename": "bg06.jpg",
+      "type": "cta",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "自分を後回しにしてきた方こそ\nお会いできたら嬉しいです。\n気軽にDMでお声がけくださいね。",
+      "subtitle": "「はじめまして」のひと言から大丈夫／MIKIがお返事します",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5
+    }
+  ],
+  "caption": "30代・40代の女性へ、最近ふと思っていることを少しだけぼやかせてください。\n\nMIKIです。\n\n「最近、自分のことを全然考えられていなかった気がする」\n\n施術中に、こういう言葉をお客様からよく聞きます。\n\n手を動かしながら、私はいつも少し胸がきゅっとなります。\n\n---\n\n仕事のこと、家族のこと、人間関係のこと。\n\n毎日いろんなものを抱えながら、最後に削られるのが「自分のための時間」になっていること。\n\n頑張っていることを誰にも見せられない夜があったり、\n誰かのことを優先するうちに、自分の声が聞こえなくなってしまったり。\n\nそれって、なんか当たり前みたいになっているけど\n本当は当たり前じゃなくていい、って私はずっと思っています。\n\n---\n\nこんな状態、ありませんか。\n\n「寝ても疲れが取れない」\n「気づいたら自分のことを後回しにしている」\n「何のために頑張っているか、たまに分からなくなる」\n「気がつけば誰かのことばかり気にしている」\n\nそういう気持ち、私はよく分かります。\n\nベッドに横になって、少しずつほぐれていく過程で\nぽつりとこぼれてくるお客様の言葉に\n私はいつも、そっと耳を傾けています。\n\n---\n\nもし「わかるな」と感じた方がいたら、よかったらDMで気持ちを聞かせてくださいね。\n\n「わかります」のひと言だけでも、私には嬉しいです。\n\n---\n\n施術のあとに「ここに来てよかった」と言ってもらえる瞬間が\n私には本当に嬉しくて。\n\nその言葉をもらうたびに、この仕事をしていてよかったと思います。\n\n少しでも気になっている方は、緊張せずに気軽にいらしてくださいね。\n初めての方こそ、安心していらしてください。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nDMで「はじめまして」のひと言から始めて大丈夫です。\nひとつずつ、私がお返事します💌",
+  "hashtags": "#自分磨き #エステ体験 #六本木エステ #ご褒美エステ #30代女性 #40代女性 #自分時間 #おひとり様エステ #美容好きな人と繋がりたい",
+  "alt_text": "朝の光が差し込む白いエステルームに、小さな花瓶と柔らかなリネンが静かに置かれている",
+  "memo": "5/10(土) 12:00。MIKIのぼやき①。施術中によく聞くお客様の言葉から、自分を後回しにしてしまう30〜40代への共感投稿。初DM獲得モード：CTA3箇所配置（中盤ソフト促し・末尾・CTAスライド）。MIKI紹介自己語り（行6, likes15）の成功パターン踏襲。",
+  "bg_prompt": "Japanese esthetic salon interior, morning light through sheer curtains, white linen on treatment table, small dried flowers in glass vase, warm cream and ivory tones, no people, calm and intimate atmosphere, high quality photo",
+  "_generated_dir": "2026-05-10-1200"
+}

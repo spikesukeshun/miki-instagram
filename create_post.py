@@ -275,14 +275,14 @@ def download_image(url: str, filename: str) -> bool:
 
 
 def apply_edit_effect(img_path: str, slide_type: str) -> None:
-    """PILで画像を加工してスライド種別に合った背景に仕上げる"""
+    """PILで画像を加工してスライド種別に合った背景に仕上げる
+    オリジナルのアスペクト比を保持する（generate_carousel.py の crop_center_with_focus が
+    適切にスケール&クロップする。1080x1350 に強制リサイズすると Drive 画像が歪む）。"""
     from PIL import Image, ImageFilter, ImageEnhance
     img = Image.open(img_path).convert("RGB")
-    img = img.resize((1080, 1350), Image.LANCZOS)
 
     if slide_type in ("text", "list"):
-        img = img.filter(ImageFilter.GaussianBlur(radius=8))
-        img = ImageEnhance.Brightness(img).enhance(1.3)
+        img = ImageEnhance.Brightness(img).enhance(1.05)
     elif slide_type == "cover":
         img = ImageEnhance.Color(img).enhance(1.2)
         img = ImageEnhance.Contrast(img).enhance(1.1)
@@ -350,7 +350,6 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                         apply_edit_effect(path, slide.get("type", "text"))
                     else:
                         _bg = _Img.open(path).convert("RGB")
-                        _bg = _bg.filter(_IF.GaussianBlur(radius=4))
                         _bg.save(path, "JPEG", quality=90)
                     slide["filename"] = filename
                     continue
@@ -375,7 +374,6 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             success = download_image(img["url"], filename)
             if success:
                 _bg = _Img.open(path).convert("RGB")
-                _bg = _bg.filter(_IF.GaussianBlur(radius=4))
                 _bg.save(path, "JPEG", quality=90)
                 slide["filename"] = filename
                 continue

@@ -1,0 +1,29 @@
+{
+  "_comment": "MIKIエステの3つのポイント（再利用可能テンプレート）。Before/After 投稿に限らず、他のカルーセルでも『3つのポイント』スライドが必要なときに、この定義をスケジュール側の content_*.json に貼り付けて流用できる。画像はすべて experiments/before_after/assets/ に同梱済み（point2.jpg / miki.jpg / sky.jpg）。",
+  "_usage": "他スケジュールで使う場合は (1) この slide 定義を content_*.json の slides 配列に挿入、(2) 画像 3 枚（point2.jpg / miki.jpg / sky.jpg）を該当プロジェクトの assets/ にコピー、(3) image パスをそのプロジェクトに合わせて書き換える。",
+  "slide": {
+    "type": "ba_points",
+    "filename_out": "miki_3_points.jpg",
+    "title": "MIKIエステの\n3つのポイント",
+    "items": [
+      {
+        "image": "assets/miki.jpg",
+        "label": "Point1",
+        "heading": "楽しむこと",
+        "body": "身体や肌はすぐには変わりません。\n楽しむ時間は心理的な余裕を生み\nストレスを軽減します。\n小さな変化でも楽しめるように\nサポートいたします。"
+      },
+      {
+        "image": "assets/point2.jpg",
+        "label": "Point2",
+        "heading": "ゆるく続けること",
+        "body": "ゼロか100かで考えず、\nできたという小さな達成感を\n積み重ねることで習慣化し、\n幸福度を高められます。"
+      },
+      {
+        "image": "assets/sky.jpg",
+        "label": "Point3",
+        "heading": "素直な気持ちを持つこと",
+        "body": "思い込みや偏見に捉われず、\nありのままを受け入れましょう。\nそうすることで、\n自己成長の促進力を養います。"
+      }
+    ]
+  }
+}

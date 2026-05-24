@@ -1,0 +1,80 @@
+{
+  "slides": [
+    {
+      "filename": "bg01.jpg",
+      "type": "cover",
+      "title": "金曜の夜の\n自分時間",
+      "tag": "- 仕事疲れの夜に -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "candle.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg02.jpg",
+      "type": "text",
+      "title": "ベッドに倒れ込む\nだけの夜に",
+      "text": "気づいたら金曜の夜。\n一週間が終わった解放感より\n疲労感のほうが先にきていませんか。\n\n月曜の朝は重く\n火水で気力を使い果たして\n金曜にはもう声も出ない。\n\nそんな日々が当たり前になっていること\n私はずっと気になっています。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "Droom.JPG",
+      "slide_photo_h_ratio": 0.5,
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg03.jpg",
+      "type": "list",
+      "title": "こんな疲れ\nありませんか",
+      "items": [
+        "朝起きた瞬間からだるい",
+        "休日も体がほぐれない",
+        "寝ても眠気が取れない",
+        "笑顔の数が減っている"
+      ],
+      "footer": "頑張りすぎているサインかもしれません。",
+      "bg_strategy": "generate"
+    },
+    {
+      "filename": "bg04.jpg",
+      "type": "text",
+      "title": "施術中に\n聞こえる言葉",
+      "text": "「最近、何のために\n頑張ってるのか分からない」\n\nそんな言葉を聞くことがあります。\n手を動かしながら\n私はいつも胸がきゅっとなります。\n\n体が頑張りすぎているとき\n気持ちもいつの間にか\n置き去りになってしまうから。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "elbow.JPG",
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg05.jpg",
+      "type": "text",
+      "title": "行ってみたいと\n思ったら",
+      "text": "「行ってみたいけど\n初めてで不安」\n\nそんな方こそ\nDMでひと言、気軽に\n送ってみてくださいね。\n\n『仕事疲れが取れない』\nそのひと言から\n私が一緒に考えますね。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "Reception.JPG",
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg06.jpg",
+      "type": "cta",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "頑張りすぎてきた方こそ\nお会いできたら嬉しいです。\n気軽にDMでお声がけくださいね。",
+      "subtitle": "「仕事疲れが取れない」のひと言でOK／私がお返事します",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5
+    }
+  ],
+  "caption": "30代・40代の働く女性へ、金曜の夜にこそ知ってほしい、仕事疲れを翌週に持ち越さないためのお話です。\n\nMIKIです。\n\n「金曜になってもまだ体が重い」\n「土日に寝だめしても月曜にはまた疲れている」\n\n施術中、こういう声を私はよく聞きます。\n手を動かしながら、いつも少し胸がきゅっとなります。\n\n---\n\n月曜の朝は重く、火曜・水曜で気力を使い果たして、金曜にはもう声も出ない。\n\nそんな日々が当たり前になっていませんか。\n\n仕事を頑張れば頑張るほど、自分のための時間が削られていく。\n気がつけば、自分の体と心の声が一番後回しになっている。\n\nそれって、本当は当たり前じゃなくていいことだと、私はずっと思っています😌\n\n---\n\nもし「これ、私のことかも」と感じた方は、よかったらDMで気持ちを聞かせてくださいね。\n\n『仕事疲れが取れない』のひと言で大丈夫です。\n行ってみたいと思ったら、まず気軽にメッセージしてくださいね。\n\n---\n\nベッドに横になって、少しずつ体がほぐれていく過程で\nぽつりとこぼれてくるお客様の言葉に、私はいつもそっと耳を傾けています。\n\n「ここに来てよかった」\n「久しぶりに肩の力が抜けました」\n「来週はもう少し優しく自分に過ごせそうです」\n\nそういう言葉をもらうたびに、この仕事をしていて本当によかったと感じます🌿\n\n---\n\n少しでも気になっている方は、緊張せずにいらしてくださいね。\n初めての方こそ、安心していらしてください。\nおひとりでいらっしゃる方がほとんどです。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nDMで「仕事疲れが取れない」のひと言から始めて大丈夫。\nひとつずつ、私が直接お返事します💌",
+  "hashtags": "#仕事疲れ #働く女性 #六本木エステ #ご褒美エステ #30代女性 #40代女性 #自分時間 #おひとり様エステ #金曜の夜",
+  "alt_text": "夜の静かなエステルームに、温かなキャンドルの灯りとリネンが置かれた落ち着いた一角",
+  "memo": "5/15(金) 21:00。悩み共感（仕事疲れ）。金曜21時投稿で「週末を前に疲労感のほうが先にくる」共感訴求。CTA3箇所配置（中盤ソフト・5枚目・末尾＋固定スライド）。MIKIのぼやき②的なシリーズ感を意識しつつテーマを仕事疲れに特化。",
+  "bg_prompt": "Japanese esthetic salon interior at night, soft warm candle light, white linen on treatment table, small dried flowers in glass vase, beige and cream tones, no people, calm intimate atmosphere, high quality photo",
+  "_generated_dir": "2026-05-15-2100"
+}

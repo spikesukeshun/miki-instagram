@@ -1,0 +1,66 @@
+{
+  "_comment": "#19（ブライダル痩身BA）の 2-6枚目用。5/6 を入れ替え：5=ba_points / 6=ba_text_overlay(duration代替)。",
+  "slides": [
+    {
+      "type": "video_passthrough",
+      "filename_out": "ba_02_video.mp4",
+      "src": "experiments/before_after/assets/F1F8_5s_v2.mp4",
+      "frame_width": 30,
+      "frame_color": "#F6F1F1",
+      "video_url": null,
+      "_note": "実投稿時は GitHub raw URL を post_scheduler が drive_helper.get_file_url で組み立てる。dry-run 中は null で OK。"
+    },
+    {
+      "type": "ba_text_overlay",
+      "filename_out": "ba_03_overlay.jpg",
+      "images": ["/tmp/bridal/bridal_wedding_dress_fitting.jpg"],
+      "strip_h": 720,
+      "top_text": "式までに整えたい\n花嫁様へ",
+      "bottom_keywords": "二の腕・背中・肩甲骨・ウエスト・姿勢",
+      "bottom_text": "が気になる方"
+    },
+    {
+      "type": "ba_text_overlay",
+      "filename_out": "ba_04_overlay.jpg",
+      "images": ["/tmp/bridal/ドレスびふあふ2.JPG"],
+      "strip_h": 720,
+      "top_text": "ドレスのライン\n見違える変化",
+      "bottom_text": "半年・月2回の施術と\nご自宅でゆるい運動・食事改善"
+    },
+    {
+      "type": "ba_points",
+      "filename_out": "ba_05_points.jpg",
+      "title": "MIKIエステの\n3つのポイント",
+      "items": [
+        {
+          "image": "/tmp/bridal/bride3.JPG",
+          "label": "Point1",
+          "heading": "楽しむこと",
+          "body": "身体や肌はすぐには変わりません。\n楽しむ時間は心理的な余裕を生み\nストレスを軽減します。\n小さな変化でも楽しめるように\nサポートいたします。"
+        },
+        {
+          "image": "experiments/before_after/assets/point2.jpg",
+          "label": "Point2",
+          "heading": "ゆるく続けること",
+          "body": "ゼロか100かで考えず、\nできたという小さな達成感を\n積み重ねることで習慣化し、\n幸福度を高められます。"
+        },
+        {
+          "image": "experiments/before_after/assets/sky.jpg",
+          "label": "Point3",
+          "heading": "素直な気持ちを持つこと",
+          "body": "思い込みや偏見に捉われず、\nありのままを受け入れましょう。\nそうすることで、\n自己成長の促進力を養います。"
+        }
+      ]
+    },
+    {
+      "_note": "スライド6はBA加工せず raw 画像をそのまま使う。create_post_ba.py 実行後に手動で _resize_to_carousel('/tmp/bridal/bridal_hanamiyome_esute_post.jpg') → generated/carousel_06.jpg に置換 → GitHub再アップ。再実行時も同じ後処理が必要。",
+      "type": "ba_text_overlay",
+      "filename_out": "ba_06_overlay.jpg",
+      "images": ["/tmp/bridal/bridal_hanamiyome_esute_post.jpg"],
+      "strip_h": 0,
+      "top_text": "",
+      "bottom_text": "",
+      "_post_action": "raw_replace"
+    }
+  ]
+}

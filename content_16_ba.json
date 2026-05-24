@@ -1,0 +1,76 @@
+{
+  "_comment": "#16（一般痩身BA）の 2-6枚目用。generate_ba_carousel.py が読む形式。アセットは experiments/before_after/assets/ から相対パスで参照（content_16_ba.json はリポジトリ直下に置く前提）。",
+  "slides": [
+    {
+      "type": "video_passthrough",
+      "filename_out": "ba_02_video.mp4",
+      "src": "experiments/before_after/assets/miki_change_6months_trimmed.mp4",
+      "frame_width": 30,
+      "frame_color": "#F6F1F1",
+      "video_url": null,
+      "_note": "実投稿時は Drive 公開URLを video_url に埋める。dry-run 中は null のままで OK。"
+    },
+    {
+      "type": "ba_text_overlay",
+      "filename_out": "ba_03_overlay.jpg",
+      "images": [
+        "experiments/before_after/assets/elbow.jpg"
+      ],
+      "strip_h": 720,
+      "top_text": "初めては\n全身ケアがおすすめです",
+      "bottom_keywords": "むくみ・冷え・姿勢の崩れ・肩こり・硬い脂肪",
+      "bottom_text": "でお悩みの方"
+    },
+    {
+      "type": "ba_grid_compare",
+      "filename_out": "ba_04_grid.jpg",
+      "title": "施術例",
+      "subtitle": "半年・月2回の施術＋ゆるい運動・食事改善でのお客様の変化",
+      "pairs": [
+        {
+          "before": "experiments/before_after/assets/case1_before.jpg",
+          "after": "experiments/before_after/assets/case1_after.jpg"
+        },
+        {
+          "before": "experiments/before_after/assets/IMG_9201.JPG",
+          "after": "experiments/before_after/assets/IMG_9202.JPG"
+        }
+      ]
+    },
+    {
+      "type": "ba_duration",
+      "filename_out": "ba_05_duration.jpg",
+      "before": "experiments/before_after/assets/IMG_9197_edited.jpg",
+      "after": "experiments/before_after/assets/IMG_9198_edited.jpg",
+      "headline": "3ヶ月〜6ヶ月で\n軽く動ける体になる",
+      "before_label": "",
+      "after_label": "",
+      "body": "施術の周期\n変化が大きい方　3〜4ヶ月（目安）\n安定した方　6ヶ月〜1年（目安）"
+    },
+    {
+      "type": "ba_points",
+      "filename_out": "ba_06_points.jpg",
+      "title": "MIKIエステの\n3つのポイント",
+      "items": [
+        {
+          "image": "experiments/before_after/assets/miki.jpg",
+          "label": "Point1",
+          "heading": "楽しむこと",
+          "body": "身体や肌はすぐには変わりません。\n楽しむ時間は心理的な余裕を生み\nストレスを軽減します。\n小さな変化でも楽しめるように\nサポートいたします。"
+        },
+        {
+          "image": "experiments/before_after/assets/point2.jpg",
+          "label": "Point2",
+          "heading": "ゆるく続けること",
+          "body": "ゼロか100かで考えず、\nできたという小さな達成感を\n積み重ねることで習慣化し、\n幸福度を高められます。"
+        },
+        {
+          "image": "experiments/before_after/assets/sky.jpg",
+          "label": "Point3",
+          "heading": "素直な気持ちを持つこと",
+          "body": "思い込みや偏見に捉われず、\nありのままを受け入れましょう。\nそうすることで、\n自己成長の促進力を養います。"
+        }
+      ]
+    }
+  ]
+}

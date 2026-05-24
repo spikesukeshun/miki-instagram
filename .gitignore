@@ -9,3 +9,7 @@ backgrounds/
 !backgrounds/slide7.jpg
 !backgrounds/slide8.jpg
 generated/carousel_*.jpg
+experiments/before_after/assets/
+experiments/before_after/generated/
+!experiments/before_after/assets/.gitkeep
+!experiments/before_after/generated/.gitkeep

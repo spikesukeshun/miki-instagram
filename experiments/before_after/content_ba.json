@@ -1,0 +1,82 @@
+{
+  "_comment": "Before/After カルーセル試作・variant_a スタイル。本番では 1/7/8 枚目は別セクションのカルーセルデザインで上書きされる前提。ここでは 2〜6 枚目（動画／text_overlay／grid／duration／points）が「Before/After 用デザイン」のテンプレート。",
+  "slides": [
+    {
+      "type": "ba_cover",
+      "filename_out": "ba_01_cover.jpg",
+      "before": "assets/IMG_9199.JPG",
+      "after": "assets/IMG_9200.JPG",
+      "upper_caption": "— 6ヶ月前",
+      "lower_caption": "現在 —",
+      "sub_text": "-12キロ\n楽しくダイエット成功",
+      "bubble_text": "初めてのエステは6ヶ月前。月に2回のエステと自宅で\nゆるい運動とゆるい食事改善で楽しく継続♪",
+      "miki_icon": "assets/miki_icon.jpg"
+    },
+    {
+      "type": "video_passthrough",
+      "filename_out": "ba_02_video.mp4",
+      "src": "assets/miki_change_6months_trimmed.mp4",
+      "frame_width": 30,
+      "frame_color": "#F6F1F1",
+      "video_url": null,
+      "_note": "publish 時は video_url（Drive 等の公開 URL）を埋める。frame_width で外周にクリーム色の額縁を付与。"
+    },
+    {
+      "type": "ba_text_overlay",
+      "filename_out": "ba_03_overlay.jpg",
+      "images": [
+        "assets/elbow.jpg"
+      ],
+      "strip_h": 720,
+      "top_text": "初めては\n全身ケアがおすすめです",
+      "bottom_keywords": "むくみ・冷え・姿勢の崩れ・肩こり・硬い脂肪",
+      "bottom_text": "でお悩みの方"
+    },
+    {
+      "type": "ba_grid_compare",
+      "filename_out": "ba_04_grid.jpg",
+      "title": "施術例",
+      "subtitle": "担当したお客様の変化（半年間・月2回エステ、運動・食事改善あり）",
+      "pairs": [
+        {"before": "assets/case1_before.jpg", "after": "assets/case1_after.jpg"},
+        {"before": "assets/IMG_9201.JPG", "after": "assets/IMG_9202.JPG"}
+      ]
+    },
+    {
+      "type": "ba_duration",
+      "filename_out": "ba_05_duration.jpg",
+      "before": "assets/IMG_9197_edited.jpg",
+      "after": "assets/IMG_9198_edited.jpg",
+      "headline": "3ヶ月〜6ヶ月で\n新しい自分に生まれ変わる",
+      "before_label": "",
+      "after_label": "",
+      "body": "施術の周期\n変化が大きい方　3〜4ヶ月（目安）\n安定した方　6ヶ月〜1年（目安）"
+    },
+    {
+      "type": "ba_points",
+      "filename_out": "ba_06_points.jpg",
+      "title": "MIKIエステの\n3つのポイント",
+      "items": [
+        {
+          "image": "assets/miki.jpg",
+          "label": "Point1",
+          "heading": "楽しむこと",
+          "body": "身体や肌はすぐには変わりません。\n楽しむ時間は心理的な余裕を生み\nストレスを軽減します。\n小さな変化でも楽しめるように\nサポートいたします。"
+        },
+        {
+          "image": "assets/point2.jpg",
+          "label": "Point2",
+          "heading": "ゆるく続けること",
+          "body": "ゼロか100かで考えず、\nできたという小さな達成感を\n積み重ねることで習慣化し、\n幸福度を高められます。"
+        },
+        {
+          "image": "assets/sky.jpg",
+          "label": "Point3",
+          "heading": "素直な気持ちを持つこと",
+          "body": "思い込みや偏見に捉われず、\nありのままを受け入れましょう。\nそうすることで、\n自己成長の促進力を養います。"
+        }
+      ]
+    }
+  ],
+  "caption": "（試作用ダミーキャプション。本番では本流の caption ルールに従って差し替える）"
+}
