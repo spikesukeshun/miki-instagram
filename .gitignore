@@ -5,6 +5,7 @@ __pycache__/
 content/
 credentials.json
 token.json
+.claude/scheduled_tasks.lock
 backgrounds/
 !backgrounds/slide7.jpg
 !backgrounds/slide8.jpg
