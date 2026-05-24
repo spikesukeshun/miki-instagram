@@ -283,14 +283,19 @@ def download_image(url: str, filename: str) -> bool:
 
 
 def apply_edit_effect(img_path: str, slide_type: str) -> None:
-    """PILで画像を加工してスライド種別に合った背景に仕上げる"""
-    from PIL import Image, ImageFilter, ImageEnhance
+    """PILで画像を加工してスライド種別に合った背景に仕上げる。
+
+    【厳守・再発防止】ユーザーから「画像がぼやける／アスペクト比が変わる」と
+    繰り返し指摘されている。以下を絶対に入れないこと:
+      - ぼかし（ImageFilter.GaussianBlur）… 写真は鮮明に見せる
+      - 1080x1350 への強制 resize … アスペクト比が崩れて被写体が伸びる
+    アスペクト比はそのまま保持し、クロップは generate_carousel.py の
+    crop_center_with_focus()（cover-fit センタークロップ）に任せる。"""
+    from PIL import Image, ImageEnhance
     img = Image.open(img_path).convert("RGB")
-    img = img.resize((1080, 1350), Image.LANCZOS)
 
     if slide_type in ("text", "list"):
-        img = img.filter(ImageFilter.GaussianBlur(radius=8))
-        img = ImageEnhance.Brightness(img).enhance(1.3)
+        img = ImageEnhance.Brightness(img).enhance(1.05)
     elif slide_type == "cover":
         img = ImageEnhance.Color(img).enhance(1.2)
         img = ImageEnhance.Contrast(img).enhance(1.1)
