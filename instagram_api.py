@@ -76,8 +76,11 @@ def create_video_container(video_url: str, caption: str) -> str:
 
 def _wait_for_container_ready(container_id: str, timeout: int = 120, interval: int = 10):
     """コンテナのstatus_codeがFINISHEDになるまでポーリングする"""
+    # コンテナ（メディアオブジェクト）はIGユーザー所有のため、status_code の
+    # 読み取りにはユーザートークンが必要（ページトークンだと Authorization
+    # Error code=100 / subcode=33 になり status が空のままタイムアウトする）。
     url = f"{API_BASE}/{container_id}"
-    params = {"fields": "status_code", "access_token": _get_access_token()}
+    params = {"fields": "status_code", "access_token": _USER_TOKEN}
     elapsed = 0
     while elapsed < timeout:
         res = requests.get(url, params=params)
@@ -96,9 +99,10 @@ def publish_container(container_id: str) -> str:
     """コンテナを公開してpost_idを返す"""
     _wait_for_container_ready(container_id)
     url = f"{API_BASE}/{ACCOUNT_ID}/media_publish"
+    # publish もコンテナ読み取りと同様にユーザートークンで実行する。
     params = {
         "creation_id": container_id,
-        "access_token": _get_access_token()
+        "access_token": _USER_TOKEN
     }
     res = requests.post(url, params=params)
     data = res.json()
