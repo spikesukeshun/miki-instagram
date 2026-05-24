@@ -326,7 +326,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
     """各スライドのbg_strategyに従って背景ファイルを決定しfilenameを更新
     Returns: 最後に使用したseed（generate時）
     """
-    from PIL import Image as _Img, ImageFilter as _IF
+    from PIL import Image as _Img
     os.makedirs("backgrounds", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     last_seed = global_seed
@@ -362,8 +362,9 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                     if strategy == "edit":
                         apply_edit_effect(path, slide.get("type", "text"))
                     else:
+                        # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
+                        # HEIC等を確実にJPEGへ正規化するため再保存のみ行う。
                         _bg = _Img.open(path).convert("RGB")
-                        _bg = _bg.filter(_IF.GaussianBlur(radius=4))
                         _bg.save(path, "JPEG", quality=90)
                     slide["filename"] = filename
                     continue
@@ -387,8 +388,8 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             print(f"  スライド{i+1}: 過去投稿を転用（いいね{img['like_count']}件）")
             success = download_image(img["url"], filename)
             if success:
+                # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
                 _bg = _Img.open(path).convert("RGB")
-                _bg = _bg.filter(_IF.GaussianBlur(radius=4))
                 _bg.save(path, "JPEG", quality=90)
                 slide["filename"] = filename
                 continue
