@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>投稿プレビュー - MIKI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #FFF9F5;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            color: #3D1F2D;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: linear-gradient(135deg, #E8A0B4, #C9A96E);
+            color: white;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 6px; }
+        .header .meta { font-size: 13px; opacity: 0.9; }
+        .section-title {
+            font-size: 13px;
+            color: #C9A96E;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            padding: 20px 16px 8px;
+            border-bottom: 1px solid #F0D9E0;
+            margin-bottom: 0;
+        }
+        .image-card {
+            position: relative;
+            margin: 12px 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(200,120,130,0.15);
+        }
+        .image-card img {
+            width: 100%;
+            display: block;
+        }
+        .image-num {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .caption-box {
+            margin: 4px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .hashtags {
+            margin: 8px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #5B8FCA;
+            line-height: 1.7;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .approve-box {
+            margin: 20px 16px 0;
+            background: linear-gradient(135deg, #FFF0F5, #FFF8EC);
+            border: 1.5px solid #E8A0B4;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .approve-box p { font-size: 13px; line-height: 1.7; color: #3D1F2D; }
+        .approve-box .step {
+            font-size: 14px;
+            font-weight: bold;
+            color: #C9607A;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #B0969F;
+            margin-top: 24px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 投稿プレビュー</h1>
+        <div class="meta">投稿予定: 2026/06/03 21:00　|　全8枚</div>
+    </div>
+
+    <div class="section-title">▼ 画像確認</div>
+    
+        <div class="image-card">
+            <div class="image-num">1 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_01.jpg?t=202605260802" alt="スライド1" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">2 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_02.jpg?t=202605260802" alt="スライド2" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">3 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_03.jpg?t=202605260802" alt="スライド3" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">4 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_04.jpg?t=202605260802" alt="スライド4" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">5 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_05.jpg?t=202605260802" alt="スライド5" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">6 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_06.jpg?t=202605260802" alt="スライド6" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">7 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_07.jpg?t=202605260802" alt="スライド7" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">8 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-03-2100/carousel_08.jpg?t=202605260802" alt="スライド8" loading="lazy">
+        </div>
+
+    <div class="section-title">▼ キャプション</div>
+    <div class="caption-box">エステティシャンとして歩んできた十数年、私が美容の道を選んだ理由を、今日は自分の言葉でお話しします。<br><br>MIKIです。<br><br>今日は施術のお話ではなく、私自身のことを少しだけ綴らせてください。<br><br>美容の専門学校で、ヘア・メイク・ネイル、そしてエステまで、美しさを多角的に学びました。たくさんの技術に触れる中で、私がたどり着いた答えは、とてもシンプルなものでした。<br><br>肌も、体も、心も、その土台を整えることが、すべての美しさの根っこにある。<br><br>表面をきれいに見せるテクニックよりも、内側からめぐりを整えていくこと。遠回りに見えても、それがいちばん確かで、長く続く美しさにつながると信じています。<br><br>---<br><br>そう思えるようになったのには、理由があります。<br><br>私自身が一人の花嫁になったとき、現実は想像していたよりもずっと大変でした。あふれる情報の中で何を信じればいいのか分からず、肌や体の悩み、そして尽きない不安に、何度も迷いました。<br><br>あのときの心細さを、今でもよく覚えています。<br><br>だからこそ、同じように揺れている方の小さな不安を、一番最初に打ち明けてもらえる存在でいたい。そう強く思うようになりました😊<br><br>---<br><br>施術を重ねるうちに、お客様の表情は少しずつ変わっていきます。体が軽くなり、肌が変わり、鏡を見るたびに自信に満ちた笑顔になっていく。<br><br>その瞬間に立ち会えることが、今の私のいちばんの喜びです。<br><br>ライフステージが変わっても、ふと「また会いたいな」と思い出してもらえる。そんな関わり方ができたら、これ以上うれしいことはありません。<br><br>変わりたいと思えた今が、はじめどきです。あなたのペースで、ゆっくり一緒に整えていきましょう💌<br><br>---<br><br>✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨<br><br>ご予約・ご相談はプロフィールのDMからお気軽にどうぞ</div>
+
+    <div class="section-title">▼ ハッシュタグ</div>
+    <div class="hashtags">#六本木エステ&nbsp;#エステサロン&nbsp;#美容好きな人と繋がりたい&nbsp;#自分磨き&nbsp;#大人の美容&nbsp;#エステティシャン&nbsp;#肌の土台</div>
+
+    <div class="approve-box">
+        <p>内容を確認したら<br>スプレッドシートで承認してください</p>
+        <div class="step">ステータス欄を「承認済み」に変更 →　GO！</div>
+    </div>
+
+    <div class="footer">
+        <p>プレビュー生成日時: 2026/05/26 08:02</p>
+    </div>
+</body>
+</html>
