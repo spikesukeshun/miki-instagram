@@ -96,6 +96,11 @@ rm -f backgrounds/bg_*.jpg generated/carousel_*.jpg      # cleanup（cleanup_bac
 9. alt_text は短い文章（キーワード羅列でない）
 10. キャプション末尾に CTA を必ず入れる
 11. `review_post.py content_NN.json` を毎回必ず実行（修正依頼処理時は `--revision "依頼文"` も付ける）
+12. **MIKIの内面感情を一人称で実況する描写は禁止**（2026-05-10 MIKI本人NG）。
+    NG：「胸がきゅっとなります」「私はそっと耳を傾けています」「心の中で『よかった』とつぶやいています」
+    OK：事実ベース・お客様視点（「『○○』というお声をよくいただきます」）
+    OK：MIKIの行動・哲学（「私は3つのポイントを大切にしています」）
+    詳細は CLAUDE.md「禁止される情緒表現（MIKI本人NG・恒久）」
 
 ## インサイト戦略（参考）
 
