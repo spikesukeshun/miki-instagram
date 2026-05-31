@@ -6,6 +6,7 @@ Usage:
     python review_post.py [content.json のパス] [--revision "修正依頼文"]
 """
 
+import os
 import sys
 import json
 import re
@@ -63,6 +64,40 @@ def check_caption_has_cta(caption: str) -> tuple[bool, str]:
     if "MIKI指名 初回限定20%OFF（VIPコースのみ）" not in caption:
         return False, "キャプション末尾にCTA「MIKI指名 初回限定20%OFF（VIPコースのみ）」がありません"
     return True, "キャプションCTA ✓"
+
+
+# 年代括りの定型導入（例: 「30代・40代の女性へ」）
+GENERIC_OPENER_RE = re.compile(r"^[2-5]0代\s*[・,、,]?\s*[2-5]0代")
+
+
+def _normalize_prefix(text: str, n: int = 12) -> str:
+    return re.sub(r"\s", "", text)[:n]
+
+
+def check_caption_seo_opener(caption: str, recent_path: str = "recent_insights.json") -> tuple[bool, str]:
+    """導入文（1行目）が定型化・直近投稿と重複していないか確認。
+    recent_insights.json があれば直近投稿の導入文と照合する（posts[].intro 必須）。"""
+    intro = next((l.strip() for l in caption.split("\n") if l.strip()), "")
+    if not intro:
+        return True, "導入文チェック（導入なし・スキップ）"
+
+    # 1) 直近投稿と同一の定型導入か
+    if os.path.exists(recent_path):
+        try:
+            with open(recent_path, encoding="utf-8") as f:
+                data = json.load(f)
+            recent_intros = [p.get("intro", "") for p in data.get("posts", []) if p.get("intro")]
+        except (json.JSONDecodeError, OSError):
+            recent_intros = []
+        new_pref = _normalize_prefix(intro)
+        if any(_normalize_prefix(s) == new_pref for s in recent_intros):
+            return False, f"導入文が直近投稿と同じ定型です（「{new_pref}…」）— 投稿ごとに固有の一文で開始してください"
+
+    # 2) 年代括りの汎用テンプレ（recent が無い場合の保険）
+    if GENERIC_OPENER_RE.match(intro):
+        return False, f"導入文が定型の年代括りです（「{intro[:14]}…」）— 没個性化回避のため固有の切り口に変更してください"
+
+    return True, "導入文の独自性 ✓"
 
 
 def check_slides(slides: list) -> list[tuple[bool, str]]:
@@ -188,6 +223,7 @@ def run_review(content_path: str, revision_instruction: str = ""):
 
     # キャプションチェック
     all_results.append(check_caption_seo_intro(caption))
+    all_results.append(check_caption_seo_opener(caption))
     all_results.append(check_caption_emoji_count(caption))
     all_results.append(check_caption_forbidden_chars(caption))
     all_results.append(check_caption_has_cta(caption))
