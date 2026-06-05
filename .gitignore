@@ -9,3 +9,10 @@ backgrounds/
 !backgrounds/slide7.jpg
 !backgrounds/slide8.jpg
 generated/carousel_*.jpg
+
+# local venv / 一時出力 / リール試作（git管理外）
+.venv/
+recent_insights.json
+upload_history.json
+reel_prototype/
+generated/carousel_*.jpg
