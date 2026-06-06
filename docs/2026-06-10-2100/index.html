@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>投稿プレビュー - MIKI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #FFF9F5;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            color: #3D1F2D;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: linear-gradient(135deg, #E8A0B4, #C9A96E);
+            color: white;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 6px; }
+        .header .meta { font-size: 13px; opacity: 0.9; }
+        .section-title {
+            font-size: 13px;
+            color: #C9A96E;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            padding: 20px 16px 8px;
+            border-bottom: 1px solid #F0D9E0;
+            margin-bottom: 0;
+        }
+        .image-card {
+            position: relative;
+            margin: 12px 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(200,120,130,0.15);
+        }
+        .image-card img {
+            width: 100%;
+            display: block;
+        }
+        .image-num {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .caption-box {
+            margin: 4px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .hashtags {
+            margin: 8px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #5B8FCA;
+            line-height: 1.7;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .approve-box {
+            margin: 20px 16px 0;
+            background: linear-gradient(135deg, #FFF0F5, #FFF8EC);
+            border: 1.5px solid #E8A0B4;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .approve-box p { font-size: 13px; line-height: 1.7; color: #3D1F2D; }
+        .approve-box .step {
+            font-size: 14px;
+            font-weight: bold;
+            color: #C9607A;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #B0969F;
+            margin-top: 24px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 投稿プレビュー</h1>
+        <div class="meta">投稿予定: 2026/06/10 21:00　|　全8枚</div>
+    </div>
+
+    <div class="section-title">▼ 画像確認</div>
+    
+        <div class="image-card">
+            <div class="image-num">1 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_01.jpg?t=202606061139" alt="スライド1" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">2 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_02.jpg?t=202606061139" alt="スライド2" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">3 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_03.jpg?t=202606061139" alt="スライド3" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">4 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_04.jpg?t=202606061139" alt="スライド4" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">5 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_05.jpg?t=202606061139" alt="スライド5" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">6 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_06.jpg?t=202606061139" alt="スライド6" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">7 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_07.jpg?t=202606061139" alt="スライド7" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">8 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-06-10-2100/carousel_08.jpg?t=202606061139" alt="スライド8" loading="lazy">
+        </div>
+
+    <div class="section-title">▼ キャプション</div>
+    <div class="caption-box">ブライダルエステは式まで1ヶ月を切ってからでも、直前ケアで間に合います。<br><br>MIKIです。<br><br>「もっと早く始めればよかった」<br><br>式の準備に追われ、自分のケアは後回し。気づけば式まで1ヶ月、という花嫁様は本当に多いです。<br><br>でも、どうか焦らないでください。直前だからこそできるケアがあります。<br><br>---<br><br>私自身、一人の花嫁になったとき、準備の大変さに何度も心が折れそうになりました。やることは山積みで、自分の肌や体にまで手が回らない。あの焦りと不安は、今でもよく覚えています。<br><br>だからこそ、直前で駆け込んでくださる花嫁様のお気持ちが、痛いほど分かります。<br><br>---<br><br>式までの1ヶ月は、肌のターンオーバーがちょうど一巡する大切な時期です。<br><br>4週間前から肌の土台を整え、2週間前にむくみを集中的に流し、1週間前にハリと血色を底上げする。前日には最終コンディションを整える。<br><br>短い期間でも、計画的に逆算してケアすれば、当日にしっかり間に合います😊<br><br>---<br><br>迎える当日、鏡の前に立ったとき「これが私」と心から思えるように。一番大切な日に、一番のあなたでいられるよう、残りの1ヶ月、私が伴走します。<br><br>直前のご相談こそ、遠慮なさらないでください。不安なお気持ちごと、私が受け止めます💌<br><br>---<br><br>✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨<br><br>ご予約・ご相談はプロフィールのDMからお気軽にどうぞ</div>
+
+    <div class="section-title">▼ ハッシュタグ</div>
+    <div class="hashtags">#ブライダルエステ&nbsp;#ブライダルエステ東京&nbsp;#プレ花嫁&nbsp;#花嫁準備&nbsp;#結婚式準備&nbsp;#直前ブライダル&nbsp;#六本木エステ</div>
+
+    <div class="approve-box">
+        <p>内容を確認したら<br>スプレッドシートで承認してください</p>
+        <div class="step">ステータス欄を「承認済み」に変更 →　GO！</div>
+    </div>
+
+    <div class="footer">
+        <p>プレビュー生成日時: 2026/06/06 11:39</p>
+    </div>
+</body>
+</html>
