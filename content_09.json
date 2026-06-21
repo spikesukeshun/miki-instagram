@@ -3,67 +3,80 @@
     {
       "filename": "bg01.jpg",
       "type": "cover",
-      "title": "GW中盤\n体をリセットする",
-      "tag": "- MIKIがすすめるご褒美エステ -",
-      "bg_strategy": "generate"
+      "title": "私の、\nオフの過ごし方",
+      "tag": "- MIKIのプライベート -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "lifestyle",
+      "reuse_filename": "六本木夜景.HEIC",
+      "focus_y": 0.5
     },
     {
       "filename": "bg02.jpg",
       "type": "text",
-      "title": "MIKIがよく\n聞くお声",
-      "text": "「旅行や外出が続いて\n体が重くなってきた気がする」\n「GW後半もまだまだ楽しみたいのに\n疲れが出てきてしまった」\n\nこういうお声を、施術中に\n私はよく聞きます。\n\n楽しい連休のはずなのに\n体が追いついていない感覚。\n\nそういうときにこそ\nご褒美エステの出番です。",
+      "title": "意外と、インドア派",
+      "text": "お休みの日は、家でゆっくり\n過ごすことが多いんです。\n\n好きな香りのお茶をいれて\n何もしない時間を味わう。\nそれが私の充電方法です。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
-      "reuse_theme": "menu",
-      "reuse_filename": "参考1.JPG"
+      "reuse_theme": "lifestyle",
+      "reuse_filename": "panda.HEIC",
+      "focus_y": 0.7,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg03.jpg",
-      "type": "list",
-      "title": "MIKIがすすめる\n3つのリセット",
-      "items": [
-        "むくみを流してすっきりする",
-        "肌のトーンを一気に整える",
-        "心の疲れも一緒に手放す"
-      ],
-      "footer": "お一人おひとりの状態に合わせてアプローチします",
+      "type": "text",
+      "title": "自分も整える",
+      "text": "人を癒やす仕事だからこそ\n自分自身のケアも大切にしています。\n\nお風呂にゆっくり浸かったり\n軽く体を動かしたり。\n心と体を整える時間を持っています。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考2.jpg"
+      "reuse_filename": "jacuzzi.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg04.jpg",
       "type": "text",
-      "title": "MIKIが伝える\nリセットの考え方",
-      "text": "「疲れたから行く」ではなく\n「後半をもっと楽しむために整える」。\n\n私がお客様によくお伝えするのは\nそういうご褒美エステの使い方です。\n\nリンパを流してむくみをリセットすると\n体の軽さが全然変わります。\n肌を整えると、鏡を見るのが\n少し楽しくなります。\n\nGW中盤の今こそ\n自分の体と向き合う時間を作ってみてください。",
+      "title": "街を歩く時間",
+      "text": "ときどき、目的もなく\n街をぶらぶら歩くのも好きです。\n\n季節の移ろいを感じながら歩くと\n新しいアイデアや元気が\n自然と湧いてくる気がします。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
-      "reuse_theme": "menu",
-      "reuse_filename": "参考6.JPG"
+      "reuse_theme": "lifestyle",
+      "reuse_filename": "IMG_9028.HEIC",
+      "focus_y": 0.4,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg05.jpg",
       "type": "text",
-      "title": "MIKIのお客様に\n届いたお声",
-      "text": "「施術後に体がすごく軽くなりました」\n「GW後半が楽しみになりました」\n「なんか気持ちまでリフレッシュした」\n\nこういうお声をいただくたびに\n私はとてもうれしくなります。\n\nはじめての方も、どうぞ気軽にいらしてください。\n一人でいらっしゃる方がほとんどなので\n安心してください。",
+      "title": "また明日から",
+      "text": "そうして自分を満たしてあげると\nまた誰かを癒やしたくなる。\n\nオフがあるから、お客様と\n向き合う時間がもっと愛おしくなる。\nそんな毎日を過ごしています。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考5.JPG"
+      "reuse_filename": "IMG_0737.JPG",
+      "focus_y": 0.55,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg06.jpg",
       "type": "cta",
-      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
-      "body": "GW後半を最高の状態で楽しみたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "頑張っているあなたにも\n自分を甘やかす時間が\n必要だと思います。\nたまには肩の力を抜いて\n会いに来てくださいね。\nまずはMIKIにご相談ください♪",
       "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
-      "bg_strategy": "generate"
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     }
   ],
-  "caption": "GW中盤の今こそ体をリセットしてほしい、後半をもっと楽しむためのご褒美エステのすすめです。\n\nMIKIです。\n\n「旅行や外出が続いて、体が重くなってきた気がする」\n\nそんなお声を、施術中に私はよく聞きます。\n\n楽しい連休のはずなのに、体が追いついていない感覚。\nGW後半もまだまだ楽しみたいのに、疲れが出てきてしまった。\n\nそういうときにこそ、ご褒美エステの出番だと私は思っています。\n\n---\n\n私がお客様によくお伝えするのは\n「疲れたから行く」だけでなく\n「後半をもっと楽しむために整える」という使い方です。\n\nリンパを流してむくみをリセットする。\n肌のトーンを整えて鏡を見るのを楽しくする。\n心の疲れも一緒に手放してすっきりする。\n\nこういうアプローチをすることで\n体の軽さが変わり、気持ちの切り替えができます。\n\n---\n\n「施術後に体がすごく軽くなりました」\n「GW後半が楽しみになりました」\n「なんか気持ちまでリフレッシュした」\n\nこういうお声をいただくたびに\n私はとてもうれしくなります。\n\n---\n\nはじめての方も、どうぞお気軽にいらしてください。\n\n一人でいらっしゃる方がほとんどなので、安心してください。\n初回はカウンセリングからじっくりと始めます。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
-  "hashtags": "#ご褒美エステ #ご褒美タイム #六本木エステ #エステ体験 #GW #リラクゼーション #自分磨き #むくみケア #リフレッシュ",
-  "alt_text": "白い花とスパストーンが並ぶ、自然光の差し込む清潔感のあるエステルーム",
-  "memo": "5/3 GW中盤（土曜12:00）。旅行・外出が続いて体が重くなってきたタイミングに刺さる訴求。「後半をもっと楽しむために整える」という能動的なご褒美エステの使い方を提案。GW突入（content_07）・GW前（content_05）と角度を変えた3部作の締め。",
-  "bg_prompt": "Japanese esthetic salon interior, fresh white flowers and smooth spa stones on wooden tray, warm white and cream tones, no people, serene and refreshing atmosphere, high quality photo"
+  "caption": "エステティシャンMIKIの、ちょっと意外なお休みの日の過ごし方をお話しします。\n\nMIKIです。\n\n今日はいつもと趣向を変えて、私のプライベートを少しだけのぞいてもらおうと思います😊\n\n意外かもしれませんが、お休みの日は家でゆっくり過ごすインドア派なんです。\n\n---\n\n好きな香りのお茶をいれて、何もしない時間を味わう。それが私の充電方法です。\n\n人を癒やす仕事だからこそ、自分自身のケアも大切にしています。お風呂にゆっくり浸かったり、軽く体を動かしたり。心と体を整える時間を持つようにしています💧\n\n---\n\nときどき、目的もなく街を歩くのも好きです。季節の移ろいを感じながら歩くと、新しい元気が自然と湧いてくる気がします。\n\nそうして自分を満たしてあげると、また誰かを癒やしたくなる。オフがあるから、お客様と向き合う時間がもっと愛おしくなるんです💌\n\n---\n\n頑張っているあなたにも、自分を甘やかす時間が必要です。たまには肩の力を抜いて、会いに来てくださいね。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ",
+  "hashtags": "#エステティシャンの休日 #六本木エステ #オフの過ごし方 #自分を整える #私の日常 #リフレッシュ #美容好きな人と繋がりたい",
+  "memo": "7/5(日)12:00 #9 プライベート（人柄/抜け感）。MIKIの休日・自己ケアを公開しリーチ最大化(過去プライベートはreach最高937)。cover=lifestyle六本木夜景、panda/4122もlifestyle、Jacuzzi/candleはmenu。全text。概算ドラフト・画像は要精査(六本木夜景HEICの仕上がり確認)。",
+  "alt_text": "夜の六本木の街明かりがきらめく、しっとりとした大人の夜景",
+  "bg_prompt": "Tokyo night cityscape, glowing city lights, calm mature mood, no people, high quality photo",
+  "_generated_dir": "2026-07-05-1200"
 }

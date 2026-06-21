@@ -3,67 +3,80 @@
     {
       "filename": "bg01.jpg",
       "type": "cover",
-      "title": "GWこそ\n肌の土台を整える",
-      "tag": "- MIKIが伝えるアラサー・アラフォー美容 -",
-      "bg_strategy": "generate"
+      "title": "卒花さんが\n教えてくれたこと",
+      "tag": "- 結婚式のその先へ -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "bridal",
+      "reuse_filename": "cover1.JPG",
+      "focus_y": 0.4
     },
     {
       "filename": "bg02.jpg",
       "type": "text",
-      "title": "MIKIがよく\n聞くお声",
-      "text": "「連休に鏡を見たら\nなんか顔色がくすんでいた」\n「スキンケアを頑張っても\n追いつかない気がしてる」\n\nこういうお声を、施術中に\n私はよく聞きます。\n\n30代・40代になると\n頑張っているのに追いつかない感覚が\n出てくるのは当然のことです。\n\nその感覚は正直なサインです。",
+      "title": "式が終わっても",
+      "text": "結婚式が無事に終わったあと\n「ここで終わりじゃないんですね」\nと言ってくださる花嫁様がいます。\n\nブライダルエステは\n人生の節目に寄り添うケアです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
-      "reuse_theme": "menu",
-      "reuse_filename": "参考1.JPG"
+      "reuse_theme": "bridal",
+      "reuse_filename": "bride3.JPG",
+      "focus_y": 0.4,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg03.jpg",
-      "type": "list",
-      "title": "30代・40代の\n肌に起きていること",
-      "items": [
-        "ターンオーバーが遅くなる",
-        "コラーゲンが急激に減少する",
-        "乾燥・くすみ・毛穴が同時に起きる"
-      ],
-      "footer": "私も施術を通じてこの変化をひしひしと感じています",
+      "type": "text",
+      "title": "あの日の言葉",
+      "text": "「人生で一番きれいな日でした」\n\nそう報告してくださったとき\n私も胸がいっぱいになりました。\n準備の日々を一緒に過ごせたことが\n本当に幸せでした。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
-      "reuse_theme": "menu",
-      "reuse_filename": "参考2.jpg"
+      "reuse_theme": "bridal",
+      "reuse_filename": "bride1.JPG",
+      "focus_y": 0.4,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg04.jpg",
       "type": "text",
-      "title": "MIKIが大切にする\n「土台」の整え方",
-      "text": "ケアを増やしても追いつかない理由は\n「土台」が変わってきているからです。\n\n私が施術で一番大切にしているのは\n体の奥から巡りを整えてリンパを流し\n老廃物をしっかり排出すること。\n\nそこからアプローチすることで\n化粧品の浸透が変わり\n肌の底力そのものが変わっていきます。\n\nGW中の今こそ\nその土台を変えるきっかけにしてみてください。",
+      "title": "結婚後も続くご縁",
+      "text": "式のあとも、記念日や\n節目のたびに来てくださる方も。\n\n一度きりではなく、長く寄り添える。\nそんな関係を築けることが\n私の何よりの喜びです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
-      "reuse_theme": "menu",
-      "reuse_filename": "参考5.JPG"
+      "reuse_theme": "bridal",
+      "reuse_filename": "A3D6D016-DC37-4204-B899-04F9BC3FEE42.JPG",
+      "focus_y": 0.4,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg05.jpg",
       "type": "text",
-      "title": "MIKIのお客様に\n届いた変化",
-      "text": "「なんか最近、肌の調子が違う気がします」\n「化粧品がすっと入るようになった」\n「顔色が明るいと言われました」\n\nこういうお声をいただくたびに\n私はこの仕事をしていて\n本当によかったと感じます。\n\nどの年代でも、土台を整えれば\n肌は必ず応えてくれます。\n私はそれを信じています。",
+      "title": "次はあなたの番",
+      "text": "これから式を迎える花嫁様も\nどうか不安にならないでください。\n\n一番輝く日を、最高の自分で。\nその瞬間まで、私が伴走します。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
-      "reuse_theme": "menu",
-      "reuse_filename": "参考3.JPG"
+      "reuse_theme": "bridal",
+      "reuse_filename": "花嫁赤ドレス横顔",
+      "focus_y": 0.4,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg06.jpg",
       "type": "cta",
-      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
-      "body": "30代・40代の肌に\n本気で向き合いたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "結婚式は、ゴールではなく\n新しい毎日のはじまり。\nその大切な節目を\n一番のあなたで迎えられるよう\n心を込めてお手伝いします。\nまずはMIKIにご相談ください♪",
       "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
-      "bg_strategy": "generate"
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     }
   ],
-  "caption": "GW中だからこそ肌の土台を整えてほしい、30代・40代の方にとくに届けたいメッセージです。\n\nMIKIです。\n\n「連休に鏡を見たら、なんか顔色がくすんでいた」\n\nそんなお声を、施術中に私はよく聞きます。\n\nさぼっているわけでも、努力していないわけでもない。\nでも確かに、以前と同じケアでは追いつかなくなってきた感覚。\n\nその感覚は正直なサインだと私は思っています。\n\n---\n\n30代に入るとターンオーバーは45日前後まで延び、くすみや毛穴詰まりが起きやすくなります。\n40代ではコラーゲンが急減し、乾燥・たるみ・くすみが同時に押し寄せてくる。\n\n「追いつかない感」があるのは、当然のことなんです。\n\n---\n\n私が施術で一番大切にしているのは\n「土台から整えること」です。\n\n体の奥から巡りを整えてリンパを流し、老廃物をしっかり排出する。\nそこからアプローチすることで\n化粧品の浸透が変わり、肌の底力が変わっていきます。\n\nGW中の今こそ、その土台を変えるきっかけにしてほしいと私は思っています。\n\n---\n\n「なんか最近、肌の調子が違う気がします」\n「化粧品がすっと入るようになった」\n「顔色が明るいと言われました」\n\nこういうお声をいただくたびに\n私はこの仕事をしていて本当によかったと感じます。\n\nどの年代でも、土台を整えれば肌は必ず応えてくれます。\n\nぜひ一度、お気軽にDMでご連絡ください。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
-  "hashtags": "#アラサー美容 #アラフォー美容 #30代美容 #40代美容 #大人の肌ケア #六本木エステ #エステ体験 #自分磨き #GW",
-  "alt_text": "ベージュトーンのエステルームに白いオーキッドとスキンケアアイテムが並ぶ、洗練された空間",
-  "memo": "5/1 GW中盤。アラサー・アラフォー両方をターゲットにした土台づくり訴求。GWで鏡を見て気づいた肌の変化をきっかけに、エステを始めるよう促す構成。content_01（アラサー）・content_04（アラフォー）と角度を変え「GW中の今こそ」でタイミング訴求。",
-  "bg_prompt": "Japanese esthetic salon interior, premium skincare products and white orchid on marble vanity, soft beige and ivory tones, no people, clean and sophisticated atmosphere, high quality photo"
+  "caption": "ブライダルエステは結婚式で終わりではなく、卒花さんとのご縁はその先も続いていきます。\n\nMIKIです。\n\n結婚式が無事に終わったあと「ここで終わりじゃないんですね」と言ってくださる花嫁様がいます。\n\nその言葉が、私はとてもうれしいんです😊\n\n---\n\n「人生で一番きれいな日でした」\n\nそう報告してくださったとき、私も胸がいっぱいになりました。準備の日々を一緒に過ごせたことが、本当に幸せでした💐\n\n式のあとも、記念日や節目のたびに来てくださる方もいます。一度きりではなく、長く寄り添える。そんな関係を築けることが、私の何よりの喜びです。\n\n---\n\nこれから式を迎える花嫁様も、どうか不安にならないでくださいね。\n\n一番輝く日を、最高の自分で。その瞬間まで、そしてその先も、私が伴走します💌\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ",
+  "hashtags": "#ブライダルエステ #卒花 #卒花嫁 #花嫁準備 #結婚式準備 #六本木エステ #プレ花嫁",
+  "memo": "7/3(金)21:00 #8 ブライダル卒花（定期ブライダル枠）。式後も続くご縁・卒花の声で長期関係性を訴求。画像は全てbridalフォルダ(cover1/bride3/bride1/A3D6D016夕日花嫁/花嫁赤ドレス横顔)、ctaのみBirthDay。概算ドラフト・画像は要精査。",
+  "alt_text": "白いウェディングドレスをまとった花嫁が、やわらかな光の中で静かに佇む情景",
+  "bg_prompt": "Elegant bridal still life, white wedding dress, soft chapel light, ivory tones, no people, no text, fine art photography",
+  "_generated_dir": "2026-07-03-2100"
 }

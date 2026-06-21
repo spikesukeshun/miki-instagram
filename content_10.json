@@ -3,67 +3,85 @@
     {
       "filename": "bg01.jpg",
       "type": "cover",
-      "title": "GW明けの\nご褒美エステ",
-      "tag": "- MIKIがすすめる連休疲れのリセット -",
-      "bg_strategy": "generate"
+      "title": "頑張った自分に\nご褒美を",
+      "tag": "- ご褒美エステ -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "Jacuzzi time.JPG",
+      "focus_y": 0.7
     },
     {
       "filename": "bg02.jpg",
       "type": "text",
-      "title": "MIKIがよく\n聞くお声",
-      "text": "「GWが終わって\nなんか体がだるい気がする」\n「連休明けって\nいつもより疲れてる感じがする」\n\nこういうお声を、施術中に\n私はよく聞きます。\n\n楽しかった連休が終わって\nいざ日常に戻るとき\n体も気持ちも一緒に重くなる感覚。\n\nそのループを抜け出すために\nご褒美エステという選択があります。",
+      "title": "毎日、お疲れさまです",
+      "text": "仕事に、家のことに\n気づけば自分のことは後回し。\n\nそんな風に頑張っているあなたにこそ\n立ち止まって自分を労わる\n時間を持ってほしいんです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考1.JPG"
+      "reuse_filename": "Hamam bath.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg03.jpg",
       "type": "list",
-      "title": "MIKIがすすめる\n連休疲れのケア",
+      "title": "ご褒美エステで\n得られること",
       "items": [
-        "全身の疲れをリンパで流す",
-        "肌のコンディションをリセット",
-        "気持ちの切り替えをサポート"
+        "凝り固まった体がほぐれる",
+        "巡りが整って軽くなる",
+        "心までゆるんで満たされる"
       ],
-      "footer": "お一人おひとりの状態に合わせてアプローチします",
+      "footer": "頑張った分だけ、しっかり癒やされてください。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考4.PNG"
+      "reuse_filename": "head massage.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg04.jpg",
       "type": "text",
-      "title": "MIKIが伝える\n連休後の整え方",
-      "text": "「また頑張れる気がする」\n\nご褒美エステのあとに\nそう言ってくださるお客様が\n私はとても好きです。\n\n体の巡りを整えてリンパを流すと\n翌日の疲れのたまり方が変わります。\n肌をリセットすると\n鏡を見るのが少し楽しくなります。\n\n連休の疲れを引きずったまま\n新しい週を迎えないでください。\n今こそ体に向き合う時間です。",
+      "title": "自分を満たす時間",
+      "text": "温かい手のぬくもりに包まれて\n日々の緊張がほどけていく。\n\n施術が終わるころには\n体も心も軽くなって\n呼吸まで深くなっているはずです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考5.JPG"
+      "reuse_filename": "IMG_7669.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg05.jpg",
       "type": "text",
-      "title": "MIKIのお客様に\n届いたお声",
-      "text": "「施術後にまた頑張れる気がしました」\n「月曜日が少し楽しみになりました」\n「連休明けの一番の贈り物になりました」\n\nこういうお声をいただくたびに\n私はこの仕事をしていて\n本当によかったと感じます。\n\nはじめての方も、どうぞ気軽にいらしてください。\n初回はカウンセリングから\nじっくりと始めますので安心です。",
+      "title": "また明日も笑顔で",
+      "text": "自分を満たしてあげると\n不思議と人にもやさしくなれる。\n\nご褒美の時間は、わがままではなく\nあなたが笑顔でいるための\n大切な習慣だと思っています。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考3.JPG"
+      "reuse_filename": "candle.jpg",
+      "focus_y": 0.6,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg06.jpg",
       "type": "cta",
-      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
-      "body": "連休疲れをリセットして\n新しい週を迎えたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "いつも頑張っているあなたへ。\nたまには何も考えず\nただ癒やされる時間を\n自分にプレゼントしてください。\n心を込めてお迎えします。\nまずはMIKIにご相談ください♪",
       "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
-      "bg_strategy": "generate"
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     }
   ],
-  "caption": "GW明けの連休疲れをリセットしてほしい、また頑張れる体と気持ちを取り戻す方法をお伝えします。\n\nMIKIです。\n\n「GWが終わって、なんか体がだるい気がする」\n\nそんなお声を、施術中に私はよく聞きます。\n\n楽しかった連休が終わって、いざ日常に戻るとき\n体も気持ちも一緒に重くなる感覚。\n\n「なんか今年のGWは疲れたな」と思いながら\n気づいたら次の週が始まってしまっている。\n\nそのループ、私はとても気になっています。\n\n---\n\n私がお客様によくお伝えするのは\n「疲れたから行く」だけでなく\n「また頑張れる自分を取り戻すために整える」という使い方です。\n\n体の巡りを整えてリンパを流すと\n翌日の疲れのたまり方が変わります。\n\n肌をリセットすると\n鏡を見るのが少し楽しくなります。\n\n気持ちが切り替わると\n新しい週のスタートが変わります。\n\n---\n\n「施術後にまた頑張れる気がしました」\n「月曜日が少し楽しみになりました」\n「連休明けの一番の贈り物になりました」\n\nこういうお声をいただくたびに\n私はこの仕事をしていて本当によかったと感じます。\n\n---\n\n連休の疲れを引きずったまま\n新しい週を迎えないでください。\n\n今こそ、自分の体に向き合う時間を作ってみてください。\n\nはじめての方も、どうぞお気軽にいらしてください。\n一人でいらっしゃる方がほとんどなので、安心してください。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
-  "hashtags": "#ご褒美エステ #ご褒美タイム #六本木エステ #エステ体験 #GW明け #連休明け #リラクゼーション #自分磨き #リフレッシュ",
-  "alt_text": "白い花とキャンドルがシンプルに並ぶ、落ち着いた雰囲気のエステルーム",
-  "memo": "5/8 GW明け木曜21:00。「連休疲れを引きずったまま新しい週を迎えないで」という共感訴求。「また頑張れる自分を取り戻す」という前向きなご褒美エステの使い方を提案。GW関連投稿シリーズ（GW前・突入・中盤・明け）の完結編。",
-  "bg_prompt": "Japanese esthetic salon interior, minimalist arrangement of white flowers and tea candles on stone surface, soft white and warm gray tones, no people, calm and restorative atmosphere, high quality photo"
+  "caption": "ご褒美エステは、頑張りすぎた自分を労わり、心と体をリセットする時間です。\n\nMIKIです。\n\n仕事に、家のことに。気づけば自分のことは後回しになっていませんか。\n\nそんな風に頑張っているあなたにこそ、立ち止まって自分を労わる時間を持ってほしいんです😊\n\n私自身も以前は、自分のことを後回しにしてばかりでした。でも自分を満たせていないと、人にもやさしくできない。そう気づいてから、ご褒美の時間を大切にするようになりました。\n\n---\n\nご褒美エステでは、凝り固まった体がほぐれて、巡りが整い、心までゆるんで満たされていきます。\n\n温かい手のぬくもりに包まれて、日々の緊張がほどけていく。施術が終わるころには、体も心も軽くなって、呼吸まで深くなっているはずです💧\n\n---\n\n自分を満たしてあげると、不思議と人にもやさしくなれる。\n\nご褒美の時間は、わがままではなく、あなたが笑顔でいるための大切な習慣だと思っています💌\n\n---\n\nいつも頑張っているあなたへ。たまには何も考えず、ただ癒やされる時間を、自分にプレゼントしてくださいね。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ",
+  "hashtags": "#ご褒美エステ #六本木エステ #自分へのご褒美 #癒やしの時間 #リラクゼーション #頑張る自分に #リセット",
+  "memo": "7/8(水)21:00 #10 ご褒美エステ（CTA寄り）。後半の締めとして頑張る自分への労わりを訴求しCV狙い。画像は全てmenu(Jacuzzi/Hamam/head massage/Droom/candle/BirthDay)。概算ドラフト・画像は要精査。",
+  "alt_text": "ジャグジーのそばにキャンドルが灯る、贅沢でゆったりとしたエステ空間の情景",
+  "bg_prompt": "Luxury spa still life, jacuzzi and candle light, warm golden tones, relaxing atmosphere, no people, high quality photo",
+  "_generated_dir": "2026-07-08-2100"
 }

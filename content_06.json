@@ -3,67 +3,85 @@
     {
       "filename": "bg01.jpg",
       "type": "cover",
-      "title": "施術を終えた\n花嫁様の変化",
-      "tag": "- MIKIが見てきた花嫁様のストーリー -",
-      "bg_strategy": "generate"
+      "title": "梅雨の肌は\n隠れ乾燥に注意",
+      "tag": "- 6月の美容知識 -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "lifestyle",
+      "reuse_filename": "rain.png",
+      "focus_y": 0.6
     },
     {
       "filename": "bg02.jpg",
-      "type": "text",
-      "title": "MIKIが一番\n好きな瞬間",
-      "text": "「鏡の前に立ったとき\n自分の顔じゃないみたいって思いました」\n\n施術を終えたある花嫁様が\n式の前日に話してくださった言葉です。\n\n私はその瞬間を今でも忘れられません。\n\n花嫁様の変化を目の当たりにする瞬間が\n私にとって一番好きな時間です。",
+      "type": "list",
+      "title": "梅雨に肌が\nくすむ理由",
+      "items": [
+        "湿気で汚れが詰まりやすい",
+        "紫外線は真夏並みに強い",
+        "冷えで巡りが落ちやすい"
+      ],
+      "footer": "ジメジメする時期こそ、肌は揺らぎやすいんです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考3.JPG"
+      "reuse_filename": "フェイスライン.JPG",
+      "focus_y": 0.45,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg03.jpg",
-      "type": "list",
-      "title": "花嫁様が体感した\n主な変化",
-      "items": [
-        "肌のトーンが明るくなった",
-        "むくみが取れて輪郭がすっきり",
-        "自信が持てるようになった"
-      ],
-      "footer": "こういうお声を私はいつも心から嬉しく思います",
+      "type": "text",
+      "title": "隠れ乾燥のサイン",
+      "text": "肌の表面はベタつくのに\n内側はつっぱる感じがする。\n\nそれは「隠れ乾燥」のサインです。\n湿気のある季節でも、肌の中は\n水分不足になっていることがあります。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考2.jpg"
+      "reuse_filename": "フェイシャル引き上げ.JPG",
+      "focus_y": 0.45,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg04.jpg",
       "type": "text",
-      "title": "変化の裏側に\nあるもの",
-      "text": "私が施術で大切にしているのは\n「表面を整えるだけ」ではありません。\n\n体の奥から巡りを整えてリンパを流し\n老廃物をしっかり排出していく。\n\nそこからアプローチすることで\n化粧品の浸透が変わり\n肌の底力が変わっていきます。\n\nそれが花嫁様の「自信」につながっていくと\n私は信じています。",
+      "title": "6月の紫外線対策",
+      "text": "曇りや雨の日でも\n紫外線は降り注いでいます。\n\n日焼け止めはもちろん、巡りを\n整えてくすみを防ぐケアも\nこの時期から始めると安心です。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考6.JPG"
+      "reuse_filename": "herbs.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg05.jpg",
       "type": "text",
-      "title": "MIKIのお客様に\n届いたお声",
-      "text": "「ドレスを着て鏡を見て、泣きそうになりました」\n「写真のできあがりがすごく楽しみです」\n「またMIKIに会いに来ます」\n\nこういうお声をいただくたびに\n私はこの仕事をしていて\n本当によかったと感じます。\n\n花嫁様の笑顔が\n私の一番の原動力です。",
+      "title": "今できるケア",
+      "text": "ていねいな保湿と\n体を冷やさないこと。\n\nそして滞った巡りを流してあげると\n肌の透明感は戻ってきます。\n梅雨こそ、土台を整えるチャンスです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考5.JPG"
+      "reuse_filename": "candle.jpg",
+      "focus_y": 0.6,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg06.jpg",
       "type": "cta",
-      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
-      "body": "式当日に「最高の自分」でいたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "ジメジメして肌が不調なときは\nひとりで抱え込まずに\nぜひ相談してくださいね。\nあなたの肌に合ったケアを\n一緒に見つけていきましょう。\nまずはMIKIにご相談ください♪",
       "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
-      "bg_strategy": "generate"
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     }
   ],
-  "caption": "ブライダルエステで花嫁様の肌が変わる瞬間、私は何度見ても心が震えます。\n\nMIKIです。\n\n「鏡の前に立ったとき、自分の顔じゃないみたいって思いました」\n\n施術を終えたある花嫁様が、式の前日に話してくださった言葉です。\n\n私はその瞬間を今でも忘れられません。\n\n---\n\n花嫁様の変化を目の当たりにする瞬間が\n私にとって一番好きな時間です。\n\n毎回ではありません。\nでも、施術を続けていくうちに\nある日突然「あれ、なんか違う」と気づいてくださる。\n\n肌のトーンが明るくなった。\nむくみが取れて輪郭がすっきりした。\n「自信が持てるようになった気がする」とおっしゃってくださる。\n\nその変化は、外からだけではなく\n内側から滲み出てくるような変化です。\n\n---\n\n私が施術で大切にしているのは\n「表面を整えるだけ」ではないということです。\n\n体の奥から巡りを整えてリンパを流し\n老廃物をしっかり排出していく。\n\nそこからアプローチすることで\n化粧品の浸透が変わり、肌の底力が変わっていきます。\n\nそしてそれが、花嫁様の「自信」につながっていくと\n私は信じています。\n\n---\n\n「式当日、ドレスを着て鏡を見て泣きそうになりました」\n「写真のできあがりがすごく楽しみです」\n「またMIKIに会いに来ます」\n\nこういうお声をいただくたびに\n私はこの仕事をしていて本当によかったと感じます。\n\nぜひ一度、お気軽にDMでご連絡ください。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
-  "hashtags": "#ブライダルエステ #ブライダルエステ東京 #プレ花嫁2026 #大人花嫁 #東京花嫁 #六本木エステ #花嫁準備",
-  "alt_text": "白いバラとウェディングアクセサリーがマーブルテーブルに並ぶ、明るく上品なブライダル準備ルーム",
-  "memo": "土曜12:00投稿。花嫁様の変化という感動ストーリー型。お客様の声と施術後の変化を軸に、MIKIのアプローチへの信頼を積み上げる構成。",
-  "bg_prompt": "Japanese bridal preparation room, white roses and wedding accessories on white marble table, soft white and champagne tones, no people, luxurious and romantic atmosphere, high quality photo"
+  "caption": "梅雨の肌は、隠れ乾燥とくすみに注意。ジメジメする時期こそ正しいケアが大切です。\n\nMIKIです。\n\n梅雨になると「なんだか肌がくすむ」「ベタつくのに乾く」と感じることはありませんか。\n\n私自身も毎年、梅雨になると肌のコンディションが不安定になりやすくて、お客様のお肌を見ていても同じ変化を感じます😊\n\n---\n\n湿気で毛穴に汚れが詰まりやすく、さらに6月の紫外線は真夏並みに強い。冷房や雨の冷えで巡りも落ちて、くすみやすくなります。\n\n表面はベタつくのに内側はつっぱる。これは「隠れ乾燥」のサインです。湿気のある季節でも、肌の中は水分不足になっていることが多いんです。\n\n---\n\n曇りや雨の日でも、紫外線は降り注いでいます。日焼け止めはもちろん、巡りを整えてくすみを防ぐケアも、この時期から始めると安心です。\n\nていねいな保湿と、体を冷やさないこと。そして滞った巡りを流してあげると、肌の透明感は戻ってきます💧\n\n---\n\n梅雨こそ、肌の土台を整えるチャンス。肌の不調が気になるときは、ひとりで抱え込まずに相談してくださいね💌\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ",
+  "hashtags": "#梅雨美容 #隠れ乾燥 #くすみケア #紫外線対策 #六本木エステ #美容知識 #大人の肌ケア",
+  "memo": "6/28(日)12:00 #6 梅雨×美容知識（美容情報）。隠れ乾燥・真夏並みUV・くすみの季節ケアを解説し保存を狙う。cover=lifestyle rain.png、他はmenuのフェイシャル/Jacuzzi/candle。概算ドラフト・画像は要精査。",
+  "alt_text": "雨粒のついた窓辺に、ドライフラワーが静かに飾られた梅雨の日のやわらかな情景",
+  "bg_prompt": "Rainy season still life, raindrops on window, dried flowers, soft muted light, calm mood, no people, high quality photo",
+  "_generated_dir": "2026-06-28-1200"
 }
