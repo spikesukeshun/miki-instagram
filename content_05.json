@@ -3,67 +3,80 @@
     {
       "filename": "bg01.jpg",
       "type": "cover",
-      "title": "GW前に\nリセットしたい",
-      "tag": "- MIKIがすすめるご褒美エステ -",
-      "bg_strategy": "generate"
+      "title": "はじめての方へ\nよくある質問",
+      "tag": "- 初めてのエステ -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考1.JPG",
+      "focus_y": 0.55
     },
     {
       "filename": "bg02.jpg",
       "type": "text",
-      "title": "MIKIがよく\n聞くお声",
-      "text": "「GW前になると\nなんか自分のことが気になる」\n「連休前に一度体をリセットしたい」\n\nこういうお声を、施術中に\n私は本当によくいただきます。\n\n日々忙しく頑張っている中で\n連休が近づいてようやく\n自分のことを考えられる気がする。\n\nその感覚は、正直なサインです。",
+      "title": "Q. 初めてで緊張します",
+      "text": "大丈夫です。ほとんどの方が\n同じ気持ちでいらっしゃいます。\n\n緊張がほぐれるように、まずは\nゆっくりお話を伺うことから\n始めるので、ご安心くださいね。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考1.JPG"
+      "reuse_filename": "head massage.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg03.jpg",
-      "type": "list",
-      "title": "MIKIのエステで\n整えること",
-      "items": [
-        "体の巡りを整えてむくみをリセット",
-        "リンパを流して老廃物を排出",
-        "肌のトーンと心の疲れをリセット"
-      ],
-      "footer": "私が一つひとつ丁寧にアプローチします",
+      "type": "text",
+      "title": "Q. 勧誘が不安です",
+      "text": "無理な勧誘や高額な契約を\nおすすめすることはありません。\n\nあなたに本当に必要なことだけを\n一緒に考えていきます。\n気になることは何でも聞いてください。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考2.jpg"
+      "reuse_filename": "makeup room.JPG",
+      "focus_y": 0.45,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg04.jpg",
       "type": "text",
-      "title": "私が大切にする\nリセットの考え方",
-      "text": "「疲れたから行く」だけでなく\n「整えるために行く」。\n\n私がお客様によくお伝えするのは\nそういうご褒美エステの使い方です。\n\n体の巡りを整えてリンパを流すと\n「体が軽い」「顔色が違う」\n「なんかいい状態」という感覚が生まれます。\n\nその感覚を持ってGWを迎えると\n旅行も、家族との時間も\nひとりの時間も、全部が豊かになります。",
+      "title": "Q. どのくらい通うの？",
+      "text": "お悩みや目標によりますが\nまずは月に1〜2回からで十分です。\n\n一度の施術でも変化は感じられます。\nご予算やペースに合わせて\n無理のない計画を立てましょう。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考3.JPG"
+      "reuse_filename": "Hamam bath.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg05.jpg",
       "type": "text",
-      "title": "MIKIのお客様に\n届いたお声",
-      "text": "「GW前に来てよかったです」\n「体が軽くなって、連休が楽しみになりました」\n「なんか顔が明るくなった気がする」\n\nGW前にいらしてくださったお客様から\n私はこういうお声をよくいただきます。\n\n整えてから連休を迎えると\n過ごし方が少し変わります。\n\n私はそれがとてもうれしいんです。",
+      "title": "Q. 当日は何をするの？",
+      "text": "はじめにカウンセリングで\nお悩みをていねいに伺います。\n\n施術のあとはお茶を飲みながら\nお肌や体の状態をお伝えします。\nどうぞ手ぶらでいらしてください。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考6.JPG"
+      "reuse_filename": "部屋&ソルト.HEIC",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg06.jpg",
       "type": "cta",
-      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
-      "body": "GWを最高の状態で迎えたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "初めての一歩は\n勇気がいるかもしれません。\nでも、その一歩を踏み出した方から\n少しずつ変わっていきます。\nわからないことは何でも\n聞いてくださいね。\nまずはMIKIにご相談ください♪",
       "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
-      "bg_strategy": "generate"
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     }
   ],
-  "caption": "GW前のご褒美エステで体をリセット、連休を最高の状態で迎える方法。\n\nMIKIです。\n\n「GW前になると、なんか自分のことが気になる」\n\nそんなお声を、施術中に私はよくいただきます。\n\n日々忙しく頑張っている中で\n連休が近づいてようやく、ほっと一息つける気がする。\n\nそのタイミングで「体を一度リセットしたい」と感じるのは\nとても自然なことだと私は思っています。\n\n---\n\nご褒美エステ、という言葉があります。\n\nでも私がお客様によくお伝えするのは\n「疲れたから行く」だけでなく\n「整えるために行く」という使い方です。\n\nリンパを流して老廃物を排出する。\n体の巡りを整えてむくみをリセットする。\n肌のトーンを上げて、心の疲れも一緒に手放す。\n\nこういうアプローチをすることで\n「体が軽い」「顔色が違う」「なんかいい状態」\nという感覚が生まれてきます。\n\n---\n\n「GW前に来てよかった」\n「体が軽くなって、連休が楽しみになりました」\n「なんか顔が明るくなった気がする」\n\nGW前にいらしてくださったお客様から\n私はこういうお声をよくいただきます。\n\n整えてから連休を迎えると\n旅行も、家族との時間も、ひとりの時間も\n全部が少し豊かになる気がします。\n\nそのことを私はいつも感じています。\n\n---\n\nGWが始まる前の今こそ\nまずはお気軽にDMでご連絡ください。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
-  "hashtags": "#ご褒美エステ #ご褒美タイム #六本木エステ #エステ体験 #GW #リラクゼーション #自分磨き #アラサー美容 #アラフォー美容",
-  "alt_text": "白いキャンドルと花がマーブルテーブルに並ぶ、柔らかなピンクとゴールドトーンの落ち着いたエステルーム",
-  "memo": "GW前の疲れリセット訴求。「疲れたから行く」ではなく「整えるために行く」というご褒美エステの新しい使い方を提案し、保存率を高める。",
-  "bg_prompt": "Japanese esthetic salon interior, luxury spa setting with white flowers and candles on marble table, soft white and gold tones, no people, serene and relaxing atmosphere, high quality photo"
+  "caption": "エステが初めてで不安な方へ、よくいただく質問にまとめてお答えします。\n\nMIKIです。\n\nはじめてのサロンって、緊張しますよね。私自身がお客様の立場だったら、きっと同じように身構えてしまうと思います。\n\nだからこそ、よくいただくご質問にお答えしておきますね😊\n\n---\n\nまず「初めてで緊張する」という方。本当に多いので、どうか心配しないでください。最初はゆっくりお話を伺うことから始めます。\n\n「勧誘されないか不安」という声もよく聞きます。無理な勧誘や高額な契約をおすすめすることはありません。あなたに必要なことだけを、一緒に考えていきます。\n\n---\n\n「どのくらい通えばいいの？」というご質問には、まずは月に1〜2回からで十分ですとお伝えしています。一度でも変化は感じていただけますし、ご予算やペースに合わせて無理のない計画を立てましょう。\n\n当日は、カウンセリングでじっくりお悩みを伺ってから施術に入ります。手ぶらでいらして大丈夫です💌\n\n---\n\nわからないことや不安なことは、ご予約の前でも気軽にDMで聞いてくださいね。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ",
+  "hashtags": "#エステ初めて #はじめてのエステ #六本木エステ #エステ体験 #エステサロン #エステ初心者 #カウンセリング",
+  "memo": "6/26(金)21:00 #5 Q&A初回（定期テーマ）。エステ初体験の不安(緊張/勧誘/頻度/当日の流れ)に1問1答で answer。安心訴求で来店ハードルを下げる。画像はmenuの落ち着いた施術室・施術シーン。全textのQ&A構成。概算ドラフト・画像は要精査。",
+  "alt_text": "やわらかな間接照明に照らされ、2台のベッドが並ぶ清潔感のあるエステルームの情景",
+  "bg_prompt": "Japanese esthetic salon room, warm soft lighting, clean beds and towels, calm and welcoming, no people, high quality photo",
+  "_generated_dir": "2026-06-26-2100"
 }
