@@ -1,0 +1,82 @@
+{
+  "slides": [
+    {
+      "filename": "bg01.jpg",
+      "type": "cover",
+      "title": "よくある質問②",
+      "tag": "- ご来店の前に -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "Droom.JPG",
+      "focus_y": 0.5
+    },
+    {
+      "filename": "bg02.jpg",
+      "type": "text",
+      "title": "Q. 施術時間はどのくらい？",
+      "text": "コースによって異なりますが\n初回はカウンセリングを含めて\nお時間に余裕をもってお越しください。\n\nお一人おひとりに合わせて\nていねいに向き合います。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "Jacuzzi time.JPG",
+      "focus_y": 0.7,
+      "slide_photo_h_ratio": 0.35
+    },
+    {
+      "filename": "bg03.jpg",
+      "type": "text",
+      "title": "Q. メイクのままで大丈夫？",
+      "text": "そのままお越しいただいて\n大丈夫です。\n\n施術のあとはメイクスペースで\nお直しいただけますので\nお帰りも安心してお過ごしいただけます。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "makeup room.JPG",
+      "focus_y": 0.45,
+      "slide_photo_h_ratio": 0.35
+    },
+    {
+      "filename": "bg04.jpg",
+      "type": "text",
+      "title": "Q. どんな悩みに対応？",
+      "text": "むくみ、たるみ、乾燥、お疲れなど\n幅広いお悩みに対応しています。\n\n気になることはカウンセリングで\n何でもお聞かせくださいね。\n一緒に整えていきましょう。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "フェイスライン.JPG",
+      "focus_y": 0.45,
+      "slide_photo_h_ratio": 0.35
+    },
+    {
+      "filename": "bg05.jpg",
+      "type": "text",
+      "title": "Q. 当日の予約もできる？",
+      "text": "空き状況によりますが\n当日のご予約も承っています。\n\n「今日少し時間ができた」というときも\nまずはお気軽にDMで\nお問い合わせくださいね。",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "candle.jpg",
+      "focus_y": 0.6,
+      "slide_photo_h_ratio": 0.35
+    },
+    {
+      "filename": "bg06.jpg",
+      "type": "cta",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "気になることや不安なことは\nどんな小さなことでも\n遠慮なく聞いてください。\nあなたが安心して通えるよう\n精一杯サポートします。\nまずはMIKIにご相談ください♪",
+      "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
+    }
+  ],
+  "caption": "エステのよくいただくご質問、第2弾。施術時間やメイクのことまでお答えします。\n\nMIKIです。\n\n前回のよくある質問が好評だったので、第2弾をお届けしますね😊\n\n---\n\nまず「施術時間はどのくらい？」というご質問。コースによって異なりますが、初回はカウンセリングを含めてお時間に余裕をもってお越しいただけると安心です。\n\n「メイクのままで大丈夫？」という方も多いですが、そのままで問題ありません。施術のあとはメイクスペースでお直しいただけるので、お帰りも安心です。\n\n---\n\n「どんな悩みに対応できるの？」というご質問もよくいただきます。むくみ、たるみ、乾燥、お疲れなど、幅広いお悩みに対応しています。気になることは、カウンセリングで何でもお聞かせくださいね。\n\nそして「当日でも予約できる？」というご質問。空き状況によりますが、当日のご予約も承っています。お時間ができたときは、お気軽にDMでお問い合わせください💌\n\n---\n\nほかにも気になることがあれば、いつでもお気軽にDMで聞いてくださいね。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ",
+  "hashtags": "#よくある質問 #エステ体験 #六本木エステ #エステ初心者 #フェイシャルエステ #エステサロン #はじめてのエステ",
+  "memo": "7/1(水)21:00 #7 よくある質問②（Q&A定期・第2弾、スケジュール組み直しで新規挿入）。施術時間/メイク/対応する悩み/当日予約の4問。未確認の事実は断定せず『要相談』に寄せた安全回答。画像はmenu流用(Droom/Jacuzzi/makeup room/フェイスライン/candle/BirthDay)。※施術時間・メイクスペース等の具体はユーザー確認推奨。ファイル名content_11だが投稿順は#7。",
+  "alt_text": "温かな照明のもと、ベッドとジャグジーが配された落ち着いた雰囲気のエステルームの情景",
+  "bg_prompt": "Japanese esthetic salon room, warm soft lighting, treatment bed, calm and welcoming, no people, high quality photo",
+  "_generated_dir": "2026-07-01-2100"
+}
