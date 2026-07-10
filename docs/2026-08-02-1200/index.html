@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>投稿プレビュー - MIKI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #FFF9F5;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            color: #3D1F2D;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: linear-gradient(135deg, #E8A0B4, #C9A96E);
+            color: white;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 6px; }
+        .header .meta { font-size: 13px; opacity: 0.9; }
+        .section-title {
+            font-size: 13px;
+            color: #C9A96E;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            padding: 20px 16px 8px;
+            border-bottom: 1px solid #F0D9E0;
+            margin-bottom: 0;
+        }
+        .image-card {
+            position: relative;
+            margin: 12px 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(200,120,130,0.15);
+        }
+        .image-card img {
+            width: 100%;
+            display: block;
+        }
+        .image-num {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .caption-box {
+            margin: 4px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .hashtags {
+            margin: 8px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #5B8FCA;
+            line-height: 1.7;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .approve-box {
+            margin: 20px 16px 0;
+            background: linear-gradient(135deg, #FFF0F5, #FFF8EC);
+            border: 1.5px solid #E8A0B4;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .approve-box p { font-size: 13px; line-height: 1.7; color: #3D1F2D; }
+        .approve-box .step {
+            font-size: 14px;
+            font-weight: bold;
+            color: #C9607A;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #B0969F;
+            margin-top: 24px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 投稿プレビュー</h1>
+        <div class="meta">投稿予定: 2026/08/02 12:00　|　全8枚</div>
+    </div>
+
+    <div class="section-title">▼ 画像確認</div>
+    
+        <div class="image-card">
+            <div class="image-num">1 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_01.jpg?t=202607102307" alt="スライド1" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">2 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_02.jpg?t=202607102307" alt="スライド2" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">3 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_03.jpg?t=202607102307" alt="スライド3" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">4 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_04.jpg?t=202607102307" alt="スライド4" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">5 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_05.jpg?t=202607102307" alt="スライド5" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">6 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_06.jpg?t=202607102307" alt="スライド6" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">7 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_07.jpg?t=202607102307" alt="スライド7" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">8 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-02-1200/carousel_08.jpg?t=202607102307" alt="スライド8" loading="lazy">
+        </div>
+
+    <div class="section-title">▼ キャプション</div>
+    <div class="caption-box">エステティシャンの小さなこだわりの話。タオルの温度から力加減まで、癒しの時間の裏側を少しだけお見せします。<br><br>MIKIです。<br><br>8月に入りましたね。今日は、普段あまり話すことのない、私の仕事の「小さなこだわり」の話をさせてください😊<br><br>ひとつ目は、タオル。お顔に触れるタオルの温度、体を包むタオルの重さ。小さなことに思えるかもしれませんが、施術の心地よさの正体は、こういう細部に宿ると思っています。<br><br>ふたつ目は、空間。まぶしすぎない明かりと、主張しすぎない香り。主役はあくまでお客様の休息なので、空間はそっと寄り添うくらいがちょうどいい。そう考えて整えています。<br><br>みっつ目は、力加減。同じお客様でも、その日の体はちがいます。「今日は少しお疲れ気味かな」と手のひらで感じ取りながら、その日のベストな強さを探していく。ここは機械には任せられない、人の手だからできる仕事です。<br><br>こうして書き出してみると、本当に細かいことばかりですね。<br><br>でも、理由はぜんぶ同じなんです。ここで過ごす時間だけは、仕事のことも家のことも、何もかも忘れてほしい。そのための準備なら、いくらでも惜しくないと思っています🌿<br><br>言葉にしなくても、体はちゃんと教えてくれます。最近頑張りすぎているあなた、一度ぜんぶ預けてみませんか。<br><br>日曜日の今日も、どうぞいい一日を。<br><br>✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨<br><br>ご予約・ご相談はプロフィールのDMからお気軽にどうぞ💌</div>
+
+    <div class="section-title">▼ ハッシュタグ</div>
+    <div class="hashtags">#エステティシャン&nbsp;#おもてなし&nbsp;#癒しの時間&nbsp;#リラクゼーションサロン&nbsp;#六本木エステ&nbsp;#自分を大切に&nbsp;#ご褒美時間</div>
+
+    <div class="approve-box">
+        <p>内容を確認したら<br>スプレッドシートで承認してください</p>
+        <div class="step">ステータス欄を「承認済み」に変更 →　GO！</div>
+    </div>
+
+    <div class="footer">
+        <p>プレビュー生成日時: 2026/07/10 23:07</p>
+    </div>
+</body>
+</html>
