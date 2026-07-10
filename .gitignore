@@ -16,3 +16,7 @@ recent_insights.json
 upload_history.json
 reel_prototype/
 generated/carousel_*.jpg
+
+# OAuth秘密情報（コミット禁止）
+client_secrets.json
+token_drive.json
