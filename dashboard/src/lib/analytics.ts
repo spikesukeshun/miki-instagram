@@ -194,6 +194,8 @@ function firstSentence(caption: string): string {
   // 「mikiです。」等の挨拶・メンション・装飾行はスキップして、意味のある最初の一文を取る
   const segments = caption
     .replace(/@[\w.]+/g, " ")
+    .replace(/[\u2060-\u2064\u200b-\u200d\ufeff]/g, "") // 不可視文字（U+2064等）
+    .replace(/[:*・=~〜\-]{2,}[:*・=~〜\-\s]*/g, " ") // 「:*:*:*」等の装飾罫線
     .split(/[。｡\n]/)
     .map((s) => s.replace(/^[\s⭐️☆★~〜・:*.#]+|[\s⭐️☆★~〜・:*.#]+$/g, "").trim())
     .filter((s) => meaningfulChars(s) >= 6);
@@ -326,11 +328,22 @@ export interface PeriodKpi {
   pvRate: number | null;
   saveRate: number | null;
   followerGain: number | null;
+  /** followerGain を集計できた週数（API制約で直近30日のみのため期間より少ないことがある） */
+  followerGainWeeks: number;
   websiteClicks: number | null;
   avgScore: number | null;
   /** 週次総合スコア（トレーリング分布に対する百分位・星重み） */
   compositeScore: number | null;
   partial: boolean;
+}
+
+/** 進行中の週は経過日数ぶんだけの週として数える（週前半のスコア過小評価を防ぐ） */
+function weekFraction(w: WeekAgg): number {
+  if (!w.partial) return 1;
+  const nowJst = new Date(Date.now() + 9 * 3600 * 1000);
+  const start = new Date(`${w.weekStart}T00:00:00Z`);
+  const days = Math.floor((nowJst.getTime() - start.getTime()) / 86400000) + 1;
+  return Math.min(7, Math.max(1, days)) / 7;
 }
 
 function aggregate(weeks: WeekAgg[], picked: WeekAgg[]): PeriodKpi | null {
@@ -351,32 +364,44 @@ function aggregate(weeks: WeekAgg[], picked: WeekAgg[]): PeriodKpi | null {
     pvRate: reach && pv != null ? pv / reach : null,
     saveRate: mean(picked.map((w) => w.saveRate).filter((v): v is number => v != null)),
     followerGain: gains.every((g) => g == null) ? null : sum(gains.filter((g): g is number => g != null)),
+    followerGainWeeks: gains.filter((g) => g != null).length,
     websiteClicks: sumOf((w) => w.websiteClicks),
     avgScore: mean(picked.map((w) => w.avgScore).filter((v): v is number => v != null)),
     compositeScore: null,
     partial: picked.some((w) => w.partial),
   };
-  kpi.compositeScore = compositeWeekScore(weeks, kpi);
+  kpi.compositeScore = compositeWeekScore(
+    weeks,
+    kpi,
+    sum(picked.map(weekFraction)),
+    sum(picked.filter((w) => w.followerGain != null).map(weekFraction)),
+  );
   return kpi;
 }
 
 /** 対象期間のKPIを、全週の分布に対する百分位×星重みで0〜100に合成 */
-function compositeWeekScore(weeks: WeekAgg[], kpi: PeriodKpi): number | null {
+function compositeWeekScore(
+  weeks: WeekAgg[],
+  kpi: PeriodKpi,
+  effectiveWeeks: number,
+  followerWeeks: number,
+): number | null {
   const full = weeks.filter((w) => !w.partial);
   if (full.length < 4) return null;
-  const n = kpi.weekStarts.length;
-  const per = (f: (w: WeekAgg) => number | null, v: number | null, scalePerWeek: boolean) => {
+  const n = Math.max(effectiveWeeks, 1 / 7);
+  const per = (f: (w: WeekAgg) => number | null, v: number | null, divisor: number | null) => {
     if (v == null) return null;
     const pool = full.map(f).filter((x): x is number => x != null);
     if (pool.length < 4) return null;
-    return percentile(sorted(pool), scalePerWeek ? v / n : v);
+    return percentile(sorted(pool), divisor != null ? v / Math.max(divisor, 1 / 7) : v);
   };
   const parts: { stars: number; p: number | null }[] = [
-    { stars: 5, p: per((w) => w.pvRate, kpi.pvRate, false) },
-    { stars: 5, p: per((w) => w.saveRate, kpi.saveRate, false) },
-    { stars: 5, p: per((w) => w.followerGain, kpi.followerGain, true) },
-    { stars: 4, p: per((w) => w.reach, kpi.reach, true) },
-    { stars: 4, p: per((w) => w.views, kpi.views, true) },
+    { stars: 5, p: per((w) => w.pvRate, kpi.pvRate, null) },
+    { stars: 5, p: per((w) => w.saveRate, kpi.saveRate, null) },
+    // フォロワー純増はAPI制約で全期間を覆えないことがある → 実際に集計できた週数で按分
+    { stars: 5, p: per((w) => w.followerGain, kpi.followerGain, followerWeeks) },
+    { stars: 4, p: per((w) => w.reach, kpi.reach, n) },
+    { stars: 4, p: per((w) => w.views, kpi.views, n) },
   ];
   const avail = parts.filter((x) => x.p != null);
   if (!avail.length) return null;
@@ -398,6 +423,8 @@ export function periodKpis(weeks: WeekAgg[], range: RangeKey, currentWeekStart: 
   const base = def.key === "this" ? ordered : ordered.filter((w) => w.weekStart !== currentWeekStart);
   const current = aggregate(weeks, base.slice(0, def.weeks));
   const previous = aggregate(weeks, base.slice(def.weeks, def.weeks * 2));
-  const prevMonth = aggregate(weeks, base.slice(4, 4 + def.weeks));
+  // 前月比較は「4週前の同じ長さの期間」。1週表示のときだけ意味を持つ
+  // （4週表示では前期比と同一に、12週表示では期間が重複してしまうため非表示）
+  const prevMonth = def.weeks === 1 ? aggregate(weeks, base.slice(4, 5)) : null;
   return { current, previous, prevMonth };
 }

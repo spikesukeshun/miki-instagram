@@ -68,7 +68,12 @@ export function KpiGrid({ cmp, rangeLabel, right }: { cmp: PeriodComparison; ran
       delta: ratio(c?.followerGain, p?.followerGain),
       monthDelta: ratio(c?.followerGain, m?.followerGain),
       stars: 5,
-      note: c?.followerGain == null ? "APIは直近30日のみ提供" : undefined,
+      note:
+        c?.followerGain == null
+          ? "APIは直近30日のみ提供"
+          : c.followerGainWeeks < c.weekStarts.length
+            ? `API制約により直近${c.followerGainWeeks}週分のみの合計`
+            : undefined,
     },
     {
       key: "score",

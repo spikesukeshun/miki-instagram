@@ -114,16 +114,36 @@ def fetch_all_media() -> list[dict]:
     return posts
 
 
+# Graph API のレート制限エラーコード（この場合は個別取得に降りず待って再試行する）
+RATE_LIMIT_CODES = {4, 17, 32, 613}
+
+
+def _is_rate_limited(data: dict) -> bool:
+    return data.get("error", {}).get("code") in RATE_LIMIT_CODES
+
+
 def fetch_media_insights(media_id: str, media_type: str) -> dict:
-    """1投稿のインサイトを取得。combinedで失敗したらメトリクス個別で救済"""
+    """1投稿のインサイトを取得。
+    レート制限 → バックオフして再試行（個別取得に降りると呼び出しが9倍になるため）。
+    メトリクス非対応などの4xx → 個別取得で取れるものだけ拾う。"""
     metrics = VIDEO_METRICS if media_type == "VIDEO" else FEED_METRICS
-    data = api_get(f"{media_id}/insights", metric=metrics)
-    if "error" not in data:
-        return _parse_insights(data)
-    # combined が失敗 → 個別取得で取れるものだけ拾う
+    for attempt in range(3):
+        data = api_get(f"{media_id}/insights", metric=metrics)
+        if "error" not in data:
+            return _parse_insights(data)
+        if not _is_rate_limited(data):
+            break
+        wait = 60 * (attempt + 1)
+        print(f"  レート制限を検知 → {wait}秒待機して再試行 ({attempt + 1}/3)")
+        time.sleep(wait)
+    else:
+        return {}
+    # combined がメトリクス非対応等で失敗 → 個別取得で取れるものだけ拾う
     result = {}
     for m in metrics.split(","):
         d = api_get(f"{media_id}/insights", metric=m)
+        if _is_rate_limited(d):
+            break
         if "error" not in d:
             result.update(_parse_insights(d))
         time.sleep(0.1)
@@ -164,9 +184,11 @@ def classify_by_caption(caption: str) -> str:
 
 
 def fetch_account_daily() -> list[dict]:
-    """直近30日の日次リーチ・フォロワー純増"""
+    """直近30日の日次リーチ・フォロワー純増。
+    follower_count の「直近30日まで」制約に秒単位で抵触しないよう29日で要求する。
+    end_time は「その時刻に終わる期間」を指すため、値の帰属日は end_time の前日。"""
     now = datetime.now(JST)
-    since = now - timedelta(days=30)
+    since = now - timedelta(days=29)
     data = api_get(f"{ACCOUNT_ID}/insights", metric="reach,follower_count",
                    period="day", since=int(since.timestamp()), until=int(now.timestamp()))
     if "error" in data:
@@ -175,7 +197,13 @@ def fetch_account_daily() -> list[dict]:
     by_date: dict[str, dict] = {}
     for item in data.get("data", []):
         for v in item.get("values", []):
-            day = v.get("end_time", "")[:10]
+            end = v.get("end_time", "")
+            if not end:
+                continue
+            try:
+                day = (datetime.strptime(end[:10], "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+            except ValueError:
+                continue
             by_date.setdefault(day, {"date": day})[item["name"]] = v.get("value") or 0
     return sorted(by_date.values(), key=lambda x: x["date"])
 
@@ -227,11 +255,14 @@ def main():
     theme_map = load_theme_map()
     overrides = load_theme_overrides()
 
+    media = [m for m in media if m.get("timestamp")]  # timestamp欠損は分析不能のため除外
     posts = []
     targets = [m for m in media if (m.get("timestamp") or "") >= args.insights_since]
     print(f"インサイト取得対象: {len(targets)}件（{args.insights_since}以降）")
 
-    for i, m in enumerate(media):
+    done = 0
+    failed = 0
+    for m in media:
         mid = m["id"]
         caption = m.get("caption") or ""
         theme = overrides.get(mid) or theme_map.get(mid)
@@ -256,8 +287,10 @@ def main():
         if (m.get("timestamp") or "") >= args.insights_since:
             ins = fetch_media_insights(mid, m.get("media_type", ""))
             post["insights"] = ins or None
-            n = sum(1 for p in posts if p["insights"] is not None) + 1
-            print(f"  [{n}/{len(targets)}] {m.get('timestamp','')[:10]} "
+            done += 1
+            if not ins:
+                failed += 1
+            print(f"  [{done}/{len(targets)}] {m.get('timestamp','')[:10]} "
                   f"reach={ins.get('reach')} saved={ins.get('saved')} pv={ins.get('profile_visits')}")
             time.sleep(0.25)
         posts.append(post)
@@ -288,6 +321,8 @@ def main():
     with_ins = sum(1 for p in posts if p["insights"])
     print(f"\n✅ 保存完了: {OUTPUT_FILE}")
     print(f"   投稿{len(posts)}件（うちインサイトあり{with_ins}件）/ 日次{len(daily)}日 / 週次{len(weekly)}週")
+    if failed:
+        print(f"   ⚠️ インサイト取得に失敗した投稿が{failed}件あります（レート制限の可能性。時間をおいて再実行を推奨）")
 
 
 if __name__ == "__main__":

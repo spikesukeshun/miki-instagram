@@ -1,159 +1,154 @@
 {
- "fetched_at": "2026-07-11T17:11:04+09:00",
+ "fetched_at": "2026-07-11T22:56:19+09:00",
  "account": {
   "username": "estmiki",
-  "followers_count": 707,
+  "followers_count": 708,
   "media_count": 423
  },
  "account_daily": [
   {
    "date": "2026-06-12",
-   "reach": 96,
-   "follower_count": 1
-  },
-  {
-   "date": "2026-06-13",
    "reach": 157,
    "follower_count": 1
   },
   {
-   "date": "2026-06-14",
+   "date": "2026-06-13",
    "reach": 95,
    "follower_count": 0
   },
   {
-   "date": "2026-06-15",
+   "date": "2026-06-14",
    "reach": 72,
    "follower_count": 0
   },
   {
-   "date": "2026-06-16",
+   "date": "2026-06-15",
    "reach": 98,
    "follower_count": 0
   },
   {
-   "date": "2026-06-17",
+   "date": "2026-06-16",
    "reach": 115,
    "follower_count": 1
   },
   {
-   "date": "2026-06-18",
+   "date": "2026-06-17",
    "reach": 69,
    "follower_count": 1
   },
   {
-   "date": "2026-06-19",
+   "date": "2026-06-18",
    "reach": 102,
    "follower_count": 0
   },
   {
-   "date": "2026-06-20",
+   "date": "2026-06-19",
    "reach": 112,
    "follower_count": 0
   },
   {
-   "date": "2026-06-21",
+   "date": "2026-06-20",
    "reach": 78,
    "follower_count": 1
   },
   {
-   "date": "2026-06-22",
+   "date": "2026-06-21",
    "reach": 81,
    "follower_count": 0
   },
   {
-   "date": "2026-06-23",
+   "date": "2026-06-22",
    "reach": 86,
    "follower_count": 0
   },
   {
-   "date": "2026-06-24",
+   "date": "2026-06-23",
    "reach": 122,
    "follower_count": 0
   },
   {
-   "date": "2026-06-25",
+   "date": "2026-06-24",
    "reach": 87,
    "follower_count": 0
   },
   {
-   "date": "2026-06-26",
+   "date": "2026-06-25",
    "reach": 92,
    "follower_count": 0
   },
   {
-   "date": "2026-06-27",
+   "date": "2026-06-26",
    "reach": 101,
    "follower_count": 1
   },
   {
-   "date": "2026-06-28",
+   "date": "2026-06-27",
    "reach": 100,
    "follower_count": 0
   },
   {
-   "date": "2026-06-29",
+   "date": "2026-06-28",
    "reach": 81,
    "follower_count": 0
   },
   {
-   "date": "2026-06-30",
+   "date": "2026-06-29",
    "reach": 80,
    "follower_count": 0
   },
   {
-   "date": "2026-07-01",
+   "date": "2026-06-30",
    "reach": 123,
    "follower_count": 0
   },
   {
-   "date": "2026-07-02",
+   "date": "2026-07-01",
    "reach": 156,
    "follower_count": 0
   },
   {
-   "date": "2026-07-03",
+   "date": "2026-07-02",
    "reach": 110,
    "follower_count": 1
   },
   {
-   "date": "2026-07-04",
+   "date": "2026-07-03",
    "reach": 99,
    "follower_count": 0
   },
   {
-   "date": "2026-07-05",
+   "date": "2026-07-04",
    "reach": 90,
    "follower_count": 0
   },
   {
-   "date": "2026-07-06",
+   "date": "2026-07-05",
    "reach": 103,
    "follower_count": 0
   },
   {
-   "date": "2026-07-07",
+   "date": "2026-07-06",
    "reach": 100,
    "follower_count": 0
   },
   {
-   "date": "2026-07-08",
+   "date": "2026-07-07",
    "reach": 185,
    "follower_count": 1
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-08",
    "reach": 167,
    "follower_count": 0
   },
   {
-   "date": "2026-07-10",
+   "date": "2026-07-09",
    "reach": 98,
    "follower_count": 0
   },
   {
-   "date": "2026-07-11",
-   "reach": 3,
+   "date": "2026-07-10",
+   "reach": 53,
    "follower_count": 0
   }
  ],
@@ -311,12 +306,12 @@
   {
    "week_start": "2026-07-06",
    "partial": true,
-   "profile_views": 19,
-   "views": 2060,
-   "accounts_engaged": 18,
-   "total_interactions": 37,
+   "profile_views": 22,
+   "views": 2185,
+   "accounts_engaged": 20,
+   "total_interactions": 40,
    "website_clicks": 4,
-   "reach": 395
+   "reach": 404
   }
  ],
  "posts": [
@@ -327,18 +322,18 @@
    "permalink": "https://www.instagram.com/p/DanKikIFrej/",
    "caption_head": "エステティシャンMIKIの、ちょっと意外なお休みの日の過ごし方をお話しします。  MIKIです。  今日はいつもと趣向を変えて、私のプライベートを少しだけのぞいてもらおうと思います😊  意外かもしれませんが、お休みの日は家でゆっくり過ごすイ",
    "slide_count": 8,
-   "likes": 7,
+   "likes": 8,
    "comments": 1,
    "theme": "lifestyle",
    "theme_source": "override",
    "insights": {
-    "reach": 70,
-    "views": 206,
+    "reach": 81,
+    "views": 240,
     "saved": 1,
     "shares": 1,
-    "likes": 7,
+    "likes": 8,
     "comments": 1,
-    "total_interactions": 10,
+    "total_interactions": 11,
     "profile_visits": 1,
     "follows": 0
    }
@@ -350,18 +345,18 @@
    "permalink": "https://www.instagram.com/p/DaiAKwjH5Ij/",
    "caption_head": "ブライダルエステは結婚式で終わりではなく、卒花さんとのご縁はその先も続いていきます。  MIKIです。  結婚式が無事に終わったあと「ここで終わりじゃないんですね」と言ってくださる花嫁様がいます。  その言葉が、私はとてもうれしいんです😊 ",
    "slide_count": 8,
-   "likes": 5,
+   "likes": 6,
    "comments": 1,
    "theme": "bridal",
    "theme_source": "heuristic",
    "insights": {
-    "reach": 84,
-    "views": 243,
+    "reach": 85,
+    "views": 244,
     "saved": 1,
     "shares": 1,
-    "likes": 5,
+    "likes": 6,
     "comments": 1,
-    "total_interactions": 8,
+    "total_interactions": 9,
     "profile_visits": 2,
     "follows": 0
    }
@@ -378,8 +373,8 @@
    "theme": "lifestyle",
    "theme_source": "heuristic",
    "insights": {
-    "reach": 57,
-    "views": 190,
+    "reach": 58,
+    "views": 192,
     "saved": 1,
     "shares": 1,
     "likes": 5,
@@ -562,8 +557,8 @@
    "theme": "lifestyle",
    "theme_source": "override",
    "insights": {
-    "reach": 337,
-    "views": 798,
+    "reach": 338,
+    "views": 799,
     "saved": 2,
     "shares": 0,
     "likes": 39,
@@ -585,8 +580,8 @@
    "theme": "menu",
    "theme_source": "override",
    "insights": {
-    "reach": 88,
-    "views": 234,
+    "reach": 89,
+    "views": 235,
     "saved": 1,
     "shares": 1,
     "likes": 6,
@@ -608,8 +603,8 @@
    "theme": "lifestyle",
    "theme_source": "override",
    "insights": {
-    "reach": 106,
-    "views": 222,
+    "reach": 107,
+    "views": 223,
     "saved": 2,
     "shares": 0,
     "likes": 10,
@@ -631,8 +626,8 @@
    "theme": "lifestyle",
    "theme_source": "override",
    "insights": {
-    "reach": 73,
-    "views": 179,
+    "reach": 74,
+    "views": 180,
     "saved": 1,
     "shares": 0,
     "likes": 11,
@@ -654,8 +649,8 @@
    "theme": "menu",
    "theme_source": "override",
    "insights": {
-    "reach": 107,
-    "views": 284,
+    "reach": 108,
+    "views": 285,
     "saved": 1,
     "shares": 1,
     "likes": 7,
@@ -677,8 +672,8 @@
    "theme": "reward",
    "theme_source": "heuristic",
    "insights": {
-    "reach": 102,
-    "views": 225,
+    "reach": 103,
+    "views": 226,
     "saved": 1,
     "shares": 1,
     "likes": 5,
@@ -700,8 +695,8 @@
    "theme": "bridal",
    "theme_source": "heuristic",
    "insights": {
-    "reach": 114,
-    "views": 265,
+    "reach": 115,
+    "views": 266,
     "saved": 1,
     "shares": 1,
     "likes": 10,
@@ -861,7 +856,7 @@
    "theme": "menu",
    "theme_source": "override",
    "insights": {
-    "reach": 74,
+    "reach": 75,
     "views": 132,
     "saved": 1,
     "shares": 0,
