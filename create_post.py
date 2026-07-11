@@ -643,6 +643,8 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
     global_seed = result.get("seed")
     last_seed = resolve_backgrounds(result["slides"], available_images, bg_prompt,
                                     global_seed=global_seed)
+    if last_seed:
+        print(f"最終seed: {last_seed}（cleanup_backgrounds.py --seed 用）")
 
     # 新規生成した背景画像をDriveテーマフォルダに保存
     drive_theme = result.get("drive_theme") or _menu_to_theme(menu)
@@ -666,11 +668,9 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
         caption=result["caption"],
         hashtags=result["hashtags"],
         memo=result["memo"],
-        seed=last_seed,
-        alt_text=result.get("alt_text", ""),
     )
 
-    # content.jsonに _generated_dir を記録（process_revisions.pyが別投稿と混同しないため）
+    # content.jsonに _generated_dir を記録（同じcontent.jsonを別日時で再利用した際の混同防止）
     if content_file and os.path.exists(content_file):
         try:
             with open(content_file, "r", encoding="utf-8") as f:

@@ -84,7 +84,7 @@ FACEBOOK_PAGE_ID=your_page_id_here
 | シーン | 担当 | 方法 |
 |---|---|---|
 | 対話セッションでの新規投稿作成 | **Claude Code**（このセッション） | Claude Codeがスライド文章・キャプション・ハッシュタグを生成・校閲し、`content.json`に書き出す |
-| 自動修正処理（GitHub Actions） | **Groq API** | `process_revisions.py`が自動実行 |
+| 修正依頼の処理 | **Claude Code**（このセッション） | チャットで修正指示を受けて content.json を修正 → create_post.py 再実行（シート経由の自動修正フローは2026-07-11に廃止済み） |
 
 **対話セッションでの実行コマンド:**
 ```bash

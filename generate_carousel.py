@@ -14,7 +14,6 @@ content.json の任意フィールド：
 
 呼び出し元：
 - create_post.py:8           from generate_carousel import generate_with_slides
-- process_revisions.py:24    from generate_carousel import generate_with_slides
 """
 import unicodedata
 from PIL import Image, ImageDraw, ImageFont
@@ -627,7 +626,7 @@ def generate_all():
 
 
 def generate_with_slides(slides: list):
-    """カスタムSLIDESで画像生成（create_post.py / process_revisions.py から呼ばれる）"""
+    """カスタムSLIDESで画像生成（create_post.py から呼ばれる）"""
     print("カルーセル画像を生成中...")
     generators = {
         "cover": generate_cover,

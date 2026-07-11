@@ -356,7 +356,7 @@ def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
     update_cell() の連続呼び出しはAPIレート制限で失敗するため、
     スプレッドシートの部分更新は必ずこの関数を使うこと。
 
-    fields キー: status / preview_url / revision / caption / hashtags / memo / alt_text
+    fields キー: status / preview_url / caption / hashtags / memo
     """
     col_map = {
         "caption": 4,      # D
@@ -364,19 +364,17 @@ def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
         "memo": 6,         # F
         "status": 7,       # G
         "preview_url": 8,  # H
-        "revision": 9,     # I
-        "alt_text": 11,    # K
     }
     sheet = get_sheet()
     rows = sheet.get_all_values()
     for i, r in enumerate(rows[1:], start=2):
         if r and r[0] == post_datetime:
-            row_data = list(r) + [""] * max(0, 11 - len(r))
+            row_data = list(r) + [""] * max(0, 8 - len(r))
             for key, val in fields.items():
                 col_idx = col_map.get(key)
                 if col_idx:
                     row_data[col_idx - 1] = val
-            sheet.update(f"A{i}:K{i}", [row_data[:11]])
+            sheet.update(f"A{i}:H{i}", [row_data[:8]])
             print(f"スプレッドシート更新完了（行{i}）: {', '.join(f'{k}={repr(v)[:30]}' for k, v in fields.items())}")
             return True
     print(f"警告: {post_datetime} の行が見つかりません")
@@ -389,8 +387,6 @@ def register(
     caption: str,
     hashtags: str,
     memo: str = "",
-    seed: int = None,
-    alt_text: str = "",
 ):
     """generatedフォルダの画像をGitHubにアップロードしてスプレッドシートに登録"""
 
@@ -419,11 +415,11 @@ def register(
     preview_url = upload_html_to_github(html, post_datetime)
 
     # スプレッドシートに登録（同じ日時の行があれば上書き、なければ追加）
-    # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL I=修正指示 J=seed K=alt_text
+    # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL
     sheet = get_sheet()
     files_str = ",".join(filenames)
     row = [post_datetime, menu_type, files_str, caption, hashtags, memo,
-           "確認待ち", preview_url, "", str(seed) if seed else "", alt_text]
+           "確認待ち", preview_url]
 
     all_values = sheet.get_all_values()
     target_row_num = None
@@ -433,7 +429,7 @@ def register(
             break
 
     if target_row_num:
-        sheet.update(f"A{target_row_num}:K{target_row_num}", [row])
+        sheet.update(f"A{target_row_num}:H{target_row_num}", [row])
         print(f"\nスプレッドシートを上書き更新しました（行{target_row_num}）！")
     else:
         sheet.append_row(row)
