@@ -20,3 +20,7 @@ generated/carousel_*.jpg
 # OAuth秘密情報（コミット禁止）
 client_secrets.json
 token_drive.json
+
+# AIダッシュボード（dashboard/README.md 参照）
+dashboard/node_modules/
+dashboard/dist/
