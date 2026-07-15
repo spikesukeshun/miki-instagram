@@ -179,7 +179,10 @@ export function analyze(data: DashboardData): Analyzed {
 
   const weeks = buildWeeks(data, posts, currentWeekStart);
   const themes = buildThemes(insightPosts, currentWeekStart);
-  const heatmap = buildHeatmap(posts);
+  // インサイト実在（reach等がある）投稿だけで集計する。
+  // 全 posts を渡すと insights の無い投稿が like/comment percentile の推定スコアで
+  // 埋められ、「投稿年（2022-23はいいねが3倍）」を測ってしまい壊れるため。
+  const heatmap = buildHeatmap(insightPosts);
 
   return { posts, insightPosts, weeks, themes, heatmap, currentWeekStart };
 }
@@ -296,12 +299,15 @@ function buildHeatmap(posts: ScoredPost[]): HeatmapData {
   }
   const hours = [...hourSet].sort((a, b) => a - b);
   const cells: HeatmapCell[] = [];
+  // 色スケール基準（maxScore）は n>=3 のセルだけで決める。
+  // 1〜2件の小標本セルがスケール最大値を占めて再び誤誘導するのを防ぐ。
+  const MIN_CELL_N = 3;
   let maxScore = 0;
   for (let wd = 0; wd < 7; wd++) {
     for (const h of hours) {
       const e = map.get(`${wd}-${h}`);
       const avg = e ? e.total / e.count : null;
-      if (avg != null) maxScore = Math.max(maxScore, avg);
+      if (avg != null && (e?.count ?? 0) >= MIN_CELL_N) maxScore = Math.max(maxScore, avg);
       cells.push({ weekday: wd, hour: h, count: e?.count ?? 0, avgScore: avg });
     }
   }

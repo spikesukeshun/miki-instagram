@@ -64,9 +64,9 @@ export function buildStrategy(
     expectedPvRate: range(t.avgPvRate),
   }));
 
-  /* おすすめ曜日×時間（実績2件以上のセルの平均スコア上位） */
+  /* おすすめ曜日×時間（実績3件以上のセルの平均スコア上位。小標本の誤誘導を避ける） */
   const bestSlots = heatmap.cells
-    .filter((c) => c.count >= 2 && c.avgScore != null)
+    .filter((c) => c.count >= 3 && c.avgScore != null)
     .map((c) => ({ weekday: c.weekday, hour: c.hour, avgScore: c.avgScore as number, count: c.count }))
     .sort((a, b) => b.avgScore - a.avgScore)
     .slice(0, 4);

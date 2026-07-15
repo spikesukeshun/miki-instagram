@@ -29,7 +29,7 @@ export function Heatmap({ heatmap }: { heatmap: HeatmapData }) {
       <SectionHeader
         index="06"
         title="投稿時間ヒートマップ"
-        desc="曜日×時間帯ごとの平均投稿スコア（全期間・423投稿）。数字はスコア、括弧内は投稿数。実績1件のセルは参考程度に。"
+        desc="曜日×時間帯ごとの平均投稿スコア（インサイト実在の投稿のみ・2025年以降）。数字はスコア、括弧内は投稿数。n<3の薄いセルは参考。"
       />
       <FadeIn>
         <Card>
@@ -56,18 +56,19 @@ export function Heatmap({ heatmap }: { heatmap: HeatmapData }) {
                       {hours.map((h) => {
                         const c = cellFor(wi, h);
                         const has = c && c.count > 0;
+                        const reliable = c && c.count >= 3;
                         return (
                           <td
                             key={h}
                             className="tnum rounded-md py-1.5"
                             style={{
-                              background: has ? bg(c.avgScore) : "var(--surface-2)",
-                              color: has ? fg(c.avgScore) : "var(--muted)",
-                              opacity: has ? 1 : 0.45,
+                              background: reliable ? bg(c.avgScore) : "var(--surface-2)",
+                              color: reliable ? fg(c.avgScore) : "var(--muted)",
+                              opacity: reliable ? 1 : has ? 0.6 : 0.45,
                             }}
                             title={
                               has
-                                ? `${wd}曜${h}時台: 平均スコア${Math.round(c.avgScore ?? 0)}点（${c.count}投稿）`
+                                ? `${wd}曜${h}時台: 平均スコア${Math.round(c.avgScore ?? 0)}点（${c.count}投稿）${reliable ? "" : " ※参考（n<3）"}`
                                 : `${wd}曜${h}時台: 投稿実績なし`
                             }
                           >
