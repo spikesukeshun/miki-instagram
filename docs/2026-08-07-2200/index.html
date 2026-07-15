@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>投稿プレビュー - MIKI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #FFF9F5;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            color: #3D1F2D;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: linear-gradient(135deg, #E8A0B4, #C9A96E);
+            color: white;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 6px; }
+        .header .meta { font-size: 13px; opacity: 0.9; }
+        .section-title {
+            font-size: 13px;
+            color: #C9A96E;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            padding: 20px 16px 8px;
+            border-bottom: 1px solid #F0D9E0;
+            margin-bottom: 0;
+        }
+        .image-card {
+            position: relative;
+            margin: 12px 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(200,120,130,0.15);
+        }
+        .image-card img {
+            width: 100%;
+            display: block;
+        }
+        .image-num {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .caption-box {
+            margin: 4px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .hashtags {
+            margin: 8px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #5B8FCA;
+            line-height: 1.7;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .approve-box {
+            margin: 20px 16px 0;
+            background: linear-gradient(135deg, #FFF0F5, #FFF8EC);
+            border: 1.5px solid #E8A0B4;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .approve-box p { font-size: 13px; line-height: 1.7; color: #3D1F2D; }
+        .approve-box .step {
+            font-size: 14px;
+            font-weight: bold;
+            color: #C9607A;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #B0969F;
+            margin-top: 24px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 投稿プレビュー</h1>
+        <div class="meta">投稿予定: 2026/08/07 22:00　|　全8枚</div>
+    </div>
+
+    <div class="section-title">▼ 画像確認</div>
+    
+        <div class="image-card">
+            <div class="image-num">1 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_01.jpg?t=202607152329" alt="スライド1" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">2 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_02.jpg?t=202607152329" alt="スライド2" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">3 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_03.jpg?t=202607152329" alt="スライド3" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">4 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_04.jpg?t=202607152329" alt="スライド4" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">5 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_05.jpg?t=202607152329" alt="スライド5" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">6 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_06.jpg?t=202607152329" alt="スライド6" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">7 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_07.jpg?t=202607152329" alt="スライド7" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">8 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-08-07-2200/carousel_08.jpg?t=202607152329" alt="スライド8" loading="lazy">
+        </div>
+
+    <div class="section-title">▼ キャプション</div>
+    <div class="caption-box">「夏なのに手足が冷えて、体がだるい」その不調はクーラー冷えかもしれません。エステティシャンが実践する、今日からできる夏の温活ケア4つをまとめました。<br><br>MIKIです。<br><br>暑い日が続きますが、体調はいかがですか？実はこの時期、サロンで一番多いお悩みが「冷え」なんです😊<br><br>「夏なのに冷え？」と思うかもしれません。でも、冷房の効いた部屋で過ごす時間、冷たい飲み物、シャワーだけで済ませるお風呂。夏の暮らしは、気づかないうちに体を内側から冷やしています。<br><br>夕方になると脚が重い。なんとなくだるさが抜けない。肩や首がこわばる。もし心当たりがあれば、それは夏の冷えのサインかもしれません。<br><br>とくに気をつけてほしいのが、むくみをためこまないこと。冷えて巡りが滞ると、夕方の脚はどんどん重くなります。むくみは、その日のうちにリセットするのが一番。ためこむほど戻すのに時間がかかるのは、体も心も同じです。<br><br>私のおすすめは、やっぱり「温めること」。湯船に浸かる、温かい飲み物を選ぶ、羽織りものを一枚持ち歩く。小さなことですが、続けるほど体は軽くなっていきます。そして夏の温活は、9月頃にどっと来る「秋バテ」の予防にもつながります🌿<br><br>それでも「もう自分では追いつかない」というときは、サロンの出番です。ラジオ波で体の芯からじんわり温めて、滞った巡りをしっかり流す。ジャグジーとあわせれば、冷房で冷えきった体が見違えるように軽くなりますよ。<br><br>夏の不調は、我慢するものではなくて、ケアするもの。あなたの体も、どうぞ大切にしてあげてください。<br><br>✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨<br><br>ご予約・ご相談はプロフィールのDMからお気軽にどうぞ💌</div>
+
+    <div class="section-title">▼ ハッシュタグ</div>
+    <div class="hashtags">#クーラー冷え&nbsp;#夏の冷え対策&nbsp;#むくみケア&nbsp;#夏バテ予防&nbsp;#温活&nbsp;#ラジオ波&nbsp;#六本木エステ&nbsp;#アラサー美容&nbsp;#アラフォー美容</div>
+
+    <div class="approve-box">
+        <p>内容を確認したら<br>スプレッドシートで承認してください</p>
+        <div class="step">ステータス欄を「承認済み」に変更 →　GO！</div>
+    </div>
+
+    <div class="footer">
+        <p>プレビュー生成日時: 2026/07/15 23:29</p>
+    </div>
+</body>
+</html>
