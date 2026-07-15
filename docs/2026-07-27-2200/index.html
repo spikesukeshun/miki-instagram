@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>投稿プレビュー - MIKI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #FFF9F5;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            color: #3D1F2D;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: linear-gradient(135deg, #E8A0B4, #C9A96E);
+            color: white;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 6px; }
+        .header .meta { font-size: 13px; opacity: 0.9; }
+        .section-title {
+            font-size: 13px;
+            color: #C9A96E;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            padding: 20px 16px 8px;
+            border-bottom: 1px solid #F0D9E0;
+            margin-bottom: 0;
+        }
+        .image-card {
+            position: relative;
+            margin: 12px 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(200,120,130,0.15);
+        }
+        .image-card img {
+            width: 100%;
+            display: block;
+        }
+        .image-num {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .caption-box {
+            margin: 4px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .hashtags {
+            margin: 8px 16px 0;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #5B8FCA;
+            line-height: 1.7;
+            box-shadow: 0 1px 6px rgba(200,120,130,0.1);
+        }
+        .approve-box {
+            margin: 20px 16px 0;
+            background: linear-gradient(135deg, #FFF0F5, #FFF8EC);
+            border: 1.5px solid #E8A0B4;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .approve-box p { font-size: 13px; line-height: 1.7; color: #3D1F2D; }
+        .approve-box .step {
+            font-size: 14px;
+            font-weight: bold;
+            color: #C9607A;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #B0969F;
+            margin-top: 24px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 投稿プレビュー</h1>
+        <div class="meta">投稿予定: 2026/07/27 22:00　|　全8枚</div>
+    </div>
+
+    <div class="section-title">▼ 画像確認</div>
+    
+        <div class="image-card">
+            <div class="image-num">1 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_01.jpg?t=202607152326" alt="スライド1" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">2 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_02.jpg?t=202607152326" alt="スライド2" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">3 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_03.jpg?t=202607152326" alt="スライド3" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">4 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_04.jpg?t=202607152326" alt="スライド4" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">5 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_05.jpg?t=202607152326" alt="スライド5" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">6 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_06.jpg?t=202607152326" alt="スライド6" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">7 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_07.jpg?t=202607152326" alt="スライド7" loading="lazy">
+        </div>
+        <div class="image-card">
+            <div class="image-num">8 / 8</div>
+            <img src="https://raw.githubusercontent.com/spikesukeshun/miki-instagram/main/generated/2026-07-27-2200/carousel_08.jpg?t=202607152326" alt="スライド8" loading="lazy">
+        </div>
+
+    <div class="section-title">▼ キャプション</div>
+    <div class="caption-box">「夏はどうも気分が上がらない」そんな日もありますよね。エステティシャンの私が続けている、夏をご機嫌に過ごす小さな習慣の話です。<br><br>MIKIです。<br><br>日曜日のお昼にこんにちは。今日は仕事の話はおやすみして、最近の私の「夏のご機嫌の保ち方」をお話しします😊<br><br>一つ目は、夏の夜のささやかな楽しみ。一日の終わりに、夜風にあたりながら冷たい一杯をゆっくり味わう時間です。頑張った日ほど、この時間が特別においしく感じるんですよね。夏の夜は少しだけ夜更かししたくなります。<br><br>二つ目は、お花。通り道に咲いている花を見つけると、つい立ち止まってしまいます。色とりどりの花びらって、それだけで気持ちを明るくしてくれませんか。私の小さな充電スポットです🌸<br><br>三つ目は、意外かもしれませんが、湯船。暑いとついシャワーで済ませたくなりますが、私は夏こそ湯船派なんです。クーラーで冷えた体をじんわり温めると、眠りの深さが全然違います。お気に入りのバスソルトを入れて、ゆっくり浸かる。これが翌日のご機嫌のひみつです。<br><br>こうして並べてみると、どれも特別なことじゃないんですよね。<br><br>でも、小さな楽しみをいくつも持っておくことが、忙しい毎日で自分のご機嫌を保ついちばんのコツだと思っています。気分が落ちそうな日も、「帰ったら湯船にゆっくり浸かろう」と思えるだけで、少し頑張れたりするので。<br><br>あなたの夏の小さな楽しみは何ですか？よかったらコメントやDMで教えてくださいね。<br><br>そして、自分ではほぐせない疲れが溜まってきたら。そのときは、どうぞ私に任せてください。夏を軽やかに過ごすお手伝いをします。<br><br>✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨<br><br>ご予約・ご相談はプロフィールのDMからお気軽にどうぞ💌</div>
+
+    <div class="section-title">▼ ハッシュタグ</div>
+    <div class="hashtags">#エステティシャンの日常&nbsp;#夏の過ごし方&nbsp;#ご機嫌な暮らし&nbsp;#自分を大切に&nbsp;#癒しの時間&nbsp;#六本木エステ&nbsp;#ご褒美時間</div>
+
+    <div class="approve-box">
+        <p>内容を確認したら<br>スプレッドシートで承認してください</p>
+        <div class="step">ステータス欄を「承認済み」に変更 →　GO！</div>
+    </div>
+
+    <div class="footer">
+        <p>プレビュー生成日時: 2026/07/15 23:26</p>
+    </div>
+</body>
+</html>
