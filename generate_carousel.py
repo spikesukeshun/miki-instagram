@@ -479,10 +479,14 @@ def generate_text_slide(img, slide):
     title = normalize_text(slide.get("title", ""))
     body = normalize_text(slide.get("text", ""))
 
+    has_title = bool(title.strip())
     title_h = measure_lines(title_font, title, line_gap=12)
     body_lines = body.split("\n")
     body_h = len(body_lines) * LINE_H
-    block_h = title_h + 30 + 1 + 80 + body_h
+    # タイトルがある時のみタイトル高さ＋区切り線＋余白を確保。
+    # タイトルが空（画像側に見出しがある場合）は本文のみを帯中央に配置し、
+    # 宙に浮いた区切り線が出ないようにする。
+    block_h = (title_h + 30 + 1 + 80 + body_h) if has_title else body_h
 
     # content_h を渡して photo zone を必要なら自動縮小（本文オーバーフロー防止）
     img, band_y, band_h = _slide_frame(img, slide, content_h=block_h)
@@ -491,13 +495,16 @@ def generate_text_slide(img, slide):
     # 万一 block_h > band_h でも上方向にはみ出さないようクランプ
     start_y = band_y + max(0, (band_h - block_h) // 2)
 
-    end_title_y = draw_multiline_centered(draw, title, title_font, start_y,
-                                          W, INK, line_gap=12)
-    rule_y = end_title_y + 18
-    _hairline(draw, rule_y)
+    if has_title:
+        end_title_y = draw_multiline_centered(draw, title, title_font, start_y,
+                                              W, INK, line_gap=12)
+        rule_y = end_title_y + 18
+        _hairline(draw, rule_y)
+        # 区切り線から本文まで 70px（旧 100px から狭めて全体バランス調整）
+        y = rule_y + 70
+    else:
+        y = start_y
 
-    # 区切り線から本文まで 70px（旧 100px から狭めて全体バランス調整）
-    y = rule_y + 70
     for line in body_lines:
         if line:
             bbox = body_font.getbbox(line)
@@ -554,6 +561,125 @@ def generate_list_slide(img, slide):
     if footer:
         _hairline(draw, y, x1=W // 2 - 60, x2=W // 2 + 60, width=2)
         draw_centered(draw, footer, footer_font, y + 22, W, GOLD)
+
+    return img.convert("RGB")
+
+
+def generate_price_slide(img, slide):
+    """料金表（左右2カラム＋縦の区切り線）。
+    写真ゾーンが左右にコースを並べた画像のとき、その真下に各コースの料金が
+    縦に揃うようにする。columns は最大2つ。
+
+    slide 例:
+      "type": "price",
+      "title": "料金のご案内",
+      "top_note": "全て税込",
+      "columns": [{"label": "スペシャル", "lines": ["平日 15,800円", "土日祝 16,800円"]}, ...],
+      "notes": ["指名料 ＋1,000円", ...]
+    """
+    title_font = get_serif(54)
+    label_font = get_serif(34)
+    price_font = get_sans(40)
+    note_font = get_sans(30)
+    top_note_font = get_sans(28)
+    PRICE_H = 58
+    NOTE_H = 46
+
+    title = normalize_text(slide.get("title", ""))
+    top_note = normalize_text(slide.get("top_note", "")) if slide.get("top_note") else ""
+    columns = slide.get("columns", [])[:2]
+    notes = [normalize_text(n) for n in slide.get("notes", [])]
+
+    highlight = slide.get("highlight")
+    # 実描画に合わせた高さ（ラベル行 46px ＋ 価格行まわり 94px）
+    hl_h = (94 + (46 if highlight.get("label") else 0)) if highlight else 0
+
+    has_title = bool(title.strip())
+    max_lines = max([len(c.get("lines", [])) for c in columns], default=0)
+    title_h = measure_lines(title_font, title, line_gap=12)
+    col_h = 46 + max_lines * PRICE_H          # ラベル＋価格行
+    block_h = ((title_h + 28 + 1 if has_title else 0)
+               + (66 if top_note else 8) + 26
+               + col_h + hl_h + (36 + len(notes) * NOTE_H if notes else 0))
+
+    img, band_y, band_h = _slide_frame(img, slide, content_h=block_h)
+    draw = ImageDraw.Draw(img)
+    start_y = band_y + max(0, (band_h - block_h) // 2)
+
+    # タイトルが空（画像側に見出しがある場合）は区切り線も出さない
+    if has_title:
+        end_title_y = draw_multiline_centered(draw, title, title_font, start_y,
+                                              W, INK, line_gap=12)
+        rule_y = end_title_y + 18
+        _hairline(draw, rule_y)
+        y = rule_y + 26
+    else:
+        y = start_y + 26
+
+    if top_note:
+        # 縦の区切り線と同じ中心軸に載るため、カラムとの間隔を広めに取る
+        draw_centered(draw, top_note, top_note_font, y, W, GOLD)
+        y += 66
+    else:
+        y += 8
+
+    def _at_center(text, font, yy, cx, fill):
+        b = font.getbbox(text)
+        draw.text((cx - (b[2] - b[0]) // 2 - b[0], yy), text, font=font, fill=fill)
+
+    # 左右カラム（中心 x）。写真ゾーンの左右分割と揃える。
+    # 1カラムのときは中央寄せ（タイトル・注記と軸を揃えるため）。
+    centers = [int(W * 0.27), int(W * 0.73)] if len(columns) == 2 else [W // 2]
+    col_top = y
+    for ci, col in enumerate(columns):
+        cx = centers[ci] if ci < len(centers) else W // 2
+        label = normalize_text(col.get("label", ""))
+        cy = col_top
+        if label:
+            _at_center(label, label_font, cy, cx, GOLD)
+        cy += 46
+        for ln in col.get("lines", []):
+            _at_center(normalize_text(ln), price_font, cy, cx, INK)
+            cy += PRICE_H
+
+    # 縦の区切り線（2カラムのときのみ）
+    if len(columns) == 2:
+        vx = W // 2
+        draw.line([(vx, col_top - 4), (vx, col_top + col_h - 8)], fill=GOLD, width=2)
+
+    y = col_top + col_h
+
+    # 割引の強調ブロック（定価に取り消し線＋割引後価格）
+    if highlight:
+        y += 26
+        hl_label = normalize_text(highlight.get("label", ""))
+        if hl_label:
+            draw_centered(draw, hl_label, note_font, y, W, GOLD)
+            y += 46
+        strike = normalize_text(highlight.get("strike", ""))
+        final = normalize_text(highlight.get("price", ""))
+        s_font = get_sans(36)
+        f_font = get_sans(52)
+        MUTED = (150, 138, 126, 255)
+        sb = s_font.getbbox(strike) if strike else (0, 0, 0, 0)
+        fb = f_font.getbbox(final) if final else (0, 0, 0, 0)
+        sw, fw = sb[2] - sb[0], fb[2] - fb[0]
+        gap = 26 if (strike and final) else 0
+        x = (W - (sw + gap + fw)) // 2
+        if strike:
+            sy = y + 12
+            draw.text((x - sb[0], sy), strike, font=s_font, fill=MUTED)
+            mid = sy + (sb[1] + sb[3]) // 2
+            draw.line([(x - 4, mid), (x + sw + 4, mid)], fill=MUTED, width=3)
+        if final:
+            draw.text((x + sw + gap - fb[0], y), final, font=f_font, fill=GOLD)
+        y += 68
+
+    if notes:
+        y += 36
+        for n in notes:
+            draw_centered(draw, n, note_font, y, W, INK)
+            y += NOTE_H
 
     return img.convert("RGB")
 
@@ -632,6 +758,7 @@ def generate_with_slides(slides: list):
         "cover": generate_cover,
         "text": generate_text_slide,
         "list": generate_list_slide,
+        "price": generate_price_slide,
         "cta": generate_cta_slide,
         "raw": generate_raw,
     }
