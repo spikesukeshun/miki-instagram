@@ -1,5 +1,3 @@
-import gspread
-from google.oauth2.service_account import Credentials
 import os
 import glob
 import base64
@@ -7,12 +5,8 @@ import requests
 from datetime import datetime
 
 from load_env import load_from_zshrc
+from sheet_client import open_sheet
 load_from_zshrc()
-
-SCOPES = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive"
-]
 
 SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 GITHUB_OWNER = "spikesukeshun"
@@ -23,9 +17,7 @@ RAW_BASE = f"https://raw.githubusercontent.com/{GITHUB_OWNER}/{GITHUB_REPO}/main
 
 
 def get_sheet():
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
-    client = gspread.authorize(creds)
-    return client.open_by_key(SPREADSHEET_ID).sheet1
+    return open_sheet(SPREADSHEET_ID)
 
 
 def _get_github_token() -> str:
