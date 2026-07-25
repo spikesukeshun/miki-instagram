@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+/*
+ * デザイントークン
+ * ダークが基本テーマ（:root デフォルト）。
+ * Artifact ビューアのテーマトグルは <html data-theme="light|dark"> を刻印するので
+ * data-theme="light" のときだけライトトークンに切り替える。
+ */
+:root {
+  /* 面 */
+  --bg: #12100c;
+  --surface: #1a1712;
+  --surface-2: #221d16;
+  --border: #2c2820;
+  --border-strong: #3d372c;
+
+  /* インク */
+  --ink: #f0eae0;
+  --ink-2: #b5ac9d;
+  --muted: #8a8276;
+
+  /* ブランドアクセント（ゴールド） */
+  --accent: #c9a063;
+  --accent-strong: #dab578;
+  --accent-dim: rgba(201, 160, 99, 0.13);
+
+  /* テーマ別カテゴリカル（dataviz検証済み・ダーク面） */
+  --s-lifestyle: #c98500;
+  --s-menu: #3987e5;
+  --s-bridal: #d55181;
+  --s-reward: #199e70;
+  --s-other: #8a857b;
+
+  /* ステータス（固定・シリーズ色と重複しない） */
+  --good: #0ca30c;
+  --warn: #fab219;
+  --serious: #ec835a;
+  --crit: #d03b3b;
+
+  /* チャートクローム */
+  --grid: #2b2822;
+  --axis: #3d372c;
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #faf6f1;
+  --surface: #fffdfa;
+  --surface-2: #f3ede4;
+  --border: #e6dccc;
+  --border-strong: #d5c8b2;
+
+  --ink: #2b2522;
+  --ink-2: #655c50;
+  --muted: #8a8276;
+
+  --accent: #96712e;
+  --accent-strong: #7a5a1e;
+  --accent-dim: rgba(150, 113, 46, 0.12);
+
+  /* ライト面で検証済みのカテゴリカル */
+  --s-lifestyle: #eda100;
+  --s-menu: #2a78d6;
+  --s-bridal: #e87ba4;
+  --s-reward: #1baf7a;
+  --s-other: #98928a;
+
+  --good: #006300;
+  --warn: #b97e00;
+  --serious: #c05a2e;
+  --crit: #d03b3b;
+
+  --grid: #e9e1d3;
+  --axis: #d5c8b2;
+
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-serious: var(--serious);
+  --color-crit: var(--crit);
+  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 72px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 数値カラムの桁揃え */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 見出しの改行バランス */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* フォーカスリング（キーボード操作向け） */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 横スクロールコンテナのスクロールバーを控えめに */
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
