@@ -51,6 +51,8 @@ export const ANALYSIS = {
   reportPosts: 12,
   /** ランキングに表示する投稿数 */
   rankingPosts: 10,
+  /** ランキングの対象期間（ヶ月）。古い投稿が上位を占め続けるのを防ぐ */
+  rankingWindowMonths: 6,
 } as const;
 
 /** ファネルのDM・予約が未入力のときに使う推定係数

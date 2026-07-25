@@ -26,6 +26,13 @@ export function weekStartKey(jst: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** 現在（JST壁時計）から months ヶ月前の Date。ScoredPost.date とそのまま比較できる */
+export function monthsAgoJst(months: number): Date {
+  const d = new Date(Date.now() + 9 * 3600 * 1000);
+  d.setUTCMonth(d.getUTCMonth() - months);
+  return d;
+}
+
 const addDays = (iso: string, days: number): string => {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
