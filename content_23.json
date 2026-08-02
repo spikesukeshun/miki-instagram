@@ -7,8 +7,8 @@
       "tag": "- 取扱ブランドのご紹介 -",
       "bg_strategy": "edit",
       "reuse_source": "drive",
-      "reuse_theme": "lifestyle",
-      "reuse_filename": "IMG_4104.heic",
+      "reuse_theme": "menu",
+      "reuse_filename": "photo-output.HEIC",
       "focus_y": 0.5
     },
     {
@@ -19,7 +19,7 @@
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "フェイシャル引き上げ.JPG",
+      "reuse_filename": "ChatGPT Image 2026年8月2日 12_03_56.png",
       "focus_y": 0.4,
       "slide_photo_h_ratio": 0.35
     },
@@ -27,11 +27,11 @@
       "filename": "bg03.jpg",
       "type": "text",
       "title": "内側からのケアも",
-      "text": "きれいは外側だけでは\nつくれません。\n\nビーマックスのインナーケアと\nピュアラナ酵素で\n体の内側から整えることも\n大切にしています。",
+      "text": "ビーマックスのインナーケアで\n巡りを整える。\n\nピュアラナ酵素で\n疲労回復＆デトックス。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "お腹のマッサージ 1.JPG",
+      "reuse_filename": "ドリンク",
       "focus_y": 0.5,
       "slide_photo_h_ratio": 0.35
     },
@@ -39,11 +39,11 @@
       "filename": "bg04.jpg",
       "type": "text",
       "title": "おうちのバスタイムに",
-      "text": "ミネラリアは\n死海のミネラルを生かしたブランド。\n\nバスソルトをひとさじ入れれば\nいつもの湯船が\n小さなスパに変わります。\n夏の冷え対策にもぴったりです。",
+      "text": "MIKIのお気に入りの\nミネラリアは\n死海のミネラルを生かしたブランド。\n\nバスソルトをひとさじ入れれば\nいつもの湯船が\n小さなスパに変わります。\n夏の冷え対策にもぴったりです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "部屋&ソルト.HEIC",
+      "reuse_filename": "ミネラリア",
       "focus_y": 0.5,
       "slide_photo_h_ratio": 0.35
     },
@@ -53,17 +53,17 @@
       "title": "悩み別 ブランド早見表",
       "items": [
         "年齢肌のケアに ディレイア",
-        "肌を整えるなら クリスティーナ",
+        "肌のデトックス、代謝向上にクリスティーナ",
         "毎日の肌づくりに MTメタトロン",
-        "体の内側から ビーマックス",
-        "巡りを整えたい日 ピュアラナ酵素",
+        "代謝アップ、脂肪燃焼のサポートにビーマックス",
+        "食生活に自信のない方にピュアラナ酵素",
         "湯船のご褒美に ミネラリア"
       ],
       "footer": "迷ったらカウンセリングで",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "目.JPG",
+      "reuse_filename": "AB7FBD3E-A1A5-4628-B43E-8525D64D8811.PNG",
       "focus_y": 0.4,
       "slide_photo_h_ratio": 0.35
     },
@@ -76,7 +76,7 @@
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "デコルテクロス.JPG",
+      "reuse_filename": "BirthDay.JPG",
       "focus_y": 0.5,
       "slide_photo_h_ratio": 0.35
     }
