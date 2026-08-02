@@ -20,6 +20,17 @@ import unicodedata
 from PIL import Image, ImageDraw, ImageFont
 import os
 
+# Drive の背景画像には iPhone 撮影の .HEIC / .heic が多数含まれる。
+# Pillow 単体では HEIC を開けず UnidentifiedImageError になるため、
+# pillow-heif を Pillow に登録して Image.open() が HEIC を扱えるようにする。
+# 本モジュールを import する create_post.py / process_revisions.py にも登録が効く。
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+except ImportError:  # 未導入環境では HEIC 以外は従来どおり動作する
+    pass
+
 
 def normalize_text(text: str) -> str:
     """Unicode NFC正規化＋フォントで描画できない可能性のある文字を除去"""

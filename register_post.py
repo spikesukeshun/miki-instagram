@@ -362,8 +362,13 @@ def register(
         sheet.update(f"A{target_row_num}:K{target_row_num}", [row])
         print(f"\nスプレッドシートを上書き更新しました（行{target_row_num}）！")
     else:
-        sheet.append_row(row)
-        print(f"\nスプレッドシートに新規登録しました！")
+        # append_row をそのまま使うと、Sheets API がデータ範囲の右端を誤検出して
+        # A列ではなく K列から書き込むことがある（2026-08 に実際に発生。
+        # A列が空の行になり post_scheduler.py から見えず、投稿されないまま埋もれた）。
+        # 追記位置を自分で決めて A〜K に明示的に書き込む。
+        new_row_num = len(all_values) + 1
+        sheet.update(f"A{new_row_num}:K{new_row_num}", [row])
+        print(f"\nスプレッドシートに新規登録しました（行{new_row_num}）！")
 
     print(f"\nスプレッドシートに登録完了！")
     print(f"  投稿日時: {post_datetime}")
