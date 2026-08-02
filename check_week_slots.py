@@ -9,6 +9,10 @@ weekly-dashboard-update の週次タスクから呼ばれる。
     /usr/bin/python3 check_week_slots.py              # 翌週（月〜日）を調べる
     /usr/bin/python3 check_week_slots.py --json       # 機械可読出力
     /usr/bin/python3 check_week_slots.py --week-start 2026-08-10
+    /usr/bin/python3 check_week_slots.py --include-registered
+        # 「確認待ち」の枠も作り直し対象に含める。新しいダッシュボード分析で
+        # 登録済みの下書きを作り直したいときだけ使う。
+        # 「承認済み」「投稿済み」は対象外（承認や公開を巻き戻さない）。
 
 設計方針（重複作成を防ぐことを最優先にする）:
   * 空き / 登録済み の判定は **スプレッドシートだけ** で行う。
@@ -44,6 +48,11 @@ DATETIME_FORMATS = (
 )
 
 EXIT_ABORT = 2  # 異常終了。SKILL.md 側は「非ゼロなら中止」で扱う
+
+# --include-registered を付けたときだけ「作り直してよい」とみなすステータス。
+# 「確認待ち」はMIKIさんがまだ承認していない下書きなので上書きしてよい。
+# 「承認済み」「未投稿」「投稿済み」は承認済み・公開済みなので絶対に作り直さない。
+REWRITABLE_STATUSES = ("確認待ち",)
 
 
 class SheetError(RuntimeError):
@@ -143,8 +152,13 @@ def load_local_drafts() -> dict:
     return out
 
 
-def build_report(week_start: dt.date, reservations: dict, drafts: dict) -> dict:
-    """スロットごとの状態を組み立てる。"""
+def build_report(week_start: dt.date, reservations: dict, drafts: dict,
+                 include_registered: bool = False) -> dict:
+    """スロットごとの状態を組み立てる。
+
+    include_registered=True のときは「確認待ち」の枠も作り直し対象（free）にする。
+    承認済み・投稿済みは対象外のまま（承認や公開を巻き戻さないため）。
+    """
     # 同じ日に別時刻の予約が入っていないかも見る（スロット時刻は過去に変わっている）
     by_date: dict = {}
     for when, status in reservations.items():
@@ -163,8 +177,14 @@ def build_report(week_start: dt.date, reservations: dict, drafts: dict) -> dict:
         local = drafts.get(gen_dir, [])
 
         if status is not None:
-            state = "registered"
-            note = f"シート登録済み（{status or 'ステータス空欄'}）"
+            if include_registered and status in REWRITABLE_STATUSES:
+                state = "free"
+                note = f"作り直し対象（{status}・未承認のため上書きしてよい）"
+            else:
+                state = "registered"
+                note = f"シート登録済み（{status or 'ステータス空欄'}）"
+                if include_registered:
+                    note += " → 承認済み・公開済みのため作り直さない"
         elif same_day:
             # 同じ日の別時刻に予約がある＝スロット時刻の変更後に作られた可能性
             state = "registered"
@@ -196,6 +216,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="翌週の投稿スロットの空きを調べる")
     parser.add_argument("--week-start", help="週の起点（月曜, YYYY-MM-DD）。省略時は翌週")
     parser.add_argument("--json", action="store_true", help="JSONで出力する")
+    parser.add_argument("--include-registered", action="store_true",
+                        help="「確認待ち」の枠も作り直し対象にする（承認済み・投稿済みは除く）")
     args = parser.parse_args()
 
     today = dt.date.today()
@@ -237,14 +259,16 @@ def main() -> int:
               "シートのA列の書式を YYYY/MM/DD HH:MM に直してください。", file=sys.stderr)
         return EXIT_ABORT
 
-    report = build_report(week_start, reservations, load_local_drafts())
+    report = build_report(week_start, reservations, load_local_drafts(),
+                          include_registered=args.include_registered)
 
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0
 
     print(f"対象週: {week_start:%Y/%m/%d}(月) 〜 {week_start + dt.timedelta(days=6):%Y/%m/%d}(日)")
-    print(f"シート参照: 予約{len(reservations)}件\n")
+    print(f"シート参照: 予約{len(reservations)}件"
+          + ("  ※--include-registered: 確認待ちの枠も作り直す\n" if args.include_registered else "\n"))
     for s in report["slots"]:
         mark = "🆕" if s["state"] == "free" else "✅"
         print(f"  {mark} {s['post_datetime']}({s['weekday']})  {s['note']}")
