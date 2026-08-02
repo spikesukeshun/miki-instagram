@@ -366,7 +366,13 @@ def register(
         # A列ではなく K列から書き込むことがある（2026-08 に実際に発生。
         # A列が空の行になり post_scheduler.py から見えず、投稿されないまま埋もれた）。
         # 追記位置を自分で決めて A〜K に明示的に書き込む。
-        new_row_num = len(all_values) + 1
+        # len(all_values) をそのまま使うと、末尾に空行が残っているシートで
+        # 間に空行を挟んでしまう。A列に値がある最後の行の次に置く。
+        last_used = max(
+            (i for i, r in enumerate(all_values, start=1) if r and r[0].strip()),
+            default=1,
+        )
+        new_row_num = last_used + 1
         sheet.update(f"A{new_row_num}:K{new_row_num}", [row])
         print(f"\nスプレッドシートに新規登録しました（行{new_row_num}）！")
 
