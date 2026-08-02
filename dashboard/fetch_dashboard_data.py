@@ -25,11 +25,13 @@ API仕様メモ（2026-07 実測）:
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -40,6 +42,12 @@ WORKTREE_ROOT = DASHBOARD_DIR.parent
 REPO_CANDIDATES = [
     WORKTREE_ROOT,
     Path.home() / "Desktop" / "美喜のinstagram",
+]
+# テーマ手動上書きの読み込み元。後に読むファイルが勝つため、
+# main repo 側（get_recent_insights.py が参照する正）を最後に置く。
+THEME_OVERRIDE_FILES = [
+    DASHBOARD_DIR / "data" / "theme_overrides.json",
+    *(root / "theme_overrides.json" for root in REPO_CANDIDATES),
 ]
 
 sys.path.insert(0, str(next((p for p in REPO_CANDIDATES if (p / "load_env.py").exists()), WORKTREE_ROOT)))
@@ -62,13 +70,61 @@ ACCOUNT_WEEKS = 16
 FEED_METRICS = "reach,views,saved,shares,likes,comments,total_interactions,profile_visits,follows"
 VIDEO_METRICS = "reach,views,saved,shares,likes,comments,total_interactions"
 
+# ──────────────────────────────────────────────────────────
 # テーマ分類（post_classifications.json に無い投稿へのヒューリスティック）
-THEME_KEYWORDS = [
-    ("bridal", ["ブライダル", "花嫁", "挙式", "結婚式", "ウェディング", "ドレス", "前撮り", "プレ花嫁"]),
-    ("reward", ["ご褒美", "リラックス", "癒し", "ジャグジー", "ハマム", "休日", "リフレッシュ"]),
-    ("lifestyle", ["MIKIです", "mikiです", "私は", "自分語り", "想い", "感謝", "お客様のお声", "日常"]),
-    ("menu", ["コース", "メニュー", "施術", "¥", "円", "キャビ", "ラジオ波", "フェイシャル", "毛穴", "小顔"]),
+# get_recent_insights.py と同じ重み付きスコアリング方式。
+#
+# 旧実装は固定順の先頭一致だったため、旧スタイルの自己紹介に含まれる
+# 「ブライダルエステも得意♪」が bridal に一致し、履歴の大半を bridal と
+# 誤判定していた（322件の人手ラベルに対し 32件=9.9% しか当たらない。
+# 多数派ベースライン 65.5% より低い）。この方式では 234件=72.7%。
+#
+# 現行のキャプションは CLAUDE.md のルールにより
+#   1〜2行目: 主題を要約したSEO導入文
+#   3行目以降: 「MIKIです。」から本文
+# という構造なので、導入文に出た語を強く重み付けする。
+# ──────────────────────────────────────────────────────────
+
+# 全投稿に出る自己紹介・料金表・ハッシュタグはテーマ信号にならないので落とす
+BOILERPLATE_MARKERS = [
+    "20代～30代の口コミ", "20代〜30代の口コミ", "シデスコ国際ライセンス",
+    "〜MIKI〜", ":*:*:*:*", "＼ご予約", "▶︎", "ご予約・お問い合わせ",
 ]
+LEAD_MARKERS = ["MIKIです", "mikiです"]
+LEAD_BOOST = 4            # 導入文に出た語の重み倍率
+LEAD_FALLBACK_CHARS = 120  # 「MIKIです」が無い旧スタイル用
+
+# (重み, 語) — 重み5は主題を確定させる明示マーカー
+THEME_KEYWORDS = {
+    "bridal": [
+        (3, ["ブライダル", "花嫁", "プレ花嫁", "卒花", "挙式", "結婚式", "ウェディング",
+             "前撮り", "フォトウェディング", "婚礼", "式まで", "式当日", "秋婚", "春婚",
+             "冬婚", "夏婚", "マリッジ"]),
+        (1, ["ドレス", "披露宴", "入籍"]),
+    ],
+    "reward": [
+        (3, ["ご褒美", "労わ", "労る", "ねぎら", "頑張った自分", "頑張ってきた自分",
+             "頑張りすぎた自分", "自分を大切", "自分のための時間", "自分時間",
+             "自分へのプレゼント"]),
+        (1, ["リセット", "疲れ", "癒し", "リフレッシュ", "リラックス", "解放"]),
+    ],
+    "lifestyle": [
+        (5, ["自分語り", "プライベート投稿", "お休みの日", "原点", "ぼやか", "私自身の話"]),
+        (3, ["プライベート", "休日の過ごし方", "大切にしている", "大切なこと",
+             "ライフプラン", "教わる", "教えてくれた", "私の話", "きっかけ", "初心",
+             "お客様のお声", "子供の頃", "ご機嫌", "習慣"]),
+        (1, ["想い", "日常", "本音", "正直", "感謝", "趣味"]),
+    ],
+    "menu": [
+        (3, ["コース", "メニュー", "料金", "キャビテーション", "ラジオ波", "EMS",
+             "痩身", "フェイシャル", "マシン", "ハーブピーリング", "ご質問",
+             "よくある質問", "予約方法", "アクセス", "契約", "キャンペーン",
+             "オプション", "毛穴", "小顔", "対策"]),
+        (1, ["施術", "ケア", "肌", "むくみ", "予約", "円"]),
+    ],
+}
+# 同点時の優先順（主題としての具体性が高い順）
+THEME_PRIORITY = ["bridal", "reward", "lifestyle", "menu"]
 
 
 def api_get(path: str, **params) -> dict:
@@ -169,18 +225,55 @@ def load_theme_map() -> dict[str, str]:
 
 
 def load_theme_overrides() -> dict[str, str]:
-    """ダッシュボード専用の手動上書き（media_id → theme）"""
-    f = DASHBOARD_DIR / "data" / "theme_overrides.json"
-    if f.exists():
-        return json.loads(f.read_text(encoding="utf-8"))
-    return {}
+    """テーマの手動上書き（media_id → theme）を全ソースからマージする。
+
+    ダッシュボード側と main repo 側で別々に育って分類がずれた実績があるため
+    （2026-08: 直近7投稿が誤ラベル）、片方だけを読まず常に両方をマージし、
+    重複した media_id は main repo 側を採用する。
+    `_comment` 等のアンダースコア始まりのキーはメタ情報なので除外する。
+    """
+    merged: dict[str, str] = {}
+    for f in THEME_OVERRIDE_FILES:
+        if not f.exists():
+            continue
+        data = json.loads(f.read_text(encoding="utf-8"))
+        merged.update({k: v for k, v in data.items() if not k.startswith("_")})
+    return merged
+
+
+def _strip_boilerplate(caption: str) -> str:
+    """定型の自己紹介・料金表・ハッシュタグを落として主題部分だけ残す。"""
+    cut = len(caption)
+    for m in BOILERPLATE_MARKERS:
+        i = caption.find(m)
+        if i != -1:
+            cut = min(cut, i)
+    # 冒頭すぐに定型文が来る場合は切ると何も残らないので全文を使う
+    body = caption[:cut] if cut > 40 else caption
+    return re.sub(r"#\S+", "", body)
+
+
+def _split_lead(body: str) -> tuple[str, str]:
+    """SEO導入文（主題）と本文に分ける。"""
+    for m in LEAD_MARKERS:
+        i = body.find(m)
+        if 0 < i <= 400:
+            return body[:i], body[i:]
+    return body[:LEAD_FALLBACK_CHARS], body[LEAD_FALLBACK_CHARS:]
 
 
 def classify_by_caption(caption: str) -> str:
-    for theme, words in THEME_KEYWORDS:
-        if any(w in caption for w in words):
-            return theme
-    return "other"
+    body = _strip_boilerplate(caption or "")
+    lead, rest = _split_lead(body)
+    score = Counter()
+    for theme, groups in THEME_KEYWORDS.items():
+        for weight, words in groups:
+            for w in words:
+                score[theme] += weight * (lead.count(w) * LEAD_BOOST + rest.count(w))
+    best = max(score.values()) if score else 0
+    if best == 0:
+        return "other"
+    return next(t for t in THEME_PRIORITY if score[t] == best)
 
 
 def fetch_account_daily() -> list[dict]:
@@ -254,6 +347,8 @@ def main():
 
     theme_map = load_theme_map()
     overrides = load_theme_overrides()
+    print(f"テーマ手動上書き: {len(overrides)}件"
+          f"（{sum(1 for f in THEME_OVERRIDE_FILES if f.exists())}ファイルをマージ）")
 
     media = [m for m in media if m.get("timestamp")]  # timestamp欠損は分析不能のため除外
     posts = []
