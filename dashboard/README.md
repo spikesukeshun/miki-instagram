@@ -41,6 +41,7 @@ dashboard/
 ├── data/
 │   ├── dashboard_data.json   # データスナップショット（ビルド時に埋め込み）
 │   └── theme_overrides.json  # テーマ分類の手動上書き（media_id → theme）
+│                             # main repo の theme_overrides.json とマージされる（重複は main repo 優先）
 ├── scripts/make_artifact.mjs # dist/index.html → dist/artifact.html（Artifact用）
 └── src/
     ├── config.ts             # スコア重み（★）・閾値・テーマ定義・ファネル係数

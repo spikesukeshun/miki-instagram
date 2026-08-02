@@ -41,9 +41,27 @@ REPO_CANDIDATES = [
     WORKTREE_ROOT,
     Path.home() / "Desktop" / "美喜のinstagram",
 ]
+# テーマ手動上書きの読み込み元。後に読むファイルが勝つため、
+# main repo 側（get_recent_insights.py が参照する正）を最後に置く。
+THEME_OVERRIDE_FILES = [
+    DASHBOARD_DIR / "data" / "theme_overrides.json",
+    *(root / "theme_overrides.json" for root in REPO_CANDIDATES),
+]
 
-sys.path.insert(0, str(next((p for p in REPO_CANDIDATES if (p / "load_env.py").exists()), WORKTREE_ROOT)))
+
+def _repo_path_for(filename: str) -> Path:
+    """filename を持つ最初の repo root を返す（無ければ worktree root）。
+    worktree に未取り込み・gitignore のファイルを main repo 側まで辿るため。"""
+    return next((p for p in REPO_CANDIDATES if (p / filename).exists()), WORKTREE_ROOT)
+
+
+sys.path.insert(0, str(_repo_path_for("load_env.py")))
+sys.path.insert(0, str(_repo_path_for("theme_classifier.py")))
 from load_env import load_from_zshrc  # noqa: E402
+# テーマ分類は get_recent_insights.py と共有（theme_classifier.py が唯一の実装）。
+# 二重定義していた頃に main repo 側だけが更新されて分類がずれた実績があるため、
+# キーワードや重みを変える時は必ず共有モジュール側を直すこと。
+from theme_classifier import classify_by_caption  # noqa: E402
 
 load_from_zshrc()
 
@@ -61,15 +79,6 @@ ACCOUNT_WEEKS = 16
 
 FEED_METRICS = "reach,views,saved,shares,likes,comments,total_interactions,profile_visits,follows"
 VIDEO_METRICS = "reach,views,saved,shares,likes,comments,total_interactions"
-
-# テーマ分類（post_classifications.json に無い投稿へのヒューリスティック）
-THEME_KEYWORDS = [
-    ("bridal", ["ブライダル", "花嫁", "挙式", "結婚式", "ウェディング", "ドレス", "前撮り", "プレ花嫁"]),
-    ("reward", ["ご褒美", "リラックス", "癒し", "ジャグジー", "ハマム", "休日", "リフレッシュ"]),
-    ("lifestyle", ["MIKIです", "mikiです", "私は", "自分語り", "想い", "感謝", "お客様のお声", "日常"]),
-    ("menu", ["コース", "メニュー", "施術", "¥", "円", "キャビ", "ラジオ波", "フェイシャル", "毛穴", "小顔"]),
-]
-
 
 def api_get(path: str, **params) -> dict:
     params["access_token"] = TOKEN
@@ -169,18 +178,20 @@ def load_theme_map() -> dict[str, str]:
 
 
 def load_theme_overrides() -> dict[str, str]:
-    """ダッシュボード専用の手動上書き（media_id → theme）"""
-    f = DASHBOARD_DIR / "data" / "theme_overrides.json"
-    if f.exists():
-        return json.loads(f.read_text(encoding="utf-8"))
-    return {}
+    """テーマの手動上書き（media_id → theme）を全ソースからマージする。
 
-
-def classify_by_caption(caption: str) -> str:
-    for theme, words in THEME_KEYWORDS:
-        if any(w in caption for w in words):
-            return theme
-    return "other"
+    ダッシュボード側と main repo 側で別々に育って分類がずれた実績があるため
+    （2026-08: 直近7投稿が誤ラベル）、片方だけを読まず常に両方をマージし、
+    重複した media_id は main repo 側を採用する。
+    `_comment` 等のアンダースコア始まりのキーはメタ情報なので除外する。
+    """
+    merged: dict[str, str] = {}
+    for f in THEME_OVERRIDE_FILES:
+        if not f.exists():
+            continue
+        data = json.loads(f.read_text(encoding="utf-8"))
+        merged.update({k: v for k, v in data.items() if not k.startswith("_")})
+    return merged
 
 
 def fetch_account_daily() -> list[dict]:
@@ -254,6 +265,8 @@ def main():
 
     theme_map = load_theme_map()
     overrides = load_theme_overrides()
+    print(f"テーマ手動上書き: {len(overrides)}件"
+          f"（{sum(1 for f in THEME_OVERRIDE_FILES if f.exists())}ファイルをマージ）")
 
     media = [m for m in media if m.get("timestamp")]  # timestamp欠損は分析不能のため除外
     posts = []
