@@ -44,20 +44,22 @@ def _github_headers():
     return {"Authorization": f"token {_get_github_token()}"}
 
 
-def upload_to_github(filepath: str, subfolder: str = "") -> str:
-    """ファイルをGitHubリポジトリにアップロードして相対パス（subfolder/filename）を返す"""
+def upload_path_to_github(filepath: str, repo_path: str, message: str = "") -> str:
+    """ファイルをリポジトリ内の任意のパスにアップロードして repo_path を返す。
+
+    generated/ 以外（GitHub Pages 用の docs/ など）へ置きたいときに使う。
+    """
     filename = os.path.basename(filepath)
     with open(filepath, "rb") as f:
         content = base64.b64encode(f.read()).decode()
 
-    path = f"{GENERATED_DIR}/{subfolder}/{filename}" if subfolder else f"{GENERATED_DIR}/{filename}"
-    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{path}"
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{repo_path}"
     headers = _github_headers()
 
     res = requests.get(api_url, headers=headers)
     sha = res.json().get("sha") if res.status_code == 200 else None
 
-    payload = {"message": f"画像追加: {filename}", "content": content}
+    payload = {"message": message or f"ファイル追加: {filename}", "content": content}
     if sha:
         payload["sha"] = sha
 
@@ -65,9 +67,42 @@ def upload_to_github(filepath: str, subfolder: str = "") -> str:
     if res.status_code not in (200, 201):
         raise Exception(f"GitHubアップロード失敗: {res.json()}")
 
-    print(f"  アップロード完了: {filename}")
+    print(f"  アップロード完了: {repo_path}")
+    return repo_path
+
+
+def upload_to_github(filepath: str, subfolder: str = "") -> str:
+    """ファイルをGitHubリポジトリにアップロードして相対パス（subfolder/filename）を返す"""
+    filename = os.path.basename(filepath)
+    path = f"{GENERATED_DIR}/{subfolder}/{filename}" if subfolder else f"{GENERATED_DIR}/{filename}"
+    upload_path_to_github(filepath, path, message=f"画像追加: {filename}")
     # サブフォルダがある場合は "slug/filename" 形式で返す（post_scheduler で正しいURLを組み立てるため）
     return f"{subfolder}/{filename}" if subfolder else filename
+
+
+def delete_path_from_github(repo_path: str, message: str = "") -> bool:
+    """リポジトリ内の1ファイルを削除する。失敗してもログのみで例外は投げない。"""
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{repo_path}"
+    headers = _github_headers()
+    try:
+        res = requests.get(api_url, headers=headers, timeout=10)
+        if res.status_code == 404:
+            print(f"  削除スキップ（既に存在しない）: {repo_path}")
+            return False
+        if res.status_code != 200:
+            print(f"  削除前のGET失敗: {res.status_code} {res.text[:200]}")
+            return False
+        sha = res.json().get("sha")
+        payload = {"message": message or f"削除: {repo_path}", "sha": sha}
+        res = requests.delete(api_url, headers=headers, json=payload, timeout=10)
+        if res.status_code in (200, 204):
+            print(f"  削除しました: {repo_path}")
+            return True
+        print(f"  削除失敗: {res.status_code} {res.text[:200]}")
+        return False
+    except Exception as e:
+        print(f"  削除でエラー（{repo_path}）: {e}")
+        return False
 
 
 def list_github_folder(slug: str) -> list:
@@ -319,28 +354,8 @@ def delete_preview_from_github(post_datetime: str) -> bool:
     """投稿成功後に docs/{slug}/index.html を GitHub から削除する。
     失敗してもログのみで例外は投げない（投稿成功フローを阻害しないため）。"""
     slug = _slug_from_datetime(post_datetime)
-    html_path = f"docs/{slug}/index.html"
-    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{html_path}"
-    headers = _github_headers()
-    try:
-        res = requests.get(api_url, headers=headers, timeout=10)
-        if res.status_code == 404:
-            print(f"  プレビュー削除スキップ（既に存在しない）: {slug}")
-            return False
-        if res.status_code != 200:
-            print(f"  プレビュー削除GET失敗: {res.status_code} {res.text[:200]}")
-            return False
-        sha = res.json().get("sha")
-        payload = {"message": f"プレビューページ削除: {slug}", "sha": sha}
-        res = requests.delete(api_url, headers=headers, json=payload, timeout=10)
-        if res.status_code in (200, 204):
-            print(f"  プレビューページを削除: {slug}")
-            return True
-        print(f"  プレビュー削除失敗: {res.status_code} {res.text[:200]}")
-        return False
-    except Exception as e:
-        print(f"  プレビュー削除でエラー: {e}")
-        return False
+    return delete_path_from_github(f"docs/{slug}/index.html",
+                                   message=f"プレビューページ削除: {slug}")
 
 
 def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
@@ -348,9 +363,10 @@ def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
     update_cell() の連続呼び出しはAPIレート制限で失敗するため、
     スプレッドシートの部分更新は必ずこの関数を使うこと。
 
-    fields キー: status / preview_url / caption / hashtags / memo
+    fields キー: filename / status / preview_url / caption / hashtags / memo
     """
     col_map = {
+        "filename": 3,     # C
         "caption": 4,      # D
         "hashtags": 5,     # E
         "memo": 6,         # F

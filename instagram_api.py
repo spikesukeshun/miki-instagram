@@ -125,6 +125,26 @@ def post_video(video_url: str, caption: str) -> str:
     return post_id
 
 
+def fetch_recent_media(limit: int = 25) -> list:
+    """公開済みメディアを新しい順に取得する。
+
+    手動投稿したリール（Instagramアプリから音源を付けて投稿したもの）が
+    公開されたかを post_scheduler が確認するために使う。
+    コンテナ読み取りと同様、IGユーザー所有のエッジなのでユーザートークンを使う。
+    """
+    url = f"{API_BASE}/{ACCOUNT_ID}/media"
+    params = {
+        "fields": "id,media_type,media_product_type,timestamp,permalink",
+        "limit": limit,
+        "access_token": _USER_TOKEN,
+    }
+    res = requests.get(url, params=params, timeout=30)
+    data = res.json()
+    if "data" not in data:
+        raise Exception(f"メディア一覧の取得失敗: {data}")
+    return data["data"]
+
+
 def _api_post_with_retry(url: str, params: dict, label: str, max_retries: int = 3) -> dict:
     """POSTリクエストを最大max_retries回リトライする（指数バックオフ）"""
     last_exc = None
