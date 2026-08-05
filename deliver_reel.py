@@ -249,10 +249,17 @@ def main():
     print(f"LINE送信中（{target_key}）...")
     if not send_line_video(video_url, thumb_url, user_ids=targets):
         sys.exit("動画の送信に失敗しました。シートは更新していません")
-    send_line_message(instruction, user_ids=targets)
-    send_line_message(caption_message, user_ids=targets)
-    if alt_text:
-        send_line_message(f"【代替テキスト】\n{alt_text}", user_ids=targets)
+
+    # 動画だけ届いて手順やキャプションが欠けている状態に気づけるようにする
+    failed = []
+    if not send_line_message(instruction, user_ids=targets):
+        failed.append("手順")
+    if not send_line_message(caption_message, user_ids=targets):
+        failed.append("キャプション")
+    if alt_text and not send_line_message(f"【代替テキスト】\n{alt_text}", user_ids=targets):
+        failed.append("代替テキスト")
+    if failed:
+        print(f"⚠️ 送信できなかったメッセージがあります: {', '.join(failed)}")
 
     if args.to_shunsuke_only:
         print("実機確認用の送信のみ完了しました（シートは更新していません）")
@@ -267,12 +274,12 @@ def main():
 
     shunsuke_id = (os.getenv("LINE_USER_ID_SHUNSUKE") or "").strip()
     if shunsuke_id:
-        send_line_message(
-            "📤 リール動画をMIKIさんに送りました\n"
-            f"📅 {format_schedule(args.datetime)}\n"
-            f"🎬 {video_url}",
-            user_ids=[shunsuke_id],
-        )
+        summary = ("📤 リール動画をMIKIさんに送りました\n"
+                   f"📅 {format_schedule(args.datetime)}\n"
+                   f"🎬 {video_url}")
+        if failed:
+            summary += f"\n⚠️ 送信できなかったメッセージ: {', '.join(failed)}"
+        send_line_message(summary, user_ids=[shunsuke_id])
 
     print("配信完了。MIKIさんの投稿は次回のスケジューラ実行時に自動確認されます")
 
