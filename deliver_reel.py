@@ -120,20 +120,23 @@ def find_sheet_row(post_datetime: str):
 
 
 def load_texts(content_file: str, sheet_row: list) -> tuple:
-    """キャプション・ハッシュタグ・代替テキストを content.json かシートから取る。"""
+    """キャプションとハッシュタグを content.json かシートから取る。
+
+    alt_text は送らない。リールでは代替テキストの入力欄が出ないことが多く、
+    このプロジェクトでもAPIに渡していないため、送ってもMIKIさんの手数が増えるだけ。
+    """
     if content_file:
         with open(content_file, encoding="utf-8") as f:
             data = json.load(f)
         return (
             (data.get("caption") or "").strip(),
             (data.get("hashtags") or "").strip(),
-            (data.get("alt_text") or "").strip(),
         )
     if not sheet_row:
-        return "", "", ""
+        return "", ""
     caption = sheet_row[3].strip() if len(sheet_row) > 3 else ""
     hashtags = sheet_row[4].strip() if len(sheet_row) > 4 else ""
-    return caption, hashtags, ""
+    return caption, hashtags
 
 
 def format_schedule(post_datetime: str) -> str:
@@ -195,7 +198,7 @@ def main():
             sys.exit(f"シートに {args.datetime} の行がありません。先に投稿枠を登録してください")
     sheet_row = found[1] if found else None
 
-    caption, hashtags, alt_text = load_texts(args.content_file, sheet_row)
+    caption, hashtags = load_texts(args.content_file, sheet_row)
     if not caption:
         sys.exit("キャプションが取得できませんでした（--content-file かシートのD列を確認してください）")
 
@@ -223,8 +226,6 @@ def main():
         print(f"        サムネ: {thumb_url}")
         print(f"[2通目]\n{instruction}")
         print(f"[3通目]\n{caption_message}")
-        if alt_text:
-            print(f"[4通目]\n【代替テキスト】\n{alt_text}")
         print("\ndry-run のためアップロード・送信・シート更新は行いませんでした")
         print(f"サムネイルを目視で確認してください: {thumb_dest}")
         return
@@ -256,8 +257,6 @@ def main():
         failed.append("手順")
     if not send_line_message(caption_message, user_ids=targets):
         failed.append("キャプション")
-    if alt_text and not send_line_message(f"【代替テキスト】\n{alt_text}", user_ids=targets):
-        failed.append("代替テキスト")
     if failed:
         print(f"⚠️ 送信できなかったメッセージがあります: {', '.join(failed)}")
 
