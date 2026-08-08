@@ -160,10 +160,35 @@ python create_post.py  # Groqで自動生成
 }
 ```
 
-- **`reuse_source` を省略すると `"instagram"` とみなされる**（Instagram API が失敗すると全スライドが Pollinations.ai 生成に fallback → ピンク一色になる）
-- `reuse_theme` は Drive フォルダのキー: `"menu"`（施術・メニュー紹介）/ `"bridal"`（ブライダル）/ `"reward"`（ご褒美）
-- **`reuse_filename` で参考N画像を直接指定すること**（`reuse_index` は使わない。参考N画像が174枚中の後半に位置するため）
-- **カバー（cover）とCTA（cta）スライドは `bg_strategy: "generate"` のまま** — 印象的な画像を新規生成する
+- **`reuse_source` を省略すると `"instagram"` とみなされる**（Instagram API が失敗すると全スライドが AI生成に fallback → ピンク一色になる）
+  - 2026-08-08 以降、`create_post.py` は省略・不一致を **黙って生成に落とさずエラーで停止** する
+- `reuse_theme` は Drive フォルダのキー: `"menu"`（施術・メニュー紹介）/ `"bridal"`（ブライダル）/ `"lifestyle"`（MIKIの世界観・日常）
+  - **`"reward"`（ご褒美）は現在0枚のため使用不可**
+- **`reuse_filename` で画像名を直接指定すること**（`reuse_index` は使わない。参考N画像がリストの後半に位置するため）
+
+#### `bg_strategy: "generate"`（AI生成）は原則禁止 ← 2026-08-08 追加
+
+- **カバー・CTAを含む全スライドで、背景は Drive のサロン実写（reuse / edit）を使う。**
+  以前このファイルには「カバーとCTAは generate のまま」と書かれていたが、実運用は
+  2026年6月以降すべて Drive 実写に移行しており、記述の方が古い。AI生成画像を
+  投稿に使わないこと（2026-08-13 の投稿でこの古い記述と「Driveに安全な在庫が無い」という
+  思い込みが重なり、全6枚がAI生成になった）。
+- **「Driveに使える写真が無い」と判断する前に、必ずサムネイルを目視確認すること。**
+  ファイル名だけでは実写かバナー加工物か判別できない。とくに `bridal` フォルダには
+  Instagram書き出しのグラフィック（`bridal_customer_voice_*` / `bridal_graduate_brides_collage` /
+  `ブライダル4文字いり` など、AMRTA名の透かしや顧客レビュー画面が焼き込まれたもの）が
+  混ざっているが、**透かしのない実写も多数ある**。目視手順は下記。
+- やむを得ず generate を使う場合は、そのスライドに `"bg_generate_reason": "理由"` を書く。
+  理由が無い `generate` は `review_post.py` が ❌ で止める。
+
+**Drive候補の目視確認手順（フォルダ内の在庫を否定する前に必ず実行）：**
+
+```bash
+python3 preview_drive_images.py bridal --limit 40
+```
+
+出力された contact sheet（`drive_preview_<theme>.png`）を Read して、透かし・文字入り・
+露出過多のものを外してから `reuse_filename` を決める。
 
 ## 恒久デザインルール（毎回必ず確認・適用すること）
 
@@ -211,8 +236,33 @@ python create_post.py  # Groqで自動生成
 
 **維持されるルール：**
 - list スライドの items は **全角20文字以内**（折り返しなし固定幅描画のため）
+- **list スライドの番号付き箇条書きは左揃え**（中央揃えにしない）
+  - 番号（01/02/…）と本文の x 座標を全項目で揃え、ブロック全体を中央に置く
+  - 行ごとに中央寄せすると番号の左端がガタつくため。`generate_list_slide()` に実装済み
+  - **この実装を「行ごとに中央寄せ」に戻さないこと**（2026-08 に古いコードで再発した）
 - 本文テキスト（items / text / body）は **シャドウなし**（タイトルもシャドウなし統一に変更）
 - 末尾2枚（slide8.jpg / slide7.jpg）は `type: "raw"` で `generate_raw()` 処理 → デザイン変更対象外
+
+### スプレッドシートの列（A〜H の8列固定）
+
+| 列 | 内容 |
+|---|---|
+| A | 投稿日時 |
+| B | メニュー種別 |
+| C | 画像ファイル名 |
+| D | 投稿文 |
+| E | ハッシュタグ |
+| F | 投稿メモ |
+| G | ステータス |
+| H | プレビューURL |
+
+- **I列以降は使わない。**（2026-07-11 に修正指示・seed・alt_text を廃止。シート経由の
+  修正依頼フローも同時に廃止し、修正はチャット経由に一本化した）
+- `alt_text` は content.json だけで管理する。seed は create_post.py のログから
+  `cleanup_backgrounds.py --seed` に渡す。**どちらもシートに書かない。**
+- 書き込みは必ず `register_post.py` の `register()` / `update_spreadsheet_row()` を通す。
+  範囲は `A:H` 固定（`SHEET_LAST_COL` / `SHEET_NUM_COLS`）で、行を更新するたびに
+  I列以降を自動でクリアする。**この範囲を広げないこと。**
 
 ### スケジュール・新規投稿作成前の必須手順（自動実行）
 
@@ -271,6 +321,10 @@ python3 insight_report.py     # 全投稿を再集計して insight_report_YYYYM
 9. キャプションの「MIKIです。」が3行目以降から始まっているか
 10. 絵文字が3〜5個の範囲か（多すぎ・少なすぎに注意）
 11. `alt_text` フィールドが短い文章（キーワード羅列でなく）で記載されているか
+12. **全スライドの背景が Drive の実写（reuse / edit）になっているか**（`generate` は原則禁止。
+    使う場合は `bg_generate_reason` に理由を書く。「Driveに良いものが無い」と判断する前に
+    `preview_drive_images.py` で必ず目視確認する）
+13. **reuse / edit のスライドに `reuse_source` / `reuse_theme` / `reuse_filename` が3つ揃っているか**
 
 ### 最終校閲ルール（必須）
 **create_post.py 実行完了後、または修正依頼処理後に、Claude Codeは必ず以下を実行する：**
@@ -299,8 +353,55 @@ python review_post.py content.json --revision "修正依頼の全文"
 9. スライド枚数が6枚以内か
 10. alt_textが文章形式か（キーワード羅列でないか）
 11. 修正依頼の内容が実際に反映されているか（--revision オプション指定時）
+12. `bg_strategy` が `generate`（AI生成）になっていないか（理由の明記がなければ ❌）
+13. reuse / edit に `reuse_source="drive"` / `reuse_theme` / `reuse_filename` が揃っているか
+    （`reuse_theme="reward"` は0枚のため ❌）
 
 ## 過去の失敗と修正記録
+
+### 【修正済み】ローカル main が origin/main から乖離し、確定済みルールが巻き戻った（2026-08-08）
+
+**症状**（週次ルーティンが作った 8/13・8/14 の投稿で同時に発生）:
+1. 8/13分の背景6枚がすべてAI生成画像になっていた
+2. シートの J列（seed）・K列（alt_text）が復活していた（2026-07-11 に廃止済みのはず）
+3. 8/14分の list スライドの番号付き箇条書きが左揃えでなく行ごとの中央寄せだった
+
+**原因（2と3に共通する本体）**:
+投稿を生成しているのは **ローカルの作業ディレクトリ `~/Desktop/美喜のinstagram`** だが、
+このディレクトリの `main` は **2026-04-26（9ffd908）以降 origin/main と分岐したまま一度も
+同期されていなかった**。5〜8月に PR で origin/main に入った修正が、実際に画像を作る
+マシンには一切届いていない状態だった。届いていなかった修正の例:
+
+- `c7748fd`（7/11）シートI列以降の廃止 → ローカルは今も `A:K` に書いていた → 症状2
+- `c6d5512` listの番号を左揃えに → ローカルは行ごと中央寄せのまま → 症状3
+
+GitHub Actions の投稿処理（post.yml → post_scheduler.py）は origin/main を使うため、
+**「画像を作るコードは4月版・投稿するコードは8月版」** という食い違いが起きていた。
+
+**原因（1）**: 背景の選定を「Driveのファイル名一覧」だけで判断し、bridal フォルダに
+Instagram書き出しのグラフィックが混ざっているのを見て「安全な在庫が無い」と誤判断し、
+6枚すべて `bg_strategy: "generate"` に切り替えていた。実際には透かしのない実写が多数あった。
+さらに当時の CLAUDE.md に「カバーとCTAは generate のまま」という**古い記述が残っており**、
+AI生成を正当化してしまった。
+
+**修正内容**:
+- `generate_carousel.py` の `generate_list_slide()` に左揃え実装を移植（上記「維持されるルール」）
+- `register_post.py` / `create_post.py` を `A:H` の8列運用に戻し、行更新のたびに I列以降を自動クリア
+- `create_post.py` の `resolve_backgrounds()` は、Drive指定の不備・ファイル未検出で
+  **黙ってAI生成にフォールバックせず例外で停止**するようにした
+- `create_post.py` の Drive再アップロードは、**新規生成した画像だけ**に限定
+  （従来は Drive から転用した実写も `bg_*.jpg` という名前だけで判定して再アップしていた。
+  AI生成画像がテーマフォルダに混ざると、次の投稿がそれを実写と誤認して reuse してしまう）
+- `review_post.py` に「generateは理由必須」「reuse三点セット必須」チェックを追加
+- `preview_drive_images.py` を追加（Drive候補をコンタクトシート化して目視確認する）
+- 週次ルーティンの SKILL.md に **手順6-0「コード同期チェック」** を追加（下記）
+
+**教訓**:
+- **ルールを文章に書くだけでは、コードが古いと巻き戻る。** 恒久ルールは
+  `review_post.py` の機械チェックか、コード側の恒久実装のどちらかに落とすこと。
+- **投稿を生成するディレクトリが origin/main から遅れていないかを毎回確認すること。**
+  `python3 check_repo_sync.py` で検出できる。
+- 「Driveに使える写真が無い」と結論する前に、必ず実物を目視すること。
 
 ### 【修正済み】キャプションSEO導入文なし・修正依頼フレーズの未反映（2026-04-18）
 

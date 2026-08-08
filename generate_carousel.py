@@ -493,20 +493,21 @@ def generate_list_slide(img, slide):
     rule_y = end_title_y + 18
     _hairline(draw, rule_y)
 
+    # 番号は明朝・GOLD、本文は sans・INK、横並び 1 行。
+    # 番号・本文とも全項目で同じ x に揃える（行ごとに中央寄せすると番号の
+    # 左端がガタつくため）。ブロック全体を中央に置いて左揃えを実現する。
+    num_font = get_serif(34)
+    gap = 28
+    nums = [f"{i+1:02d}" for i in range(len(items))]
+    num_w = max((num_font.getbbox(n)[2] - num_font.getbbox(n)[0]) for n in nums) if nums else 0
+    item_w = max((item_font.getbbox(it)[2] - item_font.getbbox(it)[0]) for it in items) if items else 0
+    x = max(24, (W - (num_w + gap + item_w)) // 2)
+    item_x = x + num_w + gap
+
     y = rule_y + 50
-    for i, it in enumerate(items):
-        # 番号は明朝・GOLD、本文は sans・INK、横並び 1 行
-        num = f"{i+1:02d}"
-        num_font = get_serif(34)
-        num_bbox = num_font.getbbox(num)
-        num_w = num_bbox[2] - num_bbox[0]
-        item_bbox = item_font.getbbox(it)
-        item_w = item_bbox[2] - item_bbox[0]
-        gap = 28
-        total = num_w + gap + item_w
-        x = (W - total) // 2
+    for num, it in zip(nums, items):
         draw.text((x, y + 8), num, font=num_font, fill=GOLD)
-        draw.text((x + num_w + gap, y), it, font=item_font, fill=INK)
+        draw.text((item_x, y), it, font=item_font, fill=INK)
         y += ITEM_H
 
     if footer:

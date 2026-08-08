@@ -16,3 +16,6 @@ design_lab/sample_bg/
 design_lab/fonts/*.ttf
 design_lab/fonts/*.otf
 design_lab/fonts/*.ttc
+client_secrets.json
+token_drive.json
+drive_preview_*.png

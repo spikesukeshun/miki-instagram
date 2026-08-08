@@ -65,6 +65,71 @@ def check_caption_has_cta(caption: str) -> tuple[bool, str]:
     return True, "キャプションCTA ✓"
 
 
+# Drive のテーマフォルダキー。reward は現在0枚なので使用不可。
+VALID_REUSE_THEMES = {"menu", "bridal", "lifestyle"}
+EMPTY_REUSE_THEMES = {"reward"}
+
+
+def check_backgrounds(slides: list) -> list[tuple[bool, str]]:
+    """背景画像の指定をチェックする。
+
+    背景は Drive のサロン実写（reuse / edit）を基本とし、AI生成（generate）は
+    使わない。どうしても generate が必要なときだけ、そのスライドに
+    "bg_generate_reason" で理由を書いて明示的にオプトインする。
+    理由なしの generate を通してしまうと、Drive を見に行かないまま
+    全スライドがAI画像の投稿が自動で出来上がる（2026-08-13分で実際に発生）。
+    """
+    results = []
+    for i, slide in enumerate(slides, 1):
+        strategy = slide.get("bg_strategy")
+
+        if not strategy:
+            results.append((False, f"スライド{i}: bg_strategy が指定されていません（reuse / edit / generate）"))
+            continue
+
+        if strategy == "generate":
+            reason = str(slide.get("bg_generate_reason", "")).strip()
+            if not reason:
+                results.append(
+                    (False, f"スライド{i}: bg_strategy=\"generate\"（AI生成）です— 背景はDriveのサロン実写を使ってください\n"
+                            f"  Driveの候補を目視で確認してから reuse / edit を選ぶこと。\n"
+                            f"  やむを得ずAI生成する場合のみ、そのスライドに \"bg_generate_reason\" で理由を明記してください")
+                )
+            else:
+                results.append((True, f"スライド{i}: generate（理由明記あり: {reason[:40]}）✓"))
+            continue
+
+        if strategy in ("reuse", "edit"):
+            missing = [k for k in ("reuse_source", "reuse_theme", "reuse_filename") if not slide.get(k)]
+            if missing:
+                results.append(
+                    (False, f"スライド{i}: bg_strategy=\"{strategy}\" なのに {', '.join(missing)} がありません\n"
+                            f"  reuse_source / reuse_theme / reuse_filename は3つセットで必須（省略するとAI生成に落ちます）")
+                )
+                continue
+            if slide["reuse_source"] != "drive":
+                results.append(
+                    (False, f"スライド{i}: reuse_source=\"{slide['reuse_source']}\" — Drive写真を使う場合は \"drive\" を指定してください")
+                )
+                continue
+            theme = slide["reuse_theme"]
+            if theme in EMPTY_REUSE_THEMES:
+                results.append((False, f"スライド{i}: reuse_theme=\"{theme}\" は現在0枚のため使用できません"))
+                continue
+            if theme not in VALID_REUSE_THEMES:
+                results.append(
+                    (False, f"スライド{i}: reuse_theme=\"{theme}\" は不正です（{' / '.join(sorted(VALID_REUSE_THEMES))}）")
+                )
+                continue
+            results.append((True, f"スライド{i}: {strategy} ← drive/{theme}/{slide['reuse_filename']} ✓"))
+            continue
+
+        if strategy != "local":
+            results.append((False, f"スライド{i}: bg_strategy=\"{strategy}\" は未知の値です"))
+
+    return results
+
+
 def check_slides(slides: list) -> list[tuple[bool, str]]:
     results = []
 
@@ -194,6 +259,9 @@ def run_review(content_path: str, revision_instruction: str = ""):
 
     # スライドチェック
     all_results.extend(check_slides(slides))
+
+    # 背景画像の指定チェック（Drive優先・AI生成の暗黙採用を防ぐ）
+    all_results.extend(check_backgrounds(slides))
 
     # alt_textチェック
     all_results.append(check_alt_text(alt_text))

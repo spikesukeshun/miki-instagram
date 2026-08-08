@@ -359,6 +359,9 @@ MIKIの文章は**丁寧語（〜ます/〜ございます）を基本**にし�
   - text スライド: 区切り線から本文まで 100px
   - cta スライド: 区切り線から本文まで 60px
   - list スライド: 区切り線から項目まで 70px
+- **list スライドの番号付き箇条書きは左揃え（generate_carousel.py に実装済み）**：
+  - 番号（01/02/…）と本文の x 座標を全項目で揃え、ブロック全体を中央に置く
+  - 行ごとに中央寄せすると番号の左端がガタつく。中央揃えに戻さないこと
 - **本文テキストのシャドウ（generate_carousel.py に実装済み）**：
   - タイトル: `draw_centered()` 経由でシャドウあり（統一済み）
   - 本文・リスト項目: シャドウなし（シャドウがあると太字・黒っぽく見えるため）
@@ -371,12 +374,16 @@ MIKIの文章は**丁寧語（〜ます/〜ございます）を基本**にし�
 - **【重要】参考Nファイルはすべて使用許可（例外ルール）**
   - サロン名（AMETA/AMRTA）・人物・施術シーンが写っていても問題なし
   - ユーザーが公式参考素材として選定したファイルのため、通常の no people / サロン名禁止ルール適用外
-- 3パターンの判断基準：
+- **背景は Drive のサロン実写（reuse / edit）を使う。`generate`（AI生成）は原則禁止**
+  - カバー・CTAも例外ではない。やむを得ない場合のみ `"bg_generate_reason": "理由"` を書く
+  - `reuse_source="drive"` / `reuse_theme` / `reuse_filename` は3つセットで必須
+  - **「使える写真が無い」とファイル名だけで判断しない。** 必ず目視してから決める：
+    `python3 preview_drive_images.py bridal --limit 40` → 出力PNGを Read で確認
+- 2パターンの判断基準：
   1. **reuse（そのまま転用）**: 参考画像の雰囲気がスライドのトーンに合う場合 → `reuse_filename="参考N.JPG"（拡張子の大文字小文字も正確に）`
   2. **edit（PIL加工転用）**: 参考画像を使いたいが調整が必要な場合 → `reuse_filename="参考N.JPG"` + `bg_strategy="edit"`
-  3. **generate（新規生成）**: 参考画像の雰囲気をプロンプトに反映して新規生成 → bg_prompt に「〜のような空間」と記述
 - 過去の生成画像（backgrounds/ フォルダ）も類似内容なら再利用する（新規生成を減らす）
-- generate を使う場合の bg_prompt 必須要素：
+- 例外的に generate を使う場合の bg_prompt 必須要素：
   - `no people`（人物なし）
   - `no text, no watermark`（文字なし）
   - `no product labels, no branding`（ブランドロゴなし）
@@ -422,3 +429,5 @@ create_post.py 完了後、Claude Codeは以下を自動校閲する（省略不
 - [ ] サロン名（AMRTA）が含まれていないか
 - [ ] キャプション末尾にCTAがあるか
 - [ ] `——`（em dash）が使われていないか
+- [ ] 全スライドの背景が Drive 実写（reuse / edit）か（generate は理由の明記が必要）
+- [ ] reuse / edit に reuse_source / reuse_theme / reuse_filename が揃っているか

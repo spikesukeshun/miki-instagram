@@ -277,12 +277,34 @@ def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
     return preview_url
 
 
+# シートは A〜H の8列のみで運用する（2026-07-11 に I列以降＝修正指示・seed・
+# alt_text を廃止）。alt_text は content.json 側だけで管理し、seed は
+# create_post.py のログから cleanup_backgrounds.py に渡す。
+# ここを 8 より広げると、シートに不要な列・文章が復活するので変更しないこと。
+SHEET_LAST_COL = "H"
+SHEET_NUM_COLS = 8
+
+
+def _clear_extra_columns(sheet, row_num: int):
+    """A〜H より右（I列以降）に残っている値を消す。
+    過去に seed / alt_text を書き込んでいた頃のデータを掃除するためのもので、
+    8列運用に戻したあとも行を触るたびに自動で片付く。"""
+    try:
+        width = max(sheet.col_count, SHEET_NUM_COLS)
+        if width <= SHEET_NUM_COLS:
+            return
+        last = gspread.utils.rowcol_to_a1(row_num, width).rstrip("0123456789")
+        sheet.batch_clear([f"I{row_num}:{last}{row_num}"])
+    except Exception as e:
+        print(f"  I列以降のクリアをスキップ: {e}")
+
+
 def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
     """指定した投稿日時の行を部分的にバッチ更新する。
     update_cell() の連続呼び出しはAPIレート制限で失敗するため、
     スプレッドシートの部分更新は必ずこの関数を使うこと。
 
-    fields キー: status / preview_url / revision / caption / hashtags / memo / alt_text
+    fields キー: status / preview_url / caption / hashtags / memo
     """
     col_map = {
         "caption": 4,      # D
@@ -290,19 +312,18 @@ def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
         "memo": 6,         # F
         "status": 7,       # G
         "preview_url": 8,  # H
-        "revision": 9,     # I
-        "alt_text": 11,    # K
     }
     sheet = get_sheet()
     rows = sheet.get_all_values()
     for i, r in enumerate(rows[1:], start=2):
         if r and r[0] == post_datetime:
-            row_data = list(r) + [""] * max(0, 11 - len(r))
+            row_data = list(r) + [""] * max(0, SHEET_NUM_COLS - len(r))
             for key, val in fields.items():
                 col_idx = col_map.get(key)
                 if col_idx:
                     row_data[col_idx - 1] = val
-            sheet.update(f"A{i}:K{i}", [row_data[:11]])
+            sheet.update(f"A{i}:{SHEET_LAST_COL}{i}", [row_data[:SHEET_NUM_COLS]])
+            _clear_extra_columns(sheet, i)
             print(f"スプレッドシート更新完了（行{i}）: {', '.join(f'{k}={repr(v)[:30]}' for k, v in fields.items())}")
             return True
     print(f"警告: {post_datetime} の行が見つかりません")
@@ -315,8 +336,6 @@ def register(
     caption: str,
     hashtags: str,
     memo: str = "",
-    seed: int = None,
-    alt_text: str = "",
 ):
     """generatedフォルダの画像をGitHubにアップロードしてスプレッドシートに登録"""
 
@@ -345,11 +364,12 @@ def register(
     preview_url = upload_html_to_github(html, post_datetime)
 
     # スプレッドシートに登録（同じ日時の行があれば上書き、なければ追加）
-    # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL I=修正指示 J=seed K=alt_text
+    # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL
+    # I列以降は使わない（2026-07-11 廃止）。列を増やさないこと。
     sheet = get_sheet()
     files_str = ",".join(filenames)
     row = [post_datetime, menu_type, files_str, caption, hashtags, memo,
-           "確認待ち", preview_url, "", str(seed) if seed else "", alt_text]
+           "確認待ち", preview_url]
 
     all_values = sheet.get_all_values()
     target_row_num = None
@@ -359,13 +379,14 @@ def register(
             break
 
     if target_row_num:
-        sheet.update(f"A{target_row_num}:K{target_row_num}", [row])
+        sheet.update(f"A{target_row_num}:{SHEET_LAST_COL}{target_row_num}", [row])
+        _clear_extra_columns(sheet, target_row_num)
         print(f"\nスプレッドシートを上書き更新しました（行{target_row_num}）！")
     else:
         # append_row をそのまま使うと、Sheets API がデータ範囲の右端を誤検出して
-        # A列ではなく K列から書き込むことがある（2026-08 に実際に発生。
+        # A列ではなく右端の列から書き込むことがある（2026-08 に実際に発生。
         # A列が空の行になり post_scheduler.py から見えず、投稿されないまま埋もれた）。
-        # 追記位置を自分で決めて A〜K に明示的に書き込む。
+        # 追記位置を自分で決めて A〜H に明示的に書き込む。
         # len(all_values) をそのまま使うと、末尾に空行が残っているシートで
         # 間に空行を挟んでしまう。A列に値がある最後の行の次に置く。
         last_used = max(
@@ -373,7 +394,8 @@ def register(
             default=1,
         )
         new_row_num = last_used + 1
-        sheet.update(f"A{new_row_num}:K{new_row_num}", [row])
+        sheet.update(f"A{new_row_num}:{SHEET_LAST_COL}{new_row_num}", [row])
+        _clear_extra_columns(sheet, new_row_num)
         print(f"\nスプレッドシートに新規登録しました（行{new_row_num}）！")
 
     print(f"\nスプレッドシートに登録完了！")
