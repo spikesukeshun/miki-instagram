@@ -5,7 +5,10 @@ __pycache__/
 content/
 credentials.json
 token.json
-.claude/scheduled_tasks.lock
+
+# Claude Code のローカル設定・作業ツリー
+# （worktree は gitlink として誤コミットされやすい。2026-08 に実際に混入した）
+.claude/
 backgrounds/
 !backgrounds/slide7.jpg
 !backgrounds/slide8.jpg
@@ -28,3 +31,24 @@ token_drive.json
 # AIダッシュボード（dashboard/README.md 参照）
 dashboard/node_modules/
 dashboard/dist/
+
+# 分析用のデータキャッシュ（スクリプトが再生成する。大きいのでコミットしない）
+posts_cache.json
+post_classifications.json
+drive_current_state.json
+reclassify_log.json
+
+# 生成レポート・作業用バイナリ
+insight_report_*.md
+instagram_insight_*.pptx
+report_*.txt
+*.png
+!assets/*.png
+!lp/*.png
+
+# design_lab（ローカル実験用サンドボックス — design_lab/README.md 参照）
+design_lab/output/
+design_lab/sample_bg/
+design_lab/fonts/*.ttf
+design_lab/fonts/*.otf
+design_lab/fonts/*.ttc
