@@ -28,12 +28,9 @@ BACKGROUNDS_DIR = "backgrounds"
 GENERATED_DIR   = "generated"
 HISTORY_PATH    = "upload_history.json"
 TARGET_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
-
-# 末尾2枚の固定スライド（slide8=サロン情報 / slide7=MIKIプロフィール）は
-# backgrounds/ に置かれているが、毎回使い回す資産なので削除してはいけない。
-# .gitignore でも `!backgrounds/slide7.jpg` として追跡対象に残してある。
-# 消すと次回の create_post.py が「背景画像が見つかりません」で落ちる。
-PROTECTED_FILES = {"slide7.jpg", "slide8.jpg"}
+# 末尾固定スライド（CLAUDE.md「末尾2枚は常に固定」）— 誤削除すると次回投稿が壊れるため保護
+# 大小拡張子（slide7.JPG 等）も守るため、比較側で .lower() してから set と照合する
+KEEP_BG_FILES   = {"slide7.jpg", "slide8.jpg"}
 
 
 def load_history() -> dict:
@@ -53,8 +50,7 @@ def get_image_files(directory: str) -> list:
     for ext in TARGET_EXTENSIONS:
         files.extend(glob.glob(os.path.join(directory, f"*{ext}")))
         files.extend(glob.glob(os.path.join(directory, f"*{ext.upper()}")))
-    # 固定スライドは使い回す資産なので削除対象から必ず外す
-    return sorted(f for f in set(files) if os.path.basename(f) not in PROTECTED_FILES)
+    return sorted(set(files))
 
 
 def get_carousel_files(directory: str) -> list:
@@ -126,7 +122,7 @@ def cleanup(seeds: list, no_generate: bool, dry_run: bool, force: bool) -> None:
         print("[info]  generate 画像なし（reuse/edit のみ）→ 履歴は変更しません")
 
     # ── 削除対象を収集 ────────────────────────────
-    bg_files       = get_image_files(BACKGROUNDS_DIR) if os.path.isdir(BACKGROUNDS_DIR) else []
+    bg_files       = [f for f in get_image_files(BACKGROUNDS_DIR) if os.path.basename(f).lower() not in KEEP_BG_FILES] if os.path.isdir(BACKGROUNDS_DIR) else []
     carousel_files = get_carousel_files(GENERATED_DIR) if os.path.isdir(GENERATED_DIR) else []
     all_targets    = bg_files + carousel_files
 

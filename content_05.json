@@ -3,67 +3,92 @@
     {
       "filename": "bg01.jpg",
       "type": "cover",
-      "title": "GW前に\nリセットしたい",
-      "tag": "- MIKIがすすめるご褒美エステ -",
-      "bg_strategy": "generate"
+      "title": "よくある質問①",
+      "tag": "- ご予約の前に -",
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "参考1.JPG",
+      "focus_y": 0.55
     },
     {
       "filename": "bg02.jpg",
       "type": "text",
-      "title": "MIKIがよく\n聞くお声",
-      "text": "「GW前になると\nなんか自分のことが気になる」\n「連休前に一度体をリセットしたい」\n\nこういうお声を、施術中に\n私は本当によくいただきます。\n\n日々忙しく頑張っている中で\n連休が近づいてようやく\n自分のことを考えられる気がする。\n\nその感覚は、正直なサインです。",
+      "title": "Q. 予約はどう取るの？",
+      "text": "DMより「予約希望」と\nお送りください。\n\nインスタからのご指名限定で\nVIPコースが20%オフになります。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考1.JPG"
+      "reuse_filename": "makeup room.JPG",
+      "focus_y": 0.45,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg03.jpg",
-      "type": "list",
-      "title": "MIKIのエステで\n整えること",
-      "items": [
-        "体の巡りを整えてむくみをリセット",
-        "リンパを流して老廃物を排出",
-        "肌のトーンと心の疲れをリセット"
-      ],
-      "footer": "私が一つひとつ丁寧にアプローチします",
+      "type": "text",
+      "title": "Q. 金額はいくらですか？",
+      "text": "【全てが叶う おすすめコース】\nご指名限定で 20%オフ\n\nVIP 150分\n24,800円 → 19,840円\nスペシャル 120分\n15,800円\n\n指名料 ＋1,000円\nコース前にジャグジー15分込み",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考2.jpg"
+      "reuse_filename": "Jacuzzi time.JPG",
+      "focus_y": 0.7,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg04.jpg",
       "type": "text",
-      "title": "私が大切にする\nリセットの考え方",
-      "text": "「疲れたから行く」だけでなく\n「整えるために行く」。\n\n私がお客様によくお伝えするのは\nそういうご褒美エステの使い方です。\n\n体の巡りを整えてリンパを流すと\n「体が軽い」「顔色が違う」\n「なんかいい状態」という感覚が生まれます。\n\nその感覚を持ってGWを迎えると\n旅行も、家族との時間も\nひとりの時間も、全部が豊かになります。",
+      "title": "Q. 勧誘が不安です",
+      "text": "コースの勧誘等は\n一切ございません。\n\n都度払いでご利用いただけます。\n気になることは何でも\n聞いてくださいね。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考3.JPG"
+      "reuse_filename": "head massage.JPG",
+      "focus_y": 0.35,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg05.jpg",
       "type": "text",
-      "title": "MIKIのお客様に\n届いたお声",
-      "text": "「GW前に来てよかったです」\n「体が軽くなって、連休が楽しみになりました」\n「なんか顔が明るくなった気がする」\n\nGW前にいらしてくださったお客様から\n私はこういうお声をよくいただきます。\n\n整えてから連休を迎えると\n過ごし方が少し変わります。\n\n私はそれがとてもうれしいんです。",
+      "title": "Q. どのくらい通うの？",
+      "text": "お悩みや目標によりますが\nまずは月に1回から2回で十分です。\n一度の施術でも変化は感じられます。\n\nご予算やペースに合わせて\n無理のない計画を立てましょう。\nご褒美や疲れたときの駆け込み寺として\n通われる方も多いです。",
       "bg_strategy": "edit",
       "reuse_source": "drive",
       "reuse_theme": "menu",
-      "reuse_filename": "参考6.JPG"
+      "reuse_filename": "Hamam bath.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     },
     {
       "filename": "bg06.jpg",
+      "type": "text",
+      "title": "Q. 最寄り駅は？",
+      "text": "① 東京メトロ日比谷線\n六本木駅 2番出口より徒歩2分\n② 都営大江戸線\n六本木駅 4B出口より徒歩5分\n③ 東京メトロ千代田線\n乃木坂駅 5番出口より徒歩7分",
+      "bg_strategy": "reuse",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "map.jpg",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.47
+    },
+    {
+      "filename": "bg07.jpg",
       "type": "cta",
-      "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
-      "body": "GWを最高の状態で迎えたい方へ。\nまずはお気軽にDMでご連絡ください。",
+      "title": "MIKI指名 初回限定20%OFF\n（VIPコースのみ）",
+      "body": "初めての一歩は\n勇気がいるかもしれません。\nでも、その一歩を踏み出した方から\n少しずつ変わっていきます。\nわからないことは何でも\n聞いてくださいね。\nまずはMIKIにご相談ください♪",
       "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
-      "bg_strategy": "generate"
+      "bg_strategy": "edit",
+      "reuse_source": "drive",
+      "reuse_theme": "menu",
+      "reuse_filename": "BirthDay.JPG",
+      "focus_y": 0.5,
+      "slide_photo_h_ratio": 0.35
     }
   ],
-  "caption": "GW前のご褒美エステで体をリセット、連休を最高の状態で迎える方法。\n\nMIKIです。\n\n「GW前になると、なんか自分のことが気になる」\n\nそんなお声を、施術中に私はよくいただきます。\n\n日々忙しく頑張っている中で\n連休が近づいてようやく、ほっと一息つける気がする。\n\nそのタイミングで「体を一度リセットしたい」と感じるのは\nとても自然なことだと私は思っています。\n\n---\n\nご褒美エステ、という言葉があります。\n\nでも私がお客様によくお伝えするのは\n「疲れたから行く」だけでなく\n「整えるために行く」という使い方です。\n\nリンパを流して老廃物を排出する。\n体の巡りを整えてむくみをリセットする。\n肌のトーンを上げて、心の疲れも一緒に手放す。\n\nこういうアプローチをすることで\n「体が軽い」「顔色が違う」「なんかいい状態」\nという感覚が生まれてきます。\n\n---\n\n「GW前に来てよかった」\n「体が軽くなって、連休が楽しみになりました」\n「なんか顔が明るくなった気がする」\n\nGW前にいらしてくださったお客様から\n私はこういうお声をよくいただきます。\n\n整えてから連休を迎えると\n旅行も、家族との時間も、ひとりの時間も\n全部が少し豊かになる気がします。\n\nそのことを私はいつも感じています。\n\n---\n\nGWが始まる前の今こそ\nまずはお気軽にDMでご連絡ください。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMから\nお気軽にどうぞ💌",
-  "hashtags": "#ご褒美エステ #ご褒美タイム #六本木エステ #エステ体験 #GW #リラクゼーション #自分磨き #アラサー美容 #アラフォー美容",
-  "alt_text": "白いキャンドルと花がマーブルテーブルに並ぶ、柔らかなピンクとゴールドトーンの落ち着いたエステルーム",
-  "memo": "GW前の疲れリセット訴求。「疲れたから行く」ではなく「整えるために行く」というご褒美エステの新しい使い方を提案し、保存率を高める。",
-  "bg_prompt": "Japanese esthetic salon interior, luxury spa setting with white flowers and candles on marble table, soft white and gold tones, no people, serene and relaxing atmosphere, high quality photo"
+  "caption": "エステのよくいただくご質問に、ご予約方法や料金、アクセスまでまとめてお答えします。\n\nMIKIです。\n\nはじめてのご利用を考えてくださっている方から、よくいただく質問にお答えしますね😊\n\n---\n\nまず、ご予約方法について。DMで「予約希望」とお送りいただくだけで大丈夫です。インスタからのご指名限定で、VIPコースが20%オフになります。\n\n気になる料金は、全てが叶うおすすめコースを2つご用意しています。VIP（150分）は20%オフで19,840円、スペシャル（120分）は15,800円。指名料は＋1,000円で、どちらもコースの前にジャグジータイム（15分）が含まれます。\n\n---\n\n「勧誘されないか不安」という声もよくいただきますが、コースの勧誘などは一切ございません。都度払いでご利用いただけるので、気になることは何でも聞いてくださいね。\n\n通う頻度は、まずは月に1回から2回で十分です。ご褒美エステや、疲れたときの駆け込み寺として通ってくださる方も多いんですよ💌\n\n---\n\nサロンの最寄り駅は、東京メトロ日比谷線の六本木駅から徒歩2分。都営大江戸線の六本木駅、千代田線の乃木坂駅からもお越しいただけます。\n\nご予約・ご相談は、いつでもお気軽にDMへどうぞ。\n\n---\n\n✨ MIKI指名 初回限定20%OFF（VIPコースのみ）✨\n\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ",
+  "hashtags": "#エステ予約 #六本木エステ #乃木坂エステ #よくある質問 #エステ料金 #エステサロン #はじめてのエステ",
+  "memo": "7/1(水)21:00 #6 よくある質問①（Q&A定期）。予約方法/料金/勧誘/頻度/最寄り駅の5問＋表紙＋CTA＝計7枚（料金スライド追加で6枚超）。料金スライドは予約方法の直後(3枚目)に配置（20%OFFの流れから具体料金へ）。料金slideはMIKI禁止ルールで『ご指名限定』表記・円表記。VIP割引後は要確認(24800×0.8=19840だが指定は19040)。画像はmenu流用、料金slideはJacuzzi(ジャグジー込みに対応)。",
+  "alt_text": "やわらかな間接照明に照らされ、2台のベッドが並ぶ清潔感のあるエステルームの情景",
+  "bg_prompt": "Japanese esthetic salon room, warm soft lighting, clean beds and towels, calm and welcoming, no people, high quality photo",
+  "_generated_dir": "2026-07-01-2100"
 }

@@ -5,6 +5,14 @@ from datetime import datetime
 import requests
 from groq import Groq
 
+# HEIC画像（MIKIがDriveに追加する参考写真にiPhone由来のHEICが含まれる）を
+# Pillowで開けるようにする。pillow-heif未導入の環境でも他形式は動くよう握りつぶす。
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except Exception:
+    pass
+
 from generate_carousel import generate_with_slides
 from register_post import register
 from load_env import load_from_zshrc
@@ -275,10 +283,15 @@ def download_image(url: str, filename: str) -> bool:
 
 
 def apply_edit_effect(img_path: str, slide_type: str) -> None:
-    """PILで画像を加工してスライド種別に合った背景に仕上げる
-    オリジナルのアスペクト比を保持する（generate_carousel.py の crop_center_with_focus が
-    適切にスケール&クロップする。1080x1350 に強制リサイズすると Drive 画像が歪む）。"""
-    from PIL import Image, ImageFilter, ImageEnhance
+    """PILで画像を加工してスライド種別に合った背景に仕上げる。
+
+    【厳守・再発防止】ユーザーから「画像がぼやける／アスペクト比が変わる」と
+    繰り返し指摘されている。以下を絶対に入れないこと:
+      - ぼかし（ImageFilter.GaussianBlur）… 写真は鮮明に見せる
+      - 1080x1350 への強制 resize … アスペクト比が崩れて被写体が伸びる
+    アスペクト比はそのまま保持し、クロップは generate_carousel.py の
+    crop_center_with_focus()（cover-fit センタークロップ）に任せる。"""
+    from PIL import Image, ImageEnhance
     img = Image.open(img_path).convert("RGB")
 
     if slide_type in ("text", "list"):
@@ -313,7 +326,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
     """各スライドのbg_strategyに従って背景ファイルを決定しfilenameを更新
     Returns: 最後に使用したseed（generate時）
     """
-    from PIL import Image as _Img, ImageFilter as _IF
+    from PIL import Image as _Img
     os.makedirs("backgrounds", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     last_seed = global_seed
@@ -366,6 +379,8 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                     if strategy == "edit":
                         apply_edit_effect(path, slide.get("type", "text"))
                     else:
+                        # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
+                        # HEIC等を確実にJPEGへ正規化するため再保存のみ行う。
                         _bg = _Img.open(path).convert("RGB")
                         _bg.save(path, "JPEG", quality=90)
                     slide["filename"] = filename
@@ -393,6 +408,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             print(f"  スライド{i+1}: 過去投稿を転用（いいね{img['like_count']}件）")
             success = download_image(img["url"], filename)
             if success:
+                # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
                 _bg = _Img.open(path).convert("RGB")
                 _bg.save(path, "JPEG", quality=90)
                 slide["filename"] = filename
@@ -655,6 +671,8 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
     global_seed = result.get("seed")
     last_seed = resolve_backgrounds(result["slides"], available_images, bg_prompt,
                                     global_seed=global_seed)
+    if last_seed:
+        print(f"最終seed: {last_seed}（cleanup_backgrounds.py --seed 用）")
 
     # 新規生成した背景画像をDriveテーマフォルダに保存
     drive_theme = result.get("drive_theme") or _menu_to_theme(menu)
@@ -672,8 +690,6 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
 
     # GitHubアップロード＆スプレッドシート登録
     print("\nスプレッドシートに登録中...")
-    # シートは A〜H の8列のみ（2026-07-11 に I列以降を廃止）。
-    # seed は下のログから cleanup_backgrounds.py に渡す。alt_text は content.json 側で管理する。
     register(
         post_datetime=post_datetime,
         menu_type=menu,
@@ -681,10 +697,8 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
         hashtags=result["hashtags"],
         memo=result["memo"],
     )
-    if last_seed:
-        print(f"\n最終seed={last_seed}（cleanup_backgrounds.py --seed に渡してください）")
 
-    # content.jsonに _generated_dir を記録（process_revisions.pyが別投稿と混同しないため）
+    # content.jsonに _generated_dir を記録（同じcontent.jsonを別日時で再利用した際の混同防止）
     if content_file and os.path.exists(content_file):
         try:
             with open(content_file, "r", encoding="utf-8") as f:

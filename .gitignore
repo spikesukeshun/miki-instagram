@@ -9,13 +9,22 @@ token.json
 backgrounds/
 !backgrounds/slide7.jpg
 !backgrounds/slide8.jpg
+generated/carousel_*.jpg
 
-# design_lab sandbox (local-only experiments — see design_lab/README.md)
-design_lab/output/
-design_lab/sample_bg/
-design_lab/fonts/*.ttf
-design_lab/fonts/*.otf
-design_lab/fonts/*.ttc
+# local venv / 一時出力 / リール試作（git管理外）
+.venv/
+recent_insights.json
+upload_history.json
+reel_prototype/
+generated/carousel_*.jpg
+
+# Drive画像の目視確認用コンタクトシート（preview_drive_images.py の出力）
+drive_preview_*.png
+
+# OAuth秘密情報（コミット禁止）
 client_secrets.json
 token_drive.json
-drive_preview_*.png
+
+# AIダッシュボード（dashboard/README.md 参照）
+dashboard/node_modules/
+dashboard/dist/

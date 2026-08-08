@@ -1,21 +1,19 @@
-import gspread
-from google.oauth2.service_account import Credentials
 import os
 import requests
 from datetime import datetime, timezone, timedelta
-from instagram_api import post_image, post_video, post_carousel
+import time
+from instagram_api import post_image, post_video, post_carousel, fetch_recent_media
+from instagram_mixed import post_mixed_carousel
 from drive_helper import get_file_url
 from line_notify import send_line_message
+from register_post import (delete_preview_from_github, delete_post_folder_from_github,
+                           delete_path_from_github, _slug_from_datetime)
+from sheet_client import open_sheet, get_all_values_with_retry, update_cell_with_retry
 
 from load_env import load_from_zshrc
 load_from_zshrc()
 
 JST = timezone(timedelta(hours=9))
-
-SCOPES = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive"
-]
 
 # 列の定義
 COL_DATETIME  = 0  # A: 投稿日時
@@ -27,12 +25,36 @@ COL_MEMO      = 5  # F: 投稿メモ
 COL_STATUS    = 6  # G: ステータス
 COL_PREVIEW   = 7  # H: プレビューURL
 
+# リールはInstagram本体の音源をAPIから付けられないため、MIKIさんがアプリから
+# 手動投稿する。deliver_reel.py が下のステータスを立て、ここでは自動投稿せずに
+# 公開されたかどうかだけを確認する。
+MANUAL_STATUS = "手動投稿待ち"
+MANUAL_REMINDED_STATUS = "手動投稿待ち・督促済"
+MANUAL_STATUSES = (MANUAL_STATUS, MANUAL_REMINDED_STATUS)
+# 手動投稿は時刻ちょうどにはならないので、枠の前後にこれだけ幅を持たせて照合する
+MANUAL_MATCH_BEFORE = timedelta(hours=1)
+MANUAL_MATCH_AFTER = timedelta(hours=72)
+# 枠から24時間たっても投稿が見つからなければ1回だけリマインドする
+MANUAL_REMIND_AFTER = timedelta(hours=24)
+
 
 def get_sheet():
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
-    client = gspread.authorize(creds)
-    spreadsheet_id = os.getenv("SPREADSHEET_ID")
-    return client.open_by_key(spreadsheet_id).sheet1
+    return open_sheet()
+
+
+def mark_status(sheet, row: int, value: str) -> bool:
+    """ステータス列を更新する。失敗しても例外を投げない。
+
+    ここで落とすと残りの行が丸ごと処理されなくなるため、記録できなかったことを
+    ログに残して先へ進める。投稿失敗時の記録に使う場合、書けなければ行は
+    「承認済み」のまま残り次回起動で再試行されるので、安全側に倒れる。
+    """
+    try:
+        update_cell_with_retry(sheet, row, COL_STATUS + 1, value)
+        return True
+    except Exception as e:
+        print(f"行{row}: ステータス更新に失敗 → {e}")
+        return False
 
 
 def build_caption(text: str, hashtags: str) -> str:
@@ -93,11 +115,132 @@ def check_token_expiry():
         print(f"トークン有効期限チェックスキップ: {e}")
 
 
+def _parse_media_time(timestamp: str):
+    """Graph API の timestamp（UTC）を JST の naive datetime にする。"""
+    return (datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S%z")
+            .astimezone(JST).replace(tzinfo=None))
+
+
+def verify_manual_reels(sheet, rows, now):
+    """手動投稿のリールが公開されたかを Graph API で確認してシートに反映する。
+
+    ここでは絶対に「エラー：」を書かない。「エラー：」で始まる行は7日以内なら
+    自動投稿の再試行対象になり、手動投稿と合わせて二重投稿になるため。
+    """
+    targets = []
+    for i, row in enumerate(rows[1:], start=2):
+        if len(row) < 7:
+            continue
+        status = row[COL_STATUS].strip()
+        if status not in MANUAL_STATUSES:
+            continue
+        try:
+            post_time = datetime.strptime(row[COL_DATETIME].strip(), "%Y/%m/%d %H:%M")
+        except ValueError:
+            print(f"行{i}: 日時フォーマットエラー（手動投稿）→ {row[COL_DATETIME]}")
+            continue
+        if post_time > now:
+            continue  # まだ投稿予定時刻前
+        targets.append((i, row, status, post_time))
+
+    if not targets:
+        return
+
+    print(f"手動投稿リールの確認: {len(targets)}件")
+
+    try:
+        media = fetch_recent_media()
+    except Exception as e:
+        print(f"  メディア一覧を取得できませんでした（次回再確認します）: {e}")
+        return
+
+    # すでにどこかの行に記録済みの投稿は、別の枠に割り当てない
+    used_permalinks = {
+        part
+        for row in rows[1:] if len(row) > COL_MEMO
+        for part in row[COL_MEMO].split()
+        if part.startswith("https://www.instagram.com/")
+    }
+
+    reels = []
+    for item in media:
+        if item.get("media_product_type") != "REELS":
+            continue
+        try:
+            reels.append((_parse_media_time(item["timestamp"]), item))
+        except (KeyError, ValueError):
+            continue
+    reels.sort(key=lambda x: x[0])
+
+    for i, row, status, post_time in targets:
+        datetime_str = row[COL_DATETIME].strip()
+        match = None
+        for posted_at, item in reels:
+            if item["permalink"] in used_permalinks:
+                continue
+            if post_time - MANUAL_MATCH_BEFORE <= posted_at <= post_time + MANUAL_MATCH_AFTER:
+                match = (posted_at, item)
+                break
+
+        if match:
+            posted_at, item = match
+            permalink = item["permalink"]
+            used_permalinks.add(permalink)
+            memo = row[COL_MEMO].strip() if len(row) > COL_MEMO else ""
+            memo = f"{memo} {permalink}".strip()
+            try:
+                update_cell_with_retry(sheet, i, COL_MEMO + 1, memo)
+            except Exception as e:
+                print(f"行{i}: メモ列にpermalinkを書けませんでした → {e}")
+            recorded = mark_status(sheet, i, "投稿済み")
+            print(f"行{i}: 手動投稿を確認 → {permalink}"
+                  f"（{posted_at.strftime('%m/%d %H:%M')} JST）")
+
+            # 配信用に GitHub Pages へ置いた動画はもう不要なので消す（1本約6MB）
+            slug = _slug_from_datetime(datetime_str)
+            for name in ("reel.mp4", "reel_thumb.jpg"):
+                try:
+                    delete_path_from_github(f"docs/{slug}/{name}",
+                                            message=f"配信済みリール削除: {slug}/{name}")
+                except Exception as e:
+                    print(f"行{i}: 配信ファイルの削除に失敗（投稿は確認済み） → {e}")
+            try:
+                delete_preview_from_github(datetime_str)
+            except Exception as e:
+                print(f"行{i}: プレビュー削除に失敗（投稿は確認済み） → {e}")
+            if recorded:
+                send_line_message(
+                    f"✅ リールの投稿を確認しました\n"
+                    f"📅 {datetime_str}\n"
+                    f"🔗 {permalink}"
+                )
+            else:
+                send_line_message(
+                    f"✅ リールの投稿を確認しましたが、シートを更新できませんでした\n"
+                    f"📅 {datetime_str}\n"
+                    f"🔗 {permalink}\n"
+                    f"該当行のステータスを手動で「投稿済み」に変更してください。"
+                )
+            continue
+
+        if status == MANUAL_STATUS and now > post_time + MANUAL_REMIND_AFTER:
+            mark_status(sheet, i, MANUAL_REMINDED_STATUS)
+            print(f"行{i}: 手動投稿が未確認のためリマインド → {datetime_str}")
+            send_line_message(
+                f"🔔 リールがまだ投稿されていないようです\n"
+                f"📅 {datetime_str} の予定でした\n"
+                f"お手すきのときにInstagramアプリから投稿してください。\n"
+                f"動画とキャプションは前にお送りしたメッセージにあります。"
+            )
+        else:
+            print(f"行{i}: 手動投稿はまだ確認できていません → {datetime_str}")
+
+
 def run():
     check_token_expiry()
 
     sheet = get_sheet()
-    rows = sheet.get_all_values()
+    rows = get_all_values_with_retry(sheet)
     now = datetime.now(JST).replace(tzinfo=None)  # JST時刻で比較（スプレッドシートの記録と統一）
 
     print(f"チェック開始: {now.strftime('%Y/%m/%d %H:%M')} JST")
@@ -143,38 +286,92 @@ def run():
             filenames = [f.strip() for f in filename.split(",")]
 
             if len(filenames) > 1:
-                image_urls = [get_file_url(f) for f in filenames]
-                post_id = post_carousel(image_urls, caption)
+                if any(is_video(f) for f in filenames):
+                    items = [
+                        {"type": "video" if is_video(f) else "image",
+                         "url": get_file_url(f)}
+                        for f in filenames
+                    ]
+                    post_id = post_mixed_carousel(items, caption)
+                else:
+                    image_urls = [get_file_url(f) for f in filenames]
+                    post_id = post_carousel(image_urls, caption)
             elif is_video(filenames[0]):
                 post_id = post_video(get_file_url(filenames[0]), caption)
             else:
                 post_id = post_image(get_file_url(filenames[0]), caption)
 
-            sheet.update_cell(i, COL_STATUS + 1, "投稿済み")
-            print(f"行{i}: 投稿成功！ post_id={post_id}")
-            send_line_message(
-                f"✅ Instagram投稿完了\n"
-                f"📅 {datetime_str}\n"
-                f"🆔 post_id={post_id}"
-            )
-            posted += 1
-
         except FileNotFoundError as e:
             print(f"行{i}: ファイルなし → {e}")
-            sheet.update_cell(i, COL_STATUS + 1, "エラー：ファイルなし")
+            mark_status(sheet, i, "エラー：ファイルなし")
             send_line_message(
                 f"❌ 投稿失敗（ファイルなし）\n"
                 f"📅 {datetime_str}\n"
                 f"エラー: {str(e)[:100]}"
             )
+            continue
         except Exception as e:
             print(f"行{i}: 投稿失敗 → {e}")
-            sheet.update_cell(i, COL_STATUS + 1, f"エラー：{str(e)[:100]}")
+            mark_status(sheet, i, f"エラー：{str(e)[:100]}")
             send_line_message(
                 f"❌ 投稿失敗\n"
                 f"📅 {datetime_str}\n"
                 f"エラー: {str(e)[:300]}"
             )
+            continue
+
+        # --- ここから先はInstagramへの投稿が成功している ---
+        # 以降の後始末で失敗しても「エラー：」を書いてはいけない。
+        # エラー行は7日以内なら再試行されるため、同じ内容がもう一度投稿されてしまう。
+        # 同じ理由で、後始末の例外でループを止めることもしない。
+        recorded = mark_status(sheet, i, "投稿済み")
+
+        print(f"行{i}: 投稿成功！ post_id={post_id}")
+        posted += 1
+
+        try:
+            delete_preview_from_github(datetime_str)
+        except Exception as e:
+            print(f"行{i}: プレビュー削除に失敗（投稿は成功済み） → {e}")
+
+        if recorded:
+            send_line_message(
+                f"✅ Instagram投稿完了\n"
+                f"📅 {datetime_str}\n"
+                f"🆔 post_id={post_id}"
+            )
+        else:
+            send_line_message(
+                f"⚠️ Instagram投稿は完了しましたがシートを更新できませんでした\n"
+                f"📅 {datetime_str}\n"
+                f"🆔 post_id={post_id}\n"
+                f"二重投稿を防ぐため、該当行のステータスを手動で「投稿済み」に変更してください。"
+            )
+
+        # 投稿済みの画像はInstagram CDNにコピー済みなので、GitHub上のコピーを削除する
+        slug = filenames[0].split("/")[0] if "/" in filenames[0] else ""
+        if slug:
+            time.sleep(2)  # プレビュー削除コミット直後の競合を避けるため少し待つ
+            for attempt in range(1, 4):  # 最大3回リトライ
+                try:
+                    n = delete_post_folder_from_github(slug)
+                    if n > 0:
+                        print(f"行{i}: GitHub generated/{slug}/ から{n}ファイル削除（試行{attempt}）")
+                        break
+                    else:
+                        print(f"行{i}: GitHub generated/{slug}/ にファイルなし（試行{attempt}）")
+                        break
+                except Exception as cleanup_err:
+                    print(f"行{i}: GitHub掃除失敗（試行{attempt}/3）: {cleanup_err}")
+                    if attempt < 3:
+                        time.sleep(5 * attempt)  # 5秒、10秒と徐々に待つ
+
+    # 手動投稿（リール）の確認は自動投稿とは独立した後始末なので、
+    # ここで落ちても投稿処理の結果に影響させない
+    try:
+        verify_manual_reels(sheet, rows, now)
+    except Exception as e:
+        print(f"手動投稿リールの確認に失敗（次回再確認します）: {e}")
 
     print(f"完了！投稿数: {posted}件")
 

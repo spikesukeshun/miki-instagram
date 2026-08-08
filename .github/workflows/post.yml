@@ -18,6 +18,8 @@ on:
 jobs:
   post:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 投稿後にgenerated/{slug}/を削除するために必要
     steps:
       - name: リポジトリを取得
         uses: actions/checkout@v4
@@ -63,6 +65,7 @@ jobs:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
           LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python post_scheduler.py
 
       - name: 失敗時LINE通知

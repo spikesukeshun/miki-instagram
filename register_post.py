@@ -1,5 +1,3 @@
-import gspread
-from google.oauth2.service_account import Credentials
 import os
 import glob
 import base64
@@ -7,12 +5,8 @@ import requests
 from datetime import datetime
 
 from load_env import load_from_zshrc
+from sheet_client import open_sheet
 load_from_zshrc()
-
-SCOPES = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive"
-]
 
 SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 GITHUB_OWNER = "spikesukeshun"
@@ -23,9 +17,7 @@ RAW_BASE = f"https://raw.githubusercontent.com/{GITHUB_OWNER}/{GITHUB_REPO}/main
 
 
 def get_sheet():
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
-    client = gspread.authorize(creds)
-    return client.open_by_key(SPREADSHEET_ID).sheet1
+    return open_sheet(SPREADSHEET_ID)
 
 
 def _get_github_token() -> str:
@@ -52,20 +44,22 @@ def _github_headers():
     return {"Authorization": f"token {_get_github_token()}"}
 
 
-def upload_to_github(filepath: str, subfolder: str = "") -> str:
-    """ファイルをGitHubリポジトリにアップロードして相対パス（subfolder/filename）を返す"""
+def upload_path_to_github(filepath: str, repo_path: str, message: str = "") -> str:
+    """ファイルをリポジトリ内の任意のパスにアップロードして repo_path を返す。
+
+    generated/ 以外（GitHub Pages 用の docs/ など）へ置きたいときに使う。
+    """
     filename = os.path.basename(filepath)
     with open(filepath, "rb") as f:
         content = base64.b64encode(f.read()).decode()
 
-    path = f"{GENERATED_DIR}/{subfolder}/{filename}" if subfolder else f"{GENERATED_DIR}/{filename}"
-    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{path}"
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{repo_path}"
     headers = _github_headers()
 
     res = requests.get(api_url, headers=headers)
     sha = res.json().get("sha") if res.status_code == 200 else None
 
-    payload = {"message": f"画像追加: {filename}", "content": content}
+    payload = {"message": message or f"ファイル追加: {filename}", "content": content}
     if sha:
         payload["sha"] = sha
 
@@ -73,9 +67,83 @@ def upload_to_github(filepath: str, subfolder: str = "") -> str:
     if res.status_code not in (200, 201):
         raise Exception(f"GitHubアップロード失敗: {res.json()}")
 
-    print(f"  アップロード完了: {filename}")
+    print(f"  アップロード完了: {repo_path}")
+    return repo_path
+
+
+def upload_to_github(filepath: str, subfolder: str = "") -> str:
+    """ファイルをGitHubリポジトリにアップロードして相対パス（subfolder/filename）を返す"""
+    filename = os.path.basename(filepath)
+    path = f"{GENERATED_DIR}/{subfolder}/{filename}" if subfolder else f"{GENERATED_DIR}/{filename}"
+    upload_path_to_github(filepath, path, message=f"画像追加: {filename}")
     # サブフォルダがある場合は "slug/filename" 形式で返す（post_scheduler で正しいURLを組み立てるため）
     return f"{subfolder}/{filename}" if subfolder else filename
+
+
+def delete_path_from_github(repo_path: str, message: str = "") -> bool:
+    """リポジトリ内の1ファイルを削除する。失敗してもログのみで例外は投げない。"""
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{repo_path}"
+    headers = _github_headers()
+    try:
+        res = requests.get(api_url, headers=headers, timeout=10)
+        if res.status_code == 404:
+            print(f"  削除スキップ（既に存在しない）: {repo_path}")
+            return False
+        if res.status_code != 200:
+            print(f"  削除前のGET失敗: {res.status_code} {res.text[:200]}")
+            return False
+        sha = res.json().get("sha")
+        payload = {"message": message or f"削除: {repo_path}", "sha": sha}
+        res = requests.delete(api_url, headers=headers, json=payload, timeout=10)
+        if res.status_code in (200, 204):
+            print(f"  削除しました: {repo_path}")
+            return True
+        print(f"  削除失敗: {res.status_code} {res.text[:200]}")
+        return False
+    except Exception as e:
+        print(f"  削除でエラー（{repo_path}）: {e}")
+        return False
+
+
+def list_github_folder(slug: str) -> list:
+    """generated/{slug}/ 配下のファイル一覧を返す。各要素は {'path': str, 'sha': str}"""
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{GENERATED_DIR}/{slug}"
+    res = requests.get(api_url, headers=_github_headers(), timeout=15)
+    if res.status_code == 404:
+        print(f"  [list_github_folder] {slug}: フォルダなし (404)")
+        return []
+    if res.status_code != 200:
+        raise Exception(
+            f"GitHub一覧取得失敗 ({slug}): HTTP {res.status_code} "
+            f"rate_limit_remaining={res.headers.get('X-RateLimit-Remaining','?')} "
+            f"body={res.text[:300]}"
+        )
+    items = res.json()
+    if isinstance(items, dict):
+        # エラーレスポンスがdictで返ることがある (message フィールドあり)
+        raise Exception(f"GitHub一覧取得で予期しないレスポンス ({slug}): {items}")
+    return [{"path": item["path"], "sha": item["sha"]} for item in items if item["type"] == "file"]
+
+
+def delete_post_folder_from_github(slug: str) -> int:
+    """generated/{slug}/ をGitHubから削除する。削除したファイル数を返す"""
+    if not slug:
+        return 0
+    items = list_github_folder(slug)
+    if not items:
+        return 0
+
+    headers = _github_headers()
+    deleted = 0
+    for item in items:
+        api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/{item['path']}"
+        payload = {"message": f"投稿済み画像削除: {item['path']}", "sha": item["sha"]}
+        res = requests.delete(api_url, headers=headers, json=payload)
+        if res.status_code in (200, 204):
+            deleted += 1
+        else:
+            print(f"  削除失敗 ({item['path']}): {res.status_code} {res.text[:150]}")
+    return deleted
 
 
 def setup_github_pages():
@@ -251,7 +319,7 @@ def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
     """HTMLをdocs/{slug}/index.htmlとしてGitHubにアップロードして一意のURLを返す"""
     # 投稿日時からスラッグ生成（例: 2026/04/08 21:00 → 2026-04-08-2100）
     if post_datetime:
-        slug = post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+        slug = _slug_from_datetime(post_datetime)
     else:
         slug = datetime.now().strftime("%Y-%m-%d-%H%M")
 
@@ -277,6 +345,19 @@ def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
     return preview_url
 
 
+def _slug_from_datetime(post_datetime: str) -> str:
+    """投稿日時文字列（例: '2026/04/14 21:00'）から slug（'2026-04-14-2100'）を生成"""
+    return post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+
+
+def delete_preview_from_github(post_datetime: str) -> bool:
+    """投稿成功後に docs/{slug}/index.html を GitHub から削除する。
+    失敗してもログのみで例外は投げない（投稿成功フローを阻害しないため）。"""
+    slug = _slug_from_datetime(post_datetime)
+    return delete_path_from_github(f"docs/{slug}/index.html",
+                                   message=f"プレビューページ削除: {slug}")
+
+
 # シートは A〜H の8列のみで運用する（2026-07-11 に I列以降＝修正指示・seed・
 # alt_text を廃止）。alt_text は content.json 側だけで管理し、seed は
 # create_post.py のログから cleanup_backgrounds.py に渡す。
@@ -285,16 +366,24 @@ SHEET_LAST_COL = "H"
 SHEET_NUM_COLS = 8
 
 
+def _col_letter(n: int) -> str:
+    """1→A, 26→Z, 27→AA"""
+    s = ""
+    while n > 0:
+        n, r = divmod(n - 1, 26)
+        s = chr(65 + r) + s
+    return s
+
+
 def _clear_extra_columns(sheet, row_num: int):
     """A〜H より右（I列以降）に残っている値を消す。
     過去に seed / alt_text を書き込んでいた頃のデータを掃除するためのもので、
     8列運用に戻したあとも行を触るたびに自動で片付く。"""
     try:
-        width = max(sheet.col_count, SHEET_NUM_COLS)
+        width = sheet.col_count
         if width <= SHEET_NUM_COLS:
             return
-        last = gspread.utils.rowcol_to_a1(row_num, width).rstrip("0123456789")
-        sheet.batch_clear([f"I{row_num}:{last}{row_num}"])
+        sheet.batch_clear([f"I{row_num}:{_col_letter(width)}{row_num}"])
     except Exception as e:
         print(f"  I列以降のクリアをスキップ: {e}")
 
@@ -304,9 +393,10 @@ def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
     update_cell() の連続呼び出しはAPIレート制限で失敗するため、
     スプレッドシートの部分更新は必ずこの関数を使うこと。
 
-    fields キー: status / preview_url / caption / hashtags / memo
+    fields キー: filename / status / preview_url / caption / hashtags / memo
     """
     col_map = {
+        "filename": 3,     # C
         "caption": 4,      # D
         "hashtags": 5,     # E
         "memo": 6,         # F
@@ -317,7 +407,7 @@ def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
     rows = sheet.get_all_values()
     for i, r in enumerate(rows[1:], start=2):
         if r and r[0] == post_datetime:
-            row_data = list(r) + [""] * max(0, SHEET_NUM_COLS - len(r))
+            row_data = list(r) + [""] * max(0, 8 - len(r))
             for key, val in fields.items():
                 col_idx = col_map.get(key)
                 if col_idx:
@@ -346,7 +436,7 @@ def register(
         return
 
     # 投稿日時からスラッグ生成（例: 2026/04/14 21:00 → 2026-04-14-2100）
-    slug = post_datetime.replace("/", "-").replace(" ", "-").replace(":", "")
+    slug = _slug_from_datetime(post_datetime)
 
     # 画像をGitHubにアップロード（投稿ごとのサブフォルダに保存）
     filenames = []
