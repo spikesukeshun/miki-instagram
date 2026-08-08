@@ -339,6 +339,16 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
         filename = f"bg_{timestamp}_{i+1:02d}.jpg"
         path = os.path.join("backgrounds", filename)
 
+        # reuse/edit なのに reuse_source が無いと "instagram" 扱いになり、
+        # Instagram取得が空 → 静かに HF生成へ落ちて全スライドがAI画像になる。
+        # 静かに落とさず、ここで content.json の書き間違いとして止める。
+        if strategy in ("reuse", "edit") and "reuse_source" not in slide:
+            raise ValueError(
+                f"スライド{i+1}: bg_strategy=\"{strategy}\" なのに reuse_source が指定されていません。\n"
+                f"  Drive写真を使う場合は reuse_source / reuse_theme / reuse_filename を"
+                f"3つセットで指定してください（CLAUDE.md「content.json に必須の Drive 指定」）。"
+            )
+
         # --- Drive 画像を使用 ---
         if strategy in ("reuse", "edit") and reuse_source == "drive":
             from drive_manager import list_drive_images, download_drive_image
@@ -350,7 +360,14 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             if reuse_filename:
                 matched_file = next((f for f in drive_files if f["name"] == reuse_filename), None)
                 if not matched_file:
-                    print(f"    → Drive画像 '{reuse_filename}' が見つからない、インデックスで代替")
+                    # 指定した写真が無いのに黙って別画像やAI生成へ落とすと、
+                    # 意図しない画像で投稿が出来上がってしまう。ここで止める。
+                    raise ValueError(
+                        f"スライド{i+1}: Drive [{theme}] に '{reuse_filename}' が見つかりません。\n"
+                        f"  ライブのDriveでファイル名を確認してください（大文字小文字・拡張子も一致必須）:\n"
+                        f"    /usr/bin/python3 -c \"from drive_manager import list_drive_images; "
+                        f"print([x['name'] for x in list_drive_images('{theme}')])\""
+                    )
             if not matched_file and drive_files and reuse_index < len(drive_files):
                 matched_file = drive_files[reuse_index]
             if matched_file:
@@ -368,7 +385,10 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                         _bg.save(path, "JPEG", quality=90)
                     slide["filename"] = filename
                     continue
-            print(f"    → Drive画像の取得失敗、HFで代替生成")
+            raise ValueError(
+                f"スライド{i+1}: Drive [{theme}] からの背景取得に失敗しました。\n"
+                f"  AI生成へ自動フォールバックはしません。Drive側を確認してやり直してください。"
+            )
 
         # --- ローカルファイルを直接使用 ---
         elif strategy == "local":
@@ -413,6 +433,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
         success, used_seed = generate_image_hf(slide_prompt, filename, seed=slide_seed)
         if success:
             slide["filename"] = filename
+            slide["_bg_generated"] = True  # Drive転用と区別する（Driveへの再アップロード判定用）
             last_seed = used_seed
             if not slide.get("seed"):
                 slide["seed"] = used_seed
@@ -557,7 +578,14 @@ def _menu_to_theme(menu: str) -> str:
 
 
 def _upload_backgrounds_to_drive(slides: list, theme: str) -> None:
-    """resolve_backgrounds で生成したbg_*.jpg をDriveテーマフォルダにアップロード（OAuth使用）"""
+    """resolve_backgrounds が **新規生成した** bg_*.jpg だけを
+    Driveテーマフォルダにアップロードする（OAuth使用）。
+
+    reuse / edit で Drive から落としてきた画像も backgrounds/bg_*.jpg という
+    同じ名前になるため、ファイル名だけで判定するとサロンの実写がテーマフォルダに
+    重複コピーされ、さらに AI生成画像もサロン写真と見分けがつかない状態で
+    フォルダに混ざる。次の投稿がそれを reuse すると「意図しない生成画像の使用」に
+    つながるので、resolve_backgrounds が付ける _bg_generated フラグで絞り込む。"""
     import json as _json
     from googleapiclient.discovery import build as _build
     from googleapiclient.http import MediaFileUpload as _MediaFileUpload
@@ -592,7 +620,7 @@ def _upload_backgrounds_to_drive(slides: list, theme: str) -> None:
     uploaded = 0
     for slide in slides:
         filename = slide.get("filename", "")
-        if not filename.startswith("bg_"):
+        if not filename.startswith("bg_") or not slide.get("_bg_generated"):
             continue
         local_path = os.path.join("backgrounds", filename)
         if not os.path.exists(local_path):
