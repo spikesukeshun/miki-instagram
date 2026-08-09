@@ -55,7 +55,7 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
 - **`reuse` / `edit` は `reuse_source="drive"` / `reuse_theme` / `reuse_filename` の3点セット必須。**
   `reuse_theme` は `menu` / `bridal` / `lifestyle` のみ（`reward` は0枚で使用不可）。
   ⚠️ **`reuse_filename` の書き忘れだけは `create_post.py` が止めてくれず、
-  Drive の0番目の画像を黙って使ってしまう**（`create_post.py:371`）。自分で確認すること
+  Drive の0番目の画像を黙って使ってしまう**（`create_post.py` の `resolve_backgrounds()`）。自分で確認すること
 - **「Driveに使える写真が無い」と判断する前に必ず目視する** → `preview_drive_images.py`。
   なお Drive「施術・メニュー紹介」の**「参考N」画像は例外扱いで全て使用可**
   （サロン名・人物・施術シーンが写っていてもよい。ユーザーが選定した公式素材のため）
@@ -87,12 +87,24 @@ python3 get_recent_insights.py
 python3 check_week_slots.py
 ```
 
-3. **`SKILL.md` と `rules/content-schema.md` を読んでから** content.json を書く（**省略不可**）
+3. **`SKILL.md` と `rules/content-schema.md` を読んでから** content.json を書く（**省略不可**）。
+   ファイル名は **`content_YYYY-MM-DD-HHMM.json`**（ここから投稿日時が決まる）。
+   トップレベルに **`menu`（メニュー種別）を必ず書く**
 4. 画像生成とシート登録：
 
 ```bash
-python create_post.py --content-file content.json
+python create_post.py --content-file content_YYYY-MM-DD-HHMM.json
 ```
+
+投稿日時とメニュー種別は**既定値を持たない**。上のようにファイル名を日付形式にして
+`menu` を書いておけば引数なしで通る。決まらなければ停止するので、その時は明示する：
+
+```bash
+python create_post.py --content-file content.json --post-datetime "2026/08/10 22:00" --menu "ご褒美エステ"
+```
+
+**過去日時の枠は停止する**（既存のシート行と GitHub フォルダを上書きするため）。
+意図的に過去枠へ登録する時だけ `--allow-past` を付ける。詳細 → `rules/content-schema.md`
 
 `--content-file` を付けない `python create_post.py` は Groq に文章を自動生成させる旧経路。
 現在の運用では使わない（定時投稿の GitHub Actions は `post_scheduler.py` だけを実行する）。
@@ -100,7 +112,7 @@ python create_post.py --content-file content.json
 5. 校閲（**省略不可**）。❌ が出たら content.json を直して 4 に戻る：
 
 ```bash
-python review_post.py content.json
+python review_post.py content_YYYY-MM-DD-HHMM.json
 ```
 
 6. 後片付け（**省略不可**）。実行ログの `seed=XXXXXX` を渡す：
@@ -122,7 +134,8 @@ seed が複数ある場合はスペース区切りで渡す。
 修正はすべて**チャット経由**（シート経由の自動修正フローは 2026-07-11 に廃止済み）。
 
 1. チャットで修正指示を受けて content.json を直す
-2. `python create_post.py --content-file content.json` を再実行
+2. `python create_post.py --content-file content_YYYY-MM-DD-HHMM.json` を再実行
+   （**同じ枠に上書きされることを日時のログ行で必ず確認する**）
 3. **修正指示文を渡して校閲する**（依頼内容が反映されたかも検証される）：
 
 ```bash
@@ -173,3 +186,10 @@ python3 deliver_reel.py --datetime "2026/08/21 21:00" \
   投稿するコードは8月版」という食い違いが起きた → `check_repo_sync.py`
 - **同じルールを2か所に書かない。書いた瞬間から片方が腐り始める。**
   コード内の数値（px値・デフォルト値）をドキュメントに転記しないこと
+- **「よく使う値」を argparse の既定値に埋め込まない。省略時は止める。**
+  2026-04-18 と 2026-08-09、`create_post.py --post-datetime` の既定値が
+  `2026/04/12 21:00` に固定されていたため、手順書どおりのコマンドを打つと
+  黙って4月12日枠の行が増え、GitHub の既存フォルダを上書きしていた。
+  1回目に現象だけ revert して既定値を直さなかったので再発した
+- **手順書に載っているコマンドを、そのまま打って安全か実際に確かめる。**
+  ドキュメントとコードの既定値がずれていると、どちらも単体では正しく見える

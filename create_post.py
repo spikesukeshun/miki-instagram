@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import datetime
 
 import requests
@@ -712,20 +713,198 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
             print(f"content.json の _generated_dir 記録スキップ: {e}")
 
 
+# content_2026-08-10-2200.json のような日付入りファイル名から投稿日時を読む。
+# fullmatch で使う。backup_content_2026-04-12-2100.json のような別物を
+# 拾わないよう、前方に何も許さないこと。
+CONTENT_FILENAME_DT_RE = re.compile(
+    r"content_(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})\.json"
+)
+POST_DATETIME_FMT = "%Y/%m/%d %H:%M"
+
+
+class PostTargetUnresolved(ValueError):
+    """投稿日時・メニュー種別が決められなかった。__main__ で parser.error に変換する。"""
+
+
+def _str_field(meta: dict, key: str) -> str:
+    """meta[key] が文字列のときだけ中身を返す。null や数値は「未指定」扱い。
+
+    str(meta.get(key, "")) だと None が "None" になって truthy 判定を通り、
+    後段のフォールバック（ファイル名など）に落ちなくなる。
+    """
+    raw = meta.get(key)
+    return raw.strip() if isinstance(raw, str) else ""
+
+
+def _load_content_meta(content_file: str) -> dict:
+    """content.json をトップレベル情報の参照用に読む。読めなければ空dict。
+
+    ここで落とさないのは、本読み込み（run() 内の json.load）に
+    エラー報告を任せるため。ただし黙って素通りさせず理由は必ず出す。
+    """
+    if not content_file or not os.path.exists(content_file):
+        return {}
+    try:
+        with open(content_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (ValueError, OSError) as e:
+        # ValueError で JSONDecodeError と UnicodeDecodeError の両方を拾う。
+        print(f"⚠️  {content_file} を読めませんでした（{type(e).__name__}: {e}）。"
+              f"投稿日時・メニュー種別はファイル名と引数だけで判定します")
+        return {}
+    if not isinstance(data, dict):
+        print(f"⚠️  {content_file} のトップレベルが dict ではありません（{type(data).__name__}）")
+        return {}
+    return data
+
+
+def _dt_from_filename(content_file: str) -> str:
+    """ファイル名 content_YYYY-MM-DD-HHMM.json → "YYYY/MM/DD HH:MM"。無ければ空文字。"""
+    if not content_file:
+        return ""
+    m = CONTENT_FILENAME_DT_RE.fullmatch(os.path.basename(content_file))
+    if not m:
+        return ""
+    y, mo, d, h, mi = m.groups()
+    return f"{y}/{mo}/{d} {h}:{mi}"
+
+
+def _dt_from_generated_dir(meta: dict) -> str:
+    """_generated_dir("YYYY-MM-DD-HHMM") → "YYYY/MM/DD HH:MM"。無ければ空文字。"""
+    raw = str(meta.get("_generated_dir", "")).strip()
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})", raw)
+    if not m:
+        return ""
+    y, mo, d, h, mi = m.groups()
+    return f"{y}/{mo}/{d} {h}:{mi}"
+
+
+def resolve_post_datetime(cli_value: str, content_file: str, meta: dict,
+                          allow_past: bool = False) -> str:
+    """投稿日時を決める。決められなければ PostTargetUnresolved を投げる。
+
+    かつて --post-datetime に "2026/04/12 21:00" というハードコード既定値があり、
+    省略すると黙って4月12日枠へ新規登録され、GitHub上の既存フォルダを実データごと
+    上書きしていた（2026-04-18・2026-08-09 の2回発生）。**既定値は置かない。**
+
+    優先順位（上ほど信頼できる）:
+      1. --post-datetime
+      2. content.json の post_datetime
+      3. ファイル名 content_YYYY-MM-DD-HHMM.json
+
+    `_generated_dir` は候補に**含めない**。あれは「意図した投稿日時」ではなく
+    「前回どこへ生成したか」の記録で、上記の事故そのものによって汚染される
+    （2026-08-09 の誤実行で実際に 2026-04-12-2100 へ書き換わった）。
+    汚染された値が別の未来枠を指していると、警告も出せないまま
+    その枠を上書きしてしまう。整合性チェック専用に留める。
+
+    現在時刻との比較はナイーブな `datetime.now()`（＝実行環境のローカル時刻）で行う。
+    このスクリプトは手元（JST）実行専用で、GitHub Actions からは呼ばれない。
+    """
+    from_file_name = _dt_from_filename(content_file)
+    from_generated = _dt_from_generated_dir(meta)
+    candidates = [
+        (cli_value, "--post-datetime"),
+        (_str_field(meta, "post_datetime"), f"{content_file} の post_datetime"),
+        (from_file_name, "ファイル名"),
+    ]
+    resolved, source = next(((v, s) for v, s in candidates if v), ("", ""))
+
+    if not resolved:
+        raise PostTargetUnresolved(
+            "投稿日時が決まりません。--post-datetime を指定してください。\n"
+            '  例: --post-datetime "2026/08/10 22:00"\n'
+            "  content.json に post_datetime を書くか、ファイル名を\n"
+            "  content_YYYY-MM-DD-HHMM.json 形式にしても決まります。\n"
+            "  （かつてここには 2026/04/12 21:00 という既定値があり、"
+            "省略すると黙って過去枠を上書きしていました）"
+        )
+
+    try:
+        dt = datetime.strptime(resolved, POST_DATETIME_FMT)
+    except ValueError:
+        raise PostTargetUnresolved(
+            f"投稿日時の形式が不正です（{source} = {resolved!r}）。\n"
+            '  "YYYY/MM/DD HH:MM" 形式で指定してください。例: "2026/08/10 22:00"'
+        )
+
+    # ゼロ埋めを正規化してから返す。strptime は "2026/8/10 22:00" も
+    # "2026/08/10 22:0" も受理するが、register_post._slug_from_datetime() は
+    # 単なる文字列置換、シートの突合も完全一致。正規化せずに渡すと
+    # generated/2026-8-10-2200/ という別フォルダと重複行が黙って作られる
+    # （このパッチが潰そうとしているのと同じクラスの事故）。
+    normalized = dt.strftime(POST_DATETIME_FMT)
+    print(f"投稿日時: {normalized}（{source} から決定）")
+    if normalized != resolved:
+        print(f"  （入力 {resolved!r} を正規化しました）")
+
+    # 取り違えの早期発見。
+    for other, label in ((from_file_name, "ファイル名"),
+                         (from_generated, "_generated_dir")):
+        if other and other != normalized:
+            print(f"  ⚠️  {label} は {other} を指しています。取り違えていないか確認してください")
+
+    # 過去枠への登録は既存の行・GitHubフォルダを実データごと上書きする。
+    # 警告だけでは長いログに埋もれて見落とされる（2026-08-09 はそれで通ってしまった）ので、
+    # 明示的なオプトインが無い限りここで止める。
+    if dt < datetime.now() and not allow_past:
+        raise PostTargetUnresolved(
+            f"投稿日時 {normalized}（{source} から決定）は現在時刻より過去です。\n"
+            "  過去枠に登録すると、その枠の既存シート行と GitHub の\n"
+            f"  generated/{dt.strftime('%Y-%m-%d-%H%M')}/ を実データごと上書きします。\n"
+            "  枠が正しければ --allow-past を付けて再実行してください。\n"
+            "  未来の枠のつもりなら --post-datetime で明示してください。"
+        )
+
+    return normalized
+
+
+def resolve_menu(cli_value: str, content_file: str, meta: dict) -> str:
+    """メニュー種別（シートB列）を決める。決められなければ例外を投げる。
+
+    --menu も "ご褒美エステ" のハードコード既定値を持っていたため、
+    指定を忘れると実際と違う種別で登録されていた。既定値は置かない。
+    """
+    candidates = [
+        (cli_value, "--menu"),
+        (_str_field(meta, "menu"), f"{content_file} の menu"),
+    ]
+    resolved, source = next(((v, s) for v, s in candidates if v), ("", ""))
+    if not resolved:
+        raise PostTargetUnresolved(
+            "メニュー種別が決まりません。--menu を指定してください。\n"
+            '  例: --menu "ご褒美エステ"（他: ブライダルエステ / 美容情報 / '
+            "はじめての方へ / 痩身エステ など）\n"
+            "  content.json のトップレベルに menu を書いても決まります。"
+        )
+    print(f"メニュー種別: {resolved}（{source} から決定）")
+    return resolved
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Instagram投稿コンテンツを生成・登録する")
     parser.add_argument("--content-file", help="Claude Codeが生成したcontent.jsonのパス（指定時はGroq生成をスキップ）")
-    parser.add_argument("--theme", default="休みの日に一人でエステに行くことへの背中押し。疲れた体のリセット・リフレッシュ、首・肩・背中の凝りを解消し巡りを良くしてQOL向上", help="投稿テーマ")
-    parser.add_argument("--menu", default="ご褒美エステ", help="メニュー種別（例: ご褒美エステ / ブライダルエステ / アラサー美容）")
-    parser.add_argument("--post-datetime", default="2026/04/12 21:00", help="投稿日時（例: 2026/04/14 21:00）")
+    parser.add_argument("--theme", default="休みの日に一人でエステに行くことへの背中押し。疲れた体のリセット・リフレッシュ、首・肩・背中の凝りを解消し巡りを良くしてQOL向上", help="投稿テーマ（--content-file 未指定のGroq生成経路でのみ使用）")
+    parser.add_argument("--menu", default="", help="メニュー種別（例: ご褒美エステ / ブライダルエステ / アラサー美容）。省略時は content.json の menu を見る")
+    parser.add_argument("--post-datetime", default="", help='投稿日時（例: "2026/08/10 22:00"）。省略時は content.json の post_datetime → ファイル名 → _generated_dir の順に見る')
     parser.add_argument("--notes", default="", help="追加指示")
+    parser.add_argument("--allow-past", action="store_true", help="過去日時の枠へ登録することを明示的に許可する（既存のシート行とGitHubフォルダを上書きします）")
     args = parser.parse_args()
+
+    _meta = _load_content_meta(args.content_file)
+    try:
+        _post_datetime = resolve_post_datetime(
+            args.post_datetime, args.content_file, _meta,
+            allow_past=args.allow_past)
+        _menu = resolve_menu(args.menu, args.content_file, _meta)
+    except PostTargetUnresolved as e:
+        parser.error(str(e))
 
     run(
         theme=args.theme,
-        menu=args.menu,
-        post_datetime=args.post_datetime,
+        menu=_menu,
+        post_datetime=_post_datetime,
         notes=args.notes,
         content_file=args.content_file,
     )

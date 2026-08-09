@@ -385,7 +385,7 @@ MIKIの文章は**丁寧語（〜ます/〜ございます）を基本**にし�
   - `reuse_source="drive"` / `reuse_theme` / `reuse_filename` は3つセットで必須。
     ⚠️ ただし**止まり方が違う**。`reuse_source` の欠落は即停止するが、
     **`reuse_filename` の欠落は停止せず、Driveの0番目の画像が黙って使われる**
-    （`create_post.py:371`）。書いた時点で自分で3つ確認すること → `rules/content-schema.md`
+    （`create_post.py` の `resolve_backgrounds()`）。書いた時点で自分で3つ確認すること → `rules/content-schema.md`
   - `reuse_theme` に使えるのは `menu` / `bridal` / `lifestyle` のみ。
     `reward`（ご褒美）は Drive に0枚なので使用不可
   - **「使える写真が無い」とファイル名だけで判断しない。** 必ず目視してから決める：
