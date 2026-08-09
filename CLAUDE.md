@@ -40,6 +40,7 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
 | `check_week_slots.py` | 週の空き枠判定（作成済みの投稿を二重に作らない）|
 | `get_recent_insights.py` / `insight_report.py` | インサイト取得・全期間集計 |
 | `preview_drive_images.py` | Drive候補をコンタクトシート化して目視確認 |
+| `image_positions.py` | 過去に使った画像の切り取り位置（focus_y）を引く |
 | `deliver_reel.py` | リールをLINE配信（手動投稿用）|
 
 ## 絶対ルール（毎回・例外なし）
@@ -67,6 +68,8 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
   `MIKI指名 初回限定20%OFF\n（VIPコースのみ）`
 - **キャプション**: 1〜2行目に主要キーワードの導入文（毎回固有の一文）→ 空行 → 3行目から
   「MIKIです。」／1000〜1500文字／絵文字3〜5個／`——` と英字の混入禁止／末尾に必ずCTA
+- **過去に使った画像は同じ `focus_y` で切り取る。** 書く前に
+  `python3 image_positions.py "ファイル名"` で履歴を引く。ズレると `review_post.py` が ❌
 - **`alt_text` は文章で書く**（キーワード羅列はNG）
 - **スプレッドシートは A〜H の8列固定。I列以降を使わない**
 

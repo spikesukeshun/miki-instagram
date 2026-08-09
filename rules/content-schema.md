@@ -75,7 +75,8 @@ bg_prompt = result.get("bg_prompt", "Japanese esthetic salon, soft pink, elegant
 | `title` | ✅ | 見出し。`\n` で改行可（高さは動的計算されるので固定値の心配は不要）|
 | `bg_strategy` | ✅ | 背景の取り方。下記参照 |
 | `reuse_source` `reuse_theme` `reuse_filename` | ✅※ | `reuse` / `edit` のとき**3つセットで必須**。ただし止まり方が違う（下記）|
-| `focus_y` | 任意 | 写真クロップの縦位置 0.0〜1.0（default 0.5）。被写体が下寄りなら 0.55〜0.65、上寄りなら 0.35〜0.45 |
+| `focus_y` | 任意 | 写真クロップの縦位置 0.0〜1.0（default 0.5）。被写体が下寄りなら 0.55〜0.65、上寄りなら 0.35〜0.45。**過去に使った画像は同じ値に揃える**（下記）|
+| `focus_y_reason` | 任意 | 過去と別の `focus_y` にする理由。書くと下記のチェックを通せる |
 | `filename` | ⛔️ | `resolve_backgrounds()` が `bg_{timestamp}_{NN}.jpg` を自動割当。既存 content.json には `bg01.jpg` 等が手書きで残っているが**上書きされるので意味はない** |
 | `bubble` | 任意 | `assets/` 内の透過PNG名。タイトル右脇に丸型バブルを合成（`generate_carousel.py:295`）|
 | `seed` | ⛔️ | `generate` 時にコードが記録する |
@@ -139,6 +140,24 @@ if not matched_file and drive_files and reuse_index < len(drive_files):
 3つ揃っているかを機械的に見るのは **`review_post.py:138`** だが、これはフロー上
 `create_post.py` の**後**に走る。つまり画像は既に出来上がっている。
 **content.json を書いた時点で自分で3つ揃っているか確認すること。**
+
+### 過去に使った画像は同じ位置で切り取る
+
+同じ Drive 写真を毎回ちがう高さで切ると、フィード上で別の写真に見えてしまう。
+`review_post.py` の `check_image_positions()` が、過去の content.json を集計して
+**同じ画像・同じスライド型で使われた `focus_y` のどれとも一致しない場合に ❌** を出す。
+
+書く前に履歴を引く:
+
+```bash
+python3 image_positions.py "candle.jpg"   # 型ごとの推奨 focus_y と使用箇所
+python3 image_positions.py                # 位置がズレている画像を一覧
+```
+
+スライド型で絞って比較しているのは、写真ゾーンの高さが型ごとに違うため
+（`cover` は既定 0.55、`text` / `list` は 0.35）。同じ `focus_y` でも見え方が変わる。
+
+意図的に別の位置にする時だけ、そのスライドに `focus_y_reason` で理由を書く。
 
 ### スライドレベルの `bg_prompt` について
 
