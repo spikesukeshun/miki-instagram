@@ -11,7 +11,7 @@
       "focus_y": 0.35,
       "reuse_source": "drive",
       "reuse_theme": "bridal",
-      "reuse_filename": "cover2.JPG"
+      "reuse_filename": "20220701_635842_01.jpg"
     },
     {
       "filename": "bg02.jpg",
@@ -24,7 +24,7 @@
       "slide_photo_h_ratio": 0.35,
       "reuse_source": "drive",
       "reuse_theme": "bridal",
-      "reuse_filename": "2376A4C8-DD79-4A2D-A078-4E1C9089EB66.JPG"
+      "reuse_filename": "IMG_8527.PNG"
     },
     {
       "filename": "bg03.jpg",
@@ -33,7 +33,7 @@
       "text": "「本番前は焦って\n色々試したくなったけど\n直前は今までのケアを\n信じることにしたんです」\n\n式を終えたあと、この言葉が\nとても印象に残っています。",
       "bg_strategy": "edit",
       "bg_prompt": "Delicate white flowers and lace on a marble table, soft romantic natural light, no people, high quality photo",
-      "focus_y": 0.45,
+      "focus_y": 0.35,
       "slide_photo_h_ratio": 0.35,
       "reuse_source": "drive",
       "reuse_theme": "bridal",
@@ -51,11 +51,11 @@
       "footer": "式まで迷ったら見返してください",
       "bg_strategy": "edit",
       "bg_prompt": "Bridal skincare items and small white flowers neatly arranged on a soft cream cloth, no people, high quality photo",
-      "focus_y": 0.45,
+      "focus_y": 0.32,
       "slide_photo_h_ratio": 0.35,
       "reuse_source": "drive",
       "reuse_theme": "bridal",
-      "reuse_filename": "cover1.JPG"
+      "reuse_filename": "3A072518-7E5E-47A0-AAD8-2605EF70454E.JPG"
     },
     {
       "filename": "bg05.jpg",
@@ -64,11 +64,11 @@
       "text": "「また会いに来ました」\n\nそう言って、季節が変わるたびに\n顔を見せてくださる\n卒花さまがたくさんいます。\n\n特別な時間だったはずが\nいつの間にか、日常の一部に\nなっている。それが、私には\nとても嬉しいんです。",
       "bg_strategy": "edit",
       "bg_prompt": "Elegant reception table setting with candles and small white flowers, warm soft light, no people, high quality photo",
-      "focus_y": 0.4,
+      "focus_y": 0.56,
       "slide_photo_h_ratio": 0.35,
       "reuse_source": "drive",
       "reuse_theme": "bridal",
-      "reuse_filename": "EBE8C1C0-37AC-45E7-959A-F0DE6B2DA644.JPG"
+      "reuse_filename": "IMG_5143.JPG"
     },
     {
       "filename": "bg06.jpg",
@@ -78,11 +78,11 @@
       "subtitle": "続きはプロフィールから\nご質問だけでも大丈夫です",
       "bg_strategy": "edit",
       "bg_prompt": "Romantic bridal bouquet of white and cream flowers on a soft cream background, natural light, no people, high quality photo",
-      "focus_y": 0.35,
+      "focus_y": 0.88,
       "slide_photo_h_ratio": 0.35,
       "reuse_source": "drive",
       "reuse_theme": "bridal",
-      "reuse_filename": "花嫁赤ドレス横顔"
+      "reuse_filename": "5D8F5C56-FA72-45AB-BA76-2264A02C3AB1.JPG"
     }
   ],
   "menu": "ブライダルエステ",
