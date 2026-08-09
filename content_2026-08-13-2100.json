@@ -33,7 +33,7 @@
       "text": "「本番前は焦って\n色々試したくなったけど\n直前は今までのケアを\n信じることにしたんです」\n\n式を終えたあと、この言葉が\nとても印象に残っています。",
       "bg_strategy": "edit",
       "bg_prompt": "Delicate white flowers and lace on a marble table, soft romantic natural light, no people, high quality photo",
-      "focus_y": 0.35,
+      "focus_y": 0.5,
       "slide_photo_h_ratio": 0.35,
       "reuse_source": "drive",
       "reuse_theme": "bridal",
