@@ -23,15 +23,27 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 
 ### トップレベル `bg_prompt` を必ず書く理由
 
-スライド固有の `bg_prompt` が無いスライドで `generate` に入った時に使われる（`create_post.py:431`）。
-**省略すると危険なデフォルトが入る**（`create_post.py:670`）:
+スライド固有の `bg_prompt` が無いスライドで `generate` に入った時に使われる。
 
-```python
-bg_prompt = result.get("bg_prompt", "Japanese esthetic salon, soft pink, elegant, luxury spa")
-```
+以前は省略時に `"Japanese esthetic salon, soft pink, elegant, luxury spa"` という
+デフォルトが入り、**ピンク禁止違反かつ `no people` 抜けのプロンプトが黙って使われていた**。
+デフォルトは廃止し、`validate_bg_prompt()` で止める方式に変更済み（2026-08-09）。
 
-`soft pink` は**ピンク禁止ルール違反**、しかも `no people` が入っていない。
-必ず自分で `no people` を含めた1本を書くこと。
+検査するのは次の3点:
+
+1. 空でないこと
+2. ピンク系の色語を含まないこと（`BANNED_BG_PROMPT_WORDS`。white / beige / cream / gold / warm tone を使う）
+3. `no people` を**小文字のまま**含むこと（`review_post.py:180` が完全一致で見るため `No People` は不可）
+
+**止まるタイミング**（どちらも画像・シートへ書く前）:
+
+| 対象 | いつ検査されるか |
+|---|---|
+| トップレベル | `create_post.py` の背景解決に入る直前。ただし **`generate` に行き着きうるスライドがあり、かつそのスライドが自前の `bg_prompt` を持たない時だけ**（全スライドが Drive の reuse/edit なら共通プロンプトは一度も使われないので、その1フィールドで投稿作成を止めない）|
+| スライドレベル | 実際に生成へ渡す直前（＝使われるプロンプトは必ず検査される）|
+
+書くこと自体は**毎回必須**。上の条件は「書き忘れても止まらない場合がある」という意味ではなく、
+「使われないフィールドで作業を止めない」という運用上の緩和。
 
 ## スライド共通フィールド
 
@@ -40,7 +52,7 @@ bg_prompt = result.get("bg_prompt", "Japanese esthetic salon, soft pink, elegant
 | `type` | ✅ | `cover` / `text` / `list` / `price` / `cta` / `raw` の6種 |
 | `title` | ✅ | 見出し。`\n` で改行可（高さは動的計算されるので固定値の心配は不要）|
 | `bg_strategy` | ✅ | 背景の取り方。下記参照 |
-| `reuse_source` `reuse_theme` `reuse_filename` | ✅※ | `reuse` / `edit` のとき**3つセットで必須**。ただし止まり方が違う（下記）|
+| `reuse_source` `reuse_theme` `reuse_filename` | ✅ | `reuse` / `edit` のとき**3点セットで必須**。1つでも欠けると `create_post.py` が止まる（下記）|
 | `focus_y` | 任意 | 写真クロップの縦位置 0.0〜1.0（default 0.5）。被写体が下寄りなら 0.55〜0.65、上寄りなら 0.35〜0.45 |
 | `filename` | ⛔️ | `resolve_backgrounds()` が `bg_{timestamp}_{NN}.jpg` を自動割当（`create_post.py:339`）。既存 content.json には `bg01.jpg` 等が手書きで残っているが**上書きされるので意味はない** |
 | `bubble` | 任意 | `assets/` 内の透過PNG名。タイトル右脇に丸型バブルを合成（`generate_carousel.py:295`）|
@@ -85,32 +97,34 @@ MIKI指名 初回限定20%OFF\n（VIPコースのみ）
 `reuse_theme` に使えるのは **`menu` / `bridal` / `lifestyle`** のみ。
 `reward`（ご褒美）は Drive に0枚のため `review_post.py` が ❌ で止める。
 
-### ⚠️ 3点セットの「止まり方」は同じではない
+### 3点セットは1つでも欠けたら止まる（2026-08-09 にコード側で統一）
 
-`create_post.py` は3つを同じようには守ってくれない。**`reuse_filename` の書き忘れだけは
-黙って通り、意図しない画像で投稿が完成する。**
+`create_post.py:_validate_reuse_fields()` が `reuse` / `edit` の全スライドについて
+`reuse_source` / `reuse_theme` / `reuse_filename` の欠落を**画像を1枚も落とす前にまとめて検査し、
+足りないフィールド名を挙げて `ValueError` で停止する**。
+`reuse_source` の値も `drive` / `instagram` のみ許可（`"Drive"` や typo は停止）。
+値が想定外だと3点セット検査を素通りしてAI生成へ落ちるため。
 
-| 欠落 | 実際の挙動 |
-|---|---|
-| `reuse_source` | `create_post.py:345` で `ValueError` 停止（原因も明示される）|
-| `reuse_theme` | `create_post.py:355` で **`"reward"` にデフォルト** → 0枚 → `:388` で停止するが、メッセージは「Drive取得に失敗」で原因が読み取れない |
-| `reuse_filename` | ❌ **`create_post.py:371` で `drive_files[reuse_index]`（既定0番）を黙って採用。停止しない** |
+以前は3つで挙動がバラバラで、特に **`reuse_filename` の書き忘れだけは黙って通り、
+Drive の `reuse_index` 番目（既定0番）の画像で投稿が完成していた**。
+この暗黙フォールバックは削除済み。**Drive 画像は必ずファイル名で解決される。**
 
-```python
-# create_post.py:371 — reuse_filename が無いと静かにここへ落ちる
-if not matched_file and drive_files and reuse_index < len(drive_files):
-    matched_file = drive_files[reuse_index]
-```
+ファイル名が Drive に見つからない場合も、別画像やAI生成へ落とさずその場で停止し、
+ファイル名一覧を確認するコマンドをエラーメッセージに出す。
+`reuse_source: "instagram"`（過去投稿の転用）も、解決・ダウンロードに失敗したら
+AI生成へ落とさず停止する。**`reuse` / `edit` から静かにAI生成へ落ちる経路はもう無い。**
+ただし `local` はファイルが見つからないと今もHF生成へフォールバックする
+（`create_post.py` の local 分岐。実績で使われていないため未対応）。
 
-3つ揃っているかを機械的に見るのは **`review_post.py:138`** だが、これはフロー上
-`create_post.py` の**後**に走る。つまり画像は既に出来上がっている。
-**content.json を書いた時点で自分で3つ揃っているか確認すること。**
+`review_post.py:138` も同じ3点セットを見るが、これはフロー上 `create_post.py` の**後**に走る。
+**先に止まるのは `create_post.py` 側**なので、エラーが出たら content.json を直して作り直す。
 
 ### スライドレベルの `bg_prompt` について
 
 `generate` を使うスライドにだけ書く。`reuse` / `edit` のスライドには不要
 （実績163スライド中、スライドレベルの `bg_prompt` があるのは6枚だけ）。
-書く場合は `no people` を必ず含める（`review_post.py:180` がチェックする）。
+書く場合は `no people` を必ず含める（`review_post.py:180` がチェックし、
+`create_post.py` も生成直前に `validate_bg_prompt()` で同じ3点を見て停止する）。
 
 ---
 

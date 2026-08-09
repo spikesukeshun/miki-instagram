@@ -21,6 +21,7 @@ Usage:
 終了コード: 0=問題なし / 1=恒久ルール違反あり（投稿を作ってはいけない）
 """
 import argparse
+import ast
 import os
 import re
 import subprocess
@@ -79,15 +80,101 @@ def check_sheet_columns() -> tuple[bool, str]:
     return True, "シート書き込みは A〜H の8列 ✓"
 
 
+def _literal_constant(src: str, name: str):
+    """ソースを AST で読んで、モジュール直下の定数 name の値を返す（無ければ None）。
+
+    文字列マッチだと「クォートの種類を変えた」「要素の順番を入れ替えた」だけで
+    チェックが外れ、ルールは守られているのに ❌ になる（＝投稿フローが止まる）。
+    実行はせず構文木だけ見るので、依存パッケージが無い環境でも動く。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return None
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id == name:
+                value = node.value
+                # frozenset({...}) / set([...]) のように包んであっても中身を取り出す
+                if (isinstance(value, ast.Call) and isinstance(value.func, ast.Name)
+                        and value.func.id in ("frozenset", "set", "tuple", "list")
+                        and len(value.args) == 1):
+                    value = value.args[0]
+                try:
+                    return ast.literal_eval(value)
+                except ValueError:
+                    return None
+    return None
+
+
+def _bg_prompt_defaults(src: str) -> list[str]:
+    """`....get("bg_prompt", <既定値>)` の既定値を AST で拾う。
+
+    空文字の既定値（`slide.get("bg_prompt", "")`）は「無ければ空」というだけで
+    ルール違反のプロンプトを作らないので対象外にする。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return []
+    found = []
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "get" and len(node.args) == 2):
+            continue
+        key = node.args[0]
+        if not (isinstance(key, ast.Constant) and key.value == "bg_prompt"):
+            continue
+        try:
+            default = ast.literal_eval(node.args[1])
+        except ValueError:
+            continue
+        if isinstance(default, str) and default.strip():
+            found.append(default)
+    return found
+
+
 def check_no_silent_bg_fallback() -> tuple[bool, str]:
-    """Drive指定の失敗時に、黙ってAI生成へフォールバックしないこと。"""
+    """Drive指定の失敗時に、黙ってAI生成や別画像へフォールバックしないこと。"""
     src = _read("create_post.py")
     if "Drive画像の取得失敗、HFで代替生成" in src:
         return False, ("create_post.py がDrive取得失敗時に黙ってAI生成へフォールバックします— "
                        "意図しない生成画像の使用につながるため例外で止めること")
-    if "reuse_source が指定されていません" not in src:
-        return False, "create_post.py に reuse_source 未指定の検出がありません"
-    return True, "Drive取得失敗時にAI生成へ落ちない ✓"
+    # 文字列マッチではなく AST で定数の中身を見る（クォート・順序・型を変えても通る）
+    keys = _literal_constant(src, "REQUIRED_DRIVE_REUSE_KEYS")
+    if keys is None or set(keys) != {"reuse_source", "reuse_theme", "reuse_filename"}:
+        return False, ("create_post.py の REQUIRED_DRIVE_REUSE_KEYS が"
+                       "（reuse_source / reuse_theme / reuse_filename）ではありません"
+                       f"（現在: {keys}）")
+    if "_validate_reuse_fields" not in src:
+        return False, "create_post.py に _validate_reuse_fields()（3点セットの欠落チェック）がありません"
+    # Drive分岐の中に reuse_index が現れたら、番号による暗黙フォールバックが復活している
+    drive_branch = re.search(r"# --- Drive 画像を使用 ---(.*?)# --- ローカルファイル", src, re.S)
+    if not drive_branch:
+        return False, "create_post.py の Drive 分岐が見つかりません（構造が変わっています）"
+    # コメントは対象外（「reuse_index は使わない」という説明で誤検知しないように）
+    drive_code = "\n".join(re.sub(r"#.*$", "", line) for line in drive_branch.group(1).splitlines())
+    if "reuse_index" in drive_code:
+        return False, ("create_post.py の Drive 分岐が reuse_index を使っています— "
+                       "ファイル名ではなく番号で画像を選ぶと、指定漏れが0番目の画像で"
+                       "黙って埋まる（意図しない写真で投稿が完成する）")
+    return True, "Drive取得失敗時にAI生成・別画像へ落ちない ✓"
+
+
+def check_bg_prompt_no_default() -> tuple[bool, str]:
+    """bg_prompt の書き忘れをルール違反のデフォルトで埋めないこと。"""
+    src = _read("create_post.py")
+    if "def validate_bg_prompt" not in src:
+        return False, "create_post.py に validate_bg_prompt() がありません（bg_prompt の検証が無い）"
+    # 中身のある既定値だけを違反とする（`slide.get("bg_prompt", "")` は無害なので通す）
+    defaults = _bg_prompt_defaults(src)
+    if defaults:
+        return False, (f"create_post.py が bg_prompt にデフォルト値を持っています（{defaults[0]}）— "
+                       "省略はデフォルトで埋めず ValueError で止めること"
+                       "（旧デフォルト soft pink がピンク禁止違反を静かに通していた）")
+    return True, "bg_prompt は既定値で埋めず検証して止める ✓"
 
 
 def check_generate_guard() -> tuple[bool, str]:
@@ -102,6 +189,7 @@ RULE_CHECKS = [
     check_list_left_align,
     check_sheet_columns,
     check_no_silent_bg_fallback,
+    check_bg_prompt_no_default,
     check_generate_guard,
 ]
 

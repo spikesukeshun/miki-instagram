@@ -382,10 +382,9 @@ MIKIの文章は**丁寧語（〜ます/〜ございます）を基本**にし�
 - **背景は Drive のサロン実写を使う。`generate`（AI生成）は原則禁止**
   - カバー・CTAも例外ではない。やむを得ない場合のみ `"bg_generate_reason": "理由"` を書く
   - **既定は `edit`**（実績のほぼ全て）。`reuse` はそのまま転用したい時だけ
-  - `reuse_source="drive"` / `reuse_theme` / `reuse_filename` は3つセットで必須。
-    ⚠️ ただし**止まり方が違う**。`reuse_source` の欠落は即停止するが、
-    **`reuse_filename` の欠落は停止せず、Driveの0番目の画像が黙って使われる**
-    （`create_post.py:371`）。書いた時点で自分で3つ確認すること → `rules/content-schema.md`
+  - `reuse_source="drive"` / `reuse_theme` / `reuse_filename` は3点セットで必須。
+    1つでも欠けると `create_post.py` が足りないフィールド名を挙げて停止する
+    （0番目の画像を黙って使う経路は 2026-08-09 に削除済み）→ `rules/content-schema.md`
   - `reuse_theme` に使えるのは `menu` / `bridal` / `lifestyle` のみ。
     `reward`（ご褒美）は Drive に0枚なので使用不可
   - **「使える写真が無い」とファイル名だけで判断しない。** 必ず目視してから決める：

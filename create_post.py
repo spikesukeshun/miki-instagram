@@ -15,6 +15,8 @@ except Exception:
 
 from generate_carousel import generate_with_slides
 from register_post import register
+# Driveのテーマ名は review_post.py を正とする（同じ一覧を2か所に持たない）
+from review_post import VALID_REUSE_THEMES, EMPTY_REUSE_THEMES
 from load_env import load_from_zshrc
 load_from_zshrc()
 
@@ -83,6 +85,9 @@ cta（コールトゥアクション）:
 - "generate": テーマに特化した新しい画像が必要な場合（表紙や印象的な場面に推奨）
 過去投稿画像が利用可能な場合は、テーマに合うものを積極的に reuse/edit で活用してください。
 reuse_indexは利用可能な過去画像リストの番号（0始まり）を指定。範囲外の番号は指定しないこと。
+※ reuse/edit には reuse_source を必ず書くこと（"drive" / "instagram"）。
+  "drive" の場合は reuse_theme（menu / bridal / lifestyle）と reuse_filename（Driveの実ファイル名）も
+  必須で、reuse_index では代用できない（3点セットが欠けると投稿生成は例外で停止する）。
 
 ## ハッシュタグ候補
 ブライダルエステ系: #ブライダルエステ #ブライダルエステ東京 #ブライダルエステ体験 #プレ花嫁2026 #大人花嫁 #東京花嫁 #六本木エステ
@@ -124,7 +129,9 @@ reuse_indexは利用可能な過去画像リストの番号（0始まり）を�
 ## 恒久デザインルール（修正依頼でも絶対に変えないこと）
 
 ### 背景画像のルール
-- bg_promptには必ず "no people" を含めること（人物なし・静物・インテリア写真を優先）
+- bg_promptには必ず小文字の "no people" を含めること（人物なし・静物・インテリア写真を優先）
+- bg_promptにピンク系の色を指定しないこと（pink / magenta / fuchsia / blush / salmon は禁止）。
+  white / beige / cream / gold / warm tone を使うこと
 - 過激・性的・露骨な肌露出は避けること。ウェディングドレスや適度な露出は問題なし
 - 不自然に過激な構図（施術中の肌露出など）は生成しない
 
@@ -321,6 +328,121 @@ def generate_image_hf(bg_prompt: str, filename: str, seed: int = None) -> tuple:
         return False, seed or 0
 
 
+# reuse / edit のスライドに必須のDrive指定。1つでも欠けたら投稿を作らない。
+REQUIRED_DRIVE_REUSE_KEYS = ("reuse_source", "reuse_theme", "reuse_filename")
+# reuse_source に書いてよい値。想定外の値は typo として止める。
+VALID_REUSE_SOURCES = {"drive", "instagram"}
+# bg_strategy に書いてよい値。typo（"reues" 等）はどの分岐にも入らず
+# 末尾のHF生成に到達してしまうので、値そのものをここで確定させる。
+VALID_BG_STRATEGIES = {"reuse", "edit", "generate", "local"}
+# bg_prompt に書いてはいけない色（ピンク系）。white / beige / cream / gold / warm tone を使う。
+# "rose"（white roses 等）は実績に正当な用例があるため入れていない。
+BANNED_BG_PROMPT_WORDS = ("pink", "ピンク", "magenta", "fuchsia", "blush", "salmon")
+
+
+def validate_bg_prompt(bg_prompt: str, where: str = "トップレベル") -> str:
+    """bg_prompt が恒久ルール（ピンク禁止・no people 必須）を満たすか検証する。
+
+    以前はここに既定値
+    "Japanese esthetic salon, soft pink, elegant, luxury spa" を置いていたが、
+    これ自体がピンク禁止違反かつ no people 抜けで、bg_prompt の書き忘れを
+    ルール違反のまま静かに通してしまっていた。既定値は持たせず、
+    content.json の記入漏れとして止める。
+    """
+    prompt = (bg_prompt or "").strip()
+    if not prompt:
+        raise ValueError(
+            f"{where}の bg_prompt がありません。\n"
+            f"  generate に落ちたスライドで使う共通プロンプトなので必ず書いてください。\n"
+            f"  ピンク系は指定せず（white / beige / cream / gold / warm tone）、"
+            f"\"no people\" を必ず含めること。\n"
+            f"  例: Calm white powder room with round mirror vanity, soft natural light, "
+            f"no people, high quality photo"
+        )
+    hit = next((w for w in BANNED_BG_PROMPT_WORDS if w in prompt.lower()), None)
+    if hit:
+        raise ValueError(
+            f"{where}の bg_prompt にピンク系の色指定 '{hit}' が含まれています: {prompt}\n"
+            f"  ピンクは禁止です。white / beige / cream / gold / warm tone を使ってください。"
+        )
+    # 大文字小文字は緩めない。review_post.py:180 が "no people" の完全一致で見ているため、
+    # ここで "No People" を通すと create_post は通って校閲だけが ❌ になる食い違いが出る。
+    if "no people" not in prompt:
+        raise ValueError(
+            f"{where}の bg_prompt に \"no people\" がありません: {prompt}\n"
+            f"  人物なし（静物・インテリア写真）を指定してください。\n"
+            f"  小文字の \"no people\" という文字列そのものを含めること"
+            f"（review_post.py が完全一致で見るため \"No People\" は不可）。"
+        )
+    return prompt
+
+
+def _may_fall_back_to_generate(slide: dict) -> bool:
+    """このスライドが HF生成（generate）に行き着く可能性があるか。
+
+    Drive の reuse / edit は解決に失敗したら例外で止まる（生成へ落ちない）ので False。
+    それ以外（generate / local / instagram）は生成に到達しうる。
+    """
+    return not (slide.get("bg_strategy") in ("reuse", "edit")
+                and slide.get("reuse_source") == "drive")
+
+
+def _validate_reuse_fields(slides: list) -> None:
+    """bg_strategy の値と reuse / edit スライドのDrive指定を、画像を1枚も落とす前に検査する。
+
+    1つでも欠けると「静かに別の画像で投稿が完成する」経路に落ちるため、
+    content.json の書き間違いとしてここで止める。
+      - bg_strategy の typo → どの分岐にも入らず末尾のHF生成に到達
+      - reuse_source 欠落 → "instagram" 扱い → 取得が空 → HF生成へ落ちて全スライドAI画像
+      - reuse_theme 欠落  → かつては "reward"（Driveに0枚）扱い → 原因の読めないエラー
+      - reuse_filename 欠落 → かつては Drive の reuse_index 番目（既定0番）を黙って採用
+    """
+    for i, slide in enumerate(slides):
+        strategy = slide.get("bg_strategy")
+        # 打ち間違い（"reues" 等）はどの分岐にも入らず末尾のHF生成に到達するので、
+        # 「知らない値ならAI生成」にせず、書き間違いとしてここで止める。
+        if strategy is not None and strategy not in VALID_BG_STRATEGIES:
+            raise ValueError(
+                f"スライド{i+1}: bg_strategy=\"{strategy}\" は不正です"
+                f"（{' / '.join(sorted(VALID_BG_STRATEGIES))} のみ・小文字）。\n"
+                f"  未知の値はどの分岐にも入らず、黙ってAI生成に落ちます。"
+            )
+        if strategy not in ("reuse", "edit"):
+            continue
+        source = slide.get("reuse_source")
+        # 値そのものが想定外（"Drive" / typo）だと3点セット検査を素通りして
+        # Instagram経路 → HF生成へ落ちるので、値も含めてここで確定させる。
+        if source and source not in VALID_REUSE_SOURCES:
+            raise ValueError(
+                f"スライド{i+1}: reuse_source=\"{source}\" は不正です"
+                f"（{' / '.join(sorted(VALID_REUSE_SOURCES))} のみ・小文字）。\n"
+                f"  Drive写真を使う場合は \"drive\" を指定してください。"
+            )
+        required = list(REQUIRED_DRIVE_REUSE_KEYS) if source in (None, "drive") else ["reuse_source"]
+        missing = [k for k in required if not slide.get(k)]
+        if missing:
+            raise ValueError(
+                f"スライド{i+1}: bg_strategy=\"{slide['bg_strategy']}\" なのに "
+                f"{' / '.join(missing)} がありません。\n"
+                f"  reuse_source / reuse_theme / reuse_filename は3点セットで必須です"
+                f"（CLAUDE.md「content.json に必須の Drive 指定」）。\n"
+                f"    reuse_source: \"drive\"\n"
+                f"    reuse_theme:  {' / '.join(sorted(VALID_REUSE_THEMES))}\n"
+                f"    reuse_filename: Driveの実ファイル名（大文字小文字・拡張子も一致必須）"
+            )
+
+        # テーマ名が不正だと Drive が空リストを返し、「ファイル名が見つかりません」という
+        # 原因を取り違えさせるメッセージで止まる（テーマが悪いのにファイル名を疑わせる）。
+        theme = slide.get("reuse_theme")
+        if source in (None, "drive") and theme not in VALID_REUSE_THEMES:
+            empty_note = ("（Drive に0枚のため使用不可）"
+                          if theme in EMPTY_REUSE_THEMES else "")
+            raise ValueError(
+                f"スライド{i+1}: reuse_theme=\"{theme}\" は使えません{empty_note}。\n"
+                f"  使えるのは {' / '.join(sorted(VALID_REUSE_THEMES))} のみです。"
+            )
+
+
 def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                         global_seed: int = None) -> int:
     """各スライドのbg_strategyに従って背景ファイルを決定しfilenameを更新
@@ -331,64 +453,52 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     last_seed = global_seed
 
+    # 1枚もダウンロードする前に全スライドのDrive指定を検査する。ループの中で止めると
+    # 「6枚目の記入漏れなのに1〜5枚目は既に backgrounds/ に落ちている」状態になる。
+    _validate_reuse_fields(slides)
+
     print("\n背景画像を準備中...")
     for i, slide in enumerate(slides):
         strategy = slide.get("bg_strategy", "generate")
-        reuse_source = slide.get("reuse_source", "instagram")
+        # reuse/edit の reuse_source は _validate_reuse_fields() で存在と値を確定済み
+        reuse_source = slide.get("reuse_source")
         reuse_index = slide.get("reuse_index", 0)
         filename = f"bg_{timestamp}_{i+1:02d}.jpg"
         path = os.path.join("backgrounds", filename)
 
-        # reuse/edit なのに reuse_source が無いと "instagram" 扱いになり、
-        # Instagram取得が空 → 静かに HF生成へ落ちて全スライドがAI画像になる。
-        # 静かに落とさず、ここで content.json の書き間違いとして止める。
-        if strategy in ("reuse", "edit") and "reuse_source" not in slide:
-            raise ValueError(
-                f"スライド{i+1}: bg_strategy=\"{strategy}\" なのに reuse_source が指定されていません。\n"
-                f"  Drive写真を使う場合は reuse_source / reuse_theme / reuse_filename を"
-                f"3つセットで指定してください（CLAUDE.md「content.json に必須の Drive 指定」）。"
-            )
-
         # --- Drive 画像を使用 ---
         if strategy in ("reuse", "edit") and reuse_source == "drive":
             from drive_manager import list_drive_images, download_drive_image
-            theme = slide.get("reuse_theme", "reward")
+            theme = slide["reuse_theme"]
             drive_files = list_drive_images(theme)
-            # reuse_filename（ファイル名指定）を優先、なければreuse_indexで番号指定
-            reuse_filename = slide.get("reuse_filename")
-            matched_file = None
-            if reuse_filename:
-                matched_file = next((f for f in drive_files if f["name"] == reuse_filename), None)
-                if not matched_file:
-                    # 指定した写真が無いのに黙って別画像やAI生成へ落とすと、
-                    # 意図しない画像で投稿が出来上がってしまう。ここで止める。
-                    raise ValueError(
-                        f"スライド{i+1}: Drive [{theme}] に '{reuse_filename}' が見つかりません。\n"
-                        f"  ライブのDriveでファイル名を確認してください（大文字小文字・拡張子も一致必須）:\n"
-                        f"    /usr/bin/python3 -c \"from drive_manager import list_drive_images; "
-                        f"print([x['name'] for x in list_drive_images('{theme}')])\""
-                    )
-            if not matched_file and drive_files and reuse_index < len(drive_files):
-                matched_file = drive_files[reuse_index]
-            if matched_file:
-                file_id = matched_file["id"]
-                name = matched_file["name"]
-                print(f"  スライド{i+1}: Drive画像を使用（{theme}/{name}）")
-                success = download_drive_image(file_id, path)
-                if success:
-                    if strategy == "edit":
-                        apply_edit_effect(path, slide.get("type", "text"))
-                    else:
-                        # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
-                        # HEIC等を確実にJPEGへ正規化するため再保存のみ行う。
-                        _bg = _Img.open(path).convert("RGB")
-                        _bg.save(path, "JPEG", quality=90)
-                    slide["filename"] = filename
-                    continue
-            raise ValueError(
-                f"スライド{i+1}: Drive [{theme}] からの背景取得に失敗しました。\n"
-                f"  AI生成へ自動フォールバックはしません。Drive側を確認してやり直してください。"
-            )
+            # reuse_filename は上で必須化済み。reuse_index による暗黙の代替採用はしない
+            # （指定漏れを0番目の画像で黙って埋めていたのが従来の事故経路）。
+            reuse_filename = slide["reuse_filename"]
+            matched_file = next((f for f in drive_files if f["name"] == reuse_filename), None)
+            if not matched_file:
+                # 指定した写真が無いのに黙って別画像やAI生成へ落とすと、
+                # 意図しない画像で投稿が出来上がってしまう。ここで止める。
+                raise ValueError(
+                    f"スライド{i+1}: Drive [{theme}] に '{reuse_filename}' が見つかりません。\n"
+                    f"  ライブのDriveでファイル名を確認してください（大文字小文字・拡張子も一致必須）:\n"
+                    f"    /usr/bin/python3 -c \"from drive_manager import list_drive_images; "
+                    f"print([x['name'] for x in list_drive_images('{theme}')])\""
+                )
+            print(f"  スライド{i+1}: Drive画像を使用（{theme}/{matched_file['name']}）")
+            if not download_drive_image(matched_file["id"], path):
+                raise ValueError(
+                    f"スライド{i+1}: Drive [{theme}] の '{reuse_filename}' のダウンロードに失敗しました。\n"
+                    f"  AI生成へ自動フォールバックはしません。Drive側を確認してやり直してください。"
+                )
+            if strategy == "edit":
+                apply_edit_effect(path, slide.get("type", "text"))
+            else:
+                # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
+                # HEIC等を確実にJPEGへ正規化するため再保存のみ行う。
+                _bg = _Img.open(path).convert("RGB")
+                _bg.save(path, "JPEG", quality=90)
+            slide["filename"] = filename
+            continue
 
         # --- ローカルファイルを直接使用 ---
         elif strategy == "local":
@@ -403,32 +513,40 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             print(f"    → ローカルファイルが見つからない ({local_path})、HFで代替生成")
 
         # --- Instagram 過去投稿を使用 ---
-        elif strategy == "reuse" and available_images and reuse_index < len(available_images):
-            img = available_images[reuse_index]
-            print(f"  スライド{i+1}: 過去投稿を転用（いいね{img['like_count']}件）")
-            success = download_image(img["url"], filename)
-            if success:
+        # ここで解決できなかった時に黙ってHF生成へ落とすと、2026-08-13 の
+        # 「全スライドがAI画像」と同じ経路になる。Drive経路と同じく例外で止める。
+        elif strategy in ("reuse", "edit"):
+            if not available_images or reuse_index >= len(available_images):
+                raise ValueError(
+                    f"スライド{i+1}: reuse_source=\"instagram\" の過去画像 "
+                    f"reuse_index={reuse_index} を解決できません"
+                    f"（取得できた過去画像: {len(available_images)}枚）。\n"
+                    f"  AI生成へ自動フォールバックはしません。"
+                    f"reuse_source=\"drive\" でDrive写真を指定してください。"
+                )
+            img_info = available_images[reuse_index]
+            print(f"  スライド{i+1}: 過去投稿を転用（いいね{img_info['like_count']}件）")
+            if not download_image(img_info["url"], filename):
+                raise ValueError(
+                    f"スライド{i+1}: 過去投稿画像のダウンロードに失敗しました。\n"
+                    f"  AI生成へ自動フォールバックはしません。"
+                )
+            if strategy == "edit":
+                apply_edit_effect(path, slide.get("type", "text"))
+            else:
                 # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
                 _bg = _Img.open(path).convert("RGB")
                 _bg.save(path, "JPEG", quality=90)
-                slide["filename"] = filename
-                continue
-            print(f"    → ダウンロード失敗、HFで代替生成")
-
-        elif strategy == "edit" and available_images and reuse_index < len(available_images):
-            img_info = available_images[reuse_index]
-            print(f"  スライド{i+1}: 過去投稿をPIL加工して使用（いいね{img_info['like_count']}件）")
-            success = download_image(img_info["url"], filename)
-            if success:
-                apply_edit_effect(path, slide.get("type", "text"))
-                slide["filename"] = filename
-                continue
-            print(f"    → ダウンロード失敗、HFで代替生成")
+            slide["filename"] = filename
+            continue
 
         # --- HF で新規生成（generate または上記失敗時） ---
         slide_seed = slide.get("seed") or global_seed
         # スライド個別のbg_promptがあればそちらを優先
         slide_prompt = slide.get("bg_prompt") or bg_prompt
+        # 実際に生成へ渡す直前に、そのプロンプト自体もルール適合を確認する
+        # （スライド個別 bg_prompt はここで初めて使われるため）。
+        slide_prompt = validate_bg_prompt(slide_prompt, where=f"スライド{i+1}")
         print(f"  スライド{i+1}: HFで生成中...")
         success, used_seed = generate_image_hf(slide_prompt, filename, seed=slide_seed)
         if success:
@@ -667,7 +785,13 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
     print(f"メモ: {result['memo']}")
 
     # 各スライドの背景をbg_strategyに従って解決
-    bg_prompt = result.get("bg_prompt", "Japanese esthetic salon, soft pink, elegant, luxury spa")
+    # 共通 bg_prompt は generate に落ちうるスライドがある時だけ使われる。
+    # 全スライドが Drive の reuse/edit（＝直近の実運用はほぼ全件これ）なら
+    # 一度も参照されないので、その1フィールドで投稿作成を止めない。
+    # 実際に使う時は resolve_backgrounds() が生成直前に validate_bg_prompt() へ通す。
+    bg_prompt = result.get("bg_prompt")
+    if any(_may_fall_back_to_generate(s) and not s.get("bg_prompt") for s in result["slides"]):
+        bg_prompt = validate_bg_prompt(bg_prompt)
     global_seed = result.get("seed")
     last_seed = resolve_backgrounds(result["slides"], available_images, bg_prompt,
                                     global_seed=global_seed)

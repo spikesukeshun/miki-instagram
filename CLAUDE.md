@@ -54,14 +54,15 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
   `generate`（AI生成）は原則禁止。使う場合は `bg_generate_reason` に理由を書く
 - **`reuse` / `edit` は `reuse_source="drive"` / `reuse_theme` / `reuse_filename` の3点セット必須。**
   `reuse_theme` は `menu` / `bridal` / `lifestyle` のみ（`reward` は0枚で使用不可）。
-  ⚠️ **`reuse_filename` の書き忘れだけは `create_post.py` が止めてくれず、
-  Drive の0番目の画像を黙って使ってしまう**（`create_post.py:371`）。自分で確認すること
+  1つでも欠けると `create_post.py` が足りないフィールド名を挙げて停止する
+  （`reuse_index` で0番目の画像を黙って使う経路は 2026-08-09 に削除済み）
 - **「Driveに使える写真が無い」と判断する前に必ず目視する** → `preview_drive_images.py`。
   なお Drive「施術・メニュー紹介」の**「参考N」画像は例外扱いで全て使用可**
   （サロン名・人物・施術シーンが写っていてもよい。ユーザーが選定した公式素材のため）
-- **トップレベル `bg_prompt` を必ず書く**（`no people` 込み）。省略すると
-  `soft pink`（ピンク禁止違反）のデフォルトが入る。**プロンプトにピンク系を指定しない**
-  （white / beige / cream / gold / warm tone を使う）
+- **トップレベル `bg_prompt` を必ず書く**（小文字の `no people` 込み）。**ピンク系を指定しない**
+  （white / beige / cream / gold / warm tone を使う）。実際に使われるプロンプトが
+  省略・ピンク・`no people` 抜けなら `create_post.py` が停止する
+  （`soft pink` のデフォルトは 2026-08-09 に廃止）
 - **スライド本文（text/body）の一人称は「私」。** MIKIはタイトルのみ
 - **CTAスライドのタイトルは固定文言**（修正依頼でも変更しない）：
   `MIKI指名 初回限定20%OFF\n（VIPコースのみ）`
