@@ -354,7 +354,8 @@ MIKIの文章は**丁寧語（〜ます/〜ございます）を基本**にし�
 - レイアウト・デザイン仕様 → `rules/carousel-design.md`
 
 ### A. 全体枚数と固定画像
-- content.json に書くスライドは **6枚**（上限6・5枚でも可）。実績は27件すべて6枚
+- content.json に書くスライドは **6枚**（上限6・5枚でも可）。実績もほぼ全件が6枚
+  （`content_05.json` だけ7枚だが、これは `review_post.py` 導入前のもので現在なら ❌ になる）
 - 末尾2枚（slide8.jpg・slide7.jpg）はコードが自動追加するため、content.json には含めない
 - 合計枚数は 7〜8枚になる（6+2 または 5+2）
 - 確認: content.json の slides 配列が6以下か？
@@ -382,7 +383,9 @@ MIKIの文章は**丁寧語（〜ます/〜ございます）を基本**にし�
   - カバー・CTAも例外ではない。やむを得ない場合のみ `"bg_generate_reason": "理由"` を書く
   - **既定は `edit`**（実績のほぼ全て）。`reuse` はそのまま転用したい時だけ
   - `reuse_source="drive"` / `reuse_theme` / `reuse_filename` は3つセットで必須。
-    1つでも欠けると `create_post.py` が例外で停止する
+    ⚠️ ただし**止まり方が違う**。`reuse_source` の欠落は即停止するが、
+    **`reuse_filename` の欠落は停止せず、Driveの0番目の画像が黙って使われる**
+    （`create_post.py:371`）。書いた時点で自分で3つ確認すること → `rules/content-schema.md`
   - `reuse_theme` に使えるのは `menu` / `bridal` / `lifestyle` のみ。
     `reward`（ご褒美）は Drive に0枚なので使用不可
   - **「使える写真が無い」とファイル名だけで判断しない。** 必ず目視してから決める：
@@ -464,6 +467,8 @@ MIKIの文章は**丁寧語（〜ます/〜ございます）を基本**にし�
 - [ ] alt_text が文章形式か（キーワード羅列でないか）
 - [ ] bg_strategy が `generate` になっていないか（理由の明記がなければ ❌）
 - [ ] reuse / edit に reuse_source / reuse_theme / reuse_filename が揃っているか
+- [ ] スライドに `bg_prompt` がある場合、`no people` が含まれているか
+      （`review_post.py:180` の条件付きチェック。`bg_prompt` が無いスライドは素通しされる）
 
 `review_post.py` では見られないので目視で確認する項目：
 - [ ] タイトルのMIKI使用が幼稚でないか

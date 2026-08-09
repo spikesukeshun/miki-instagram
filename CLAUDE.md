@@ -87,12 +87,15 @@ python3 get_recent_insights.py
 python3 check_week_slots.py
 ```
 
-3. `SKILL.md` と `rules/content-schema.md` を読んでから content.json を書く
+3. **`SKILL.md` と `rules/content-schema.md` を読んでから** content.json を書く（**省略不可**）
 4. 画像生成とシート登録：
 
 ```bash
 python create_post.py --content-file content.json
 ```
+
+`--content-file` を付けない `python create_post.py` は Groq に文章を自動生成させる旧経路。
+現在の運用では使わない（定時投稿の GitHub Actions は `post_scheduler.py` だけを実行する）。
 
 5. 校閲（**省略不可**）。❌ が出たら content.json を直して 4 に戻る：
 

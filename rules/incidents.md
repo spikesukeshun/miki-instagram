@@ -85,9 +85,9 @@ AI生成を正当化してしまった。
 
 | ドキュメントの記述 | 実際 |
 |---|---|
-| 「AIが生成するスライド 5〜8枚」 | 27/27件が6枚。`review_post.py` は6枚超で ❌ |
+| 「AIが生成するスライド 5〜8枚」 | ほぼ全件が6枚（例外は `review_post.py` 導入前の `content_05.json` の7枚のみ）。`review_post.py` は6枚超で ❌ |
 | 「全スライド共通で `bg_prompt` に `no people` 必須」 | スライドレベルの `bg_prompt` は163中6枚のみ。必須なのはトップレベルの `bg_prompt` |
-| CTAタイトルは改行なし版 | 27/27件が改行版。`CTA_REQUIRED_TITLE_ALT` として許容済み |
+| CTAタイトルは改行なし版 | ほぼ全件が改行版。`CTA_REQUIRED_TITLE_ALT` として許容済み |
 | 「`generate` は表紙や印象的な場面に使う」 | 直近16件連続で generate ゼロ |
 | SKILL.md「タイトルはシャドウあり」 | 全呼び出しで shadow 未指定＝なし |
 | SKILL.md「区切り線から本文まで text 100px / list 70px / cta 60px」 | 実装は 70 / 50 / 50px |

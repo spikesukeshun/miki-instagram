@@ -51,7 +51,7 @@ bg_prompt = result.get("bg_prompt", "Japanese esthetic salon, soft pink, elegant
 | type | フィールド | 備考 |
 |---|---|---|
 | `cover` | `kicker` 任意 / `tag` **実質必須** / `photo_h_ratio` 任意（default **0.55**）| `kicker` は自動で大文字化されるので英字推奨。`tag` は実績で全カバーが使用 |
-| `text` | `text` ✅ / `slide_photo_h_ratio` 任意（default **0.35**、`0` で写真なし純クリーム）| 最も多用される型（163中92枚）|
+| `text` | `text` ✅ / `slide_photo_h_ratio` 任意（default **0.35**、`0` で写真なし純クリーム）| 最も多用される型（実績の過半数）|
 | `list` | `items` ✅ / `footer` **実質必須** / `slide_photo_h_ratio` 任意 | **`items` は全角20文字以内**（折り返しなし固定幅描画のため、超えると画像外へはみ出す）|
 | `price` | `title` / `top_note` / `columns`（最大2・`{label, lines}`）/ `notes` / `highlight` | 料金表。左右2カラム＋縦の区切り線（`generate_carousel.py:569`）|
 | `cta` | `body` ✅ / `subtitle` ✅ / `slide_photo_h_ratio` 任意 | `title` は固定文言（下記）。`subtitle` は**最終行に 💌 が自動付与される**（`generate_carousel.py:728`）ので、絵文字を数える時は勘定に入れる |
