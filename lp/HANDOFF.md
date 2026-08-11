@@ -8,7 +8,7 @@
 |---|---|
 | ソース | `/Users/shunsuke/Desktop/美喜のinstagram/lp/index.html`（単一ファイル・310KB） |
 | 公開URL | https://claude.ai/code/artifact/0339725a-6a87-493d-b337-dd920153489f |
-| git | `lp/` は **未コミット（untracked）**。コミット要否は未確認 |
+| git | ブランチ **`lp/conversion-landing-page`** にコミット済み（初回コミット `ddcec57`）。**push はしていない** |
 
 ### ⚠️ 更新時の必須手順
 別セッションから更新する場合、Artifact ツールに **`url` パラメータで上記URLを渡すこと**。
