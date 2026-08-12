@@ -53,7 +53,7 @@
   .wrap{width:min(1120px,100%);margin-inline:auto;padding-inline:var(--pad)}
   .narrow{width:min(760px,100%);margin-inline:auto;padding-inline:var(--pad)}
 
-  section{position:relative;padding-block:clamp(72px,11vw,140px)}
+  section{position:relative;padding-block:clamp(72px,11vw,112px)}
   [id]{scroll-margin-top:76px}
 
   /* ===================== TYPE ===================== */
@@ -722,8 +722,12 @@
     .lb.is-review-open{padding:74px 10px 84px}
     .lb-box.is-review{max-height:calc(100svh - 168px)}
   }
-  /* 600px以上あれば等倍表示のままでも本文が15px相当になるので拡大ボタンは出さない */
-  @media (min-width:600px){ .lb-zoom{display:none} .lb.is-review-open{padding:24px} }
+  /* 600px以上では画像だけを広げず、カードそのものを広げて文字を大きくする。
+     広い画面で横に振らせる操作は不自然なので、横スクロールは出さない */
+  @media (min-width:600px){
+    .lb-box.is-review.zoomed{width:min(980px,96vw)}
+    .lb-box.is-review.zoomed img{width:100%}
+  }
 
   /* ---- モーダル：文章モード（画像モードは従来どおり .lb-box のまま） ---- */
   .lb-box.is-content{background:var(--bone);max-height:calc(100svh - 64px);overflow-y:auto;
