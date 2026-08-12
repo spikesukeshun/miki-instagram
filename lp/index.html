@@ -1841,7 +1841,16 @@
       clearTimeout(railLabelTimer);
       railLabelTimer = setTimeout(function(){ rail.classList.remove("show-label"); }, 1900);
     }
+    function railMark(idx){
+      railItems.forEach(function(a, i){
+        a.classList.toggle("on", i === idx);
+        if(i === idx) a.setAttribute("aria-current", "true");
+        else a.removeAttribute("aria-current");
+      });
+    }
     function railUpdate(){
+      /* なぞっている間はスクロール位置に追従させない。指で選んでいる区間を上書きしてしまう */
+      if(railDragging) return;
       /* the active section is the last one whose top has passed the header */
       var idx = -1;
       for(var i = 0; i < railTargets.length; i++){
@@ -1850,11 +1859,7 @@
       }
       if(idx === railCurrent) return;
       railCurrent = idx;
-      railItems.forEach(function(a, i){
-        a.classList.toggle("on", i === idx);
-        if(i === idx) a.setAttribute("aria-current", "true");
-        else a.removeAttribute("aria-current");
-      });
+      railMark(idx);
       if(idx >= 0) railShowLabel();
     }
     /* time-throttled rather than rAF so it still updates in headless/paused-frame contexts */
@@ -1875,12 +1880,15 @@
       if(!t) return;
       var y = t.getBoundingClientRect().top + (window.pageYOffset || 0) - 68;
       window.scrollTo({top: y < 0 ? 0 : y, behavior: "auto"});
-      railUpdate();
+      railCurrent = i;
+      railMark(i);
       railShowLabel();
     }
 
-    /* なぞって移動する。指の下にあるドットが変わったらその区間へ飛ぶ */
-    var railDragging = false, railMoved = false;
+    /* なぞって選ぶ。指を動かしている間はドットとラベルだけを切り替え、
+       ページは動かさない。移動は指を離したとき一度だけ。
+       なぞるたびにスクロールさせると、下の画面が指に追従してガタガタ動く */
+    var railDragging = false, railPick = -1;
     function railIndexAt(clientY){
       for(var i = 0; i < railItems.length; i++){
         var r = railItems[i].getBoundingClientRect();
@@ -1888,25 +1896,35 @@
       }
       return -1;
     }
+    function railPreview(i){
+      if(i < 0 || i === railCurrent) return;
+      railCurrent = i;
+      railPick = i;
+      railMark(i);
+      railShowLabel();
+    }
     rail.addEventListener("pointerdown", function(e){
-      railDragging = true; railMoved = false;
+      railDragging = true;
+      railPick = railIndexAt(e.clientY);
+      railPreview(railPick);
       if(rail.setPointerCapture) rail.setPointerCapture(e.pointerId);
     });
     rail.addEventListener("pointermove", function(e){
       if(!railDragging) return;
       var i = railIndexAt(e.clientY);
-      if(i >= 0 && i !== railCurrent){ railMoved = true; railGo(i); }
+      if(i >= 0) railPreview(i);
     });
-    function railEnd(e){
+    function railEnd(){
       if(!railDragging) return;
       railDragging = false;
-      if(!railMoved){                       /* 動かさなければタップ扱い */
-        var i = railIndexAt(e.clientY);
-        if(i >= 0) railGo(i);
-      }
+      if(railPick >= 0) railGo(railPick);
+      railPick = -1;
     }
     rail.addEventListener("pointerup", railEnd);
-    rail.addEventListener("pointercancel", function(){ railDragging = false; });
+    /* 中断されたら移動しない。ドットは実際のスクロール位置に戻す */
+    rail.addEventListener("pointercancel", function(){
+      railDragging = false; railPick = -1; railCurrent = -1; railUpdate();
+    });
     /* href によるジャンプは上の処理と二重になるので止める */
     railItems.forEach(function(a){
       a.addEventListener("click", function(e){ e.preventDefault(); });
@@ -1965,12 +1983,11 @@
     lb.classList.add("is-review-open");
     lb.setAttribute("aria-label", "お客様の声の拡大表示");
     lbZoom.hidden = false;
-    /* スマホは等倍で開いても画面幅に縛られて文字が大きくならない（＝タップした意味がない）。
-       拡大ボタンを出す幅＝等倍では読めない幅なので、そこでは最初から拡大して開く */
-    var startZoomed = innerWidth < 600;   /* 拡大ボタンを出すブレークポイントと同じ値 */
-    lbBox.classList.toggle("zoomed", startZoomed);
-    lbZoom.setAttribute("aria-pressed", startZoomed ? "true" : "false");
-    lbZoom.textContent = startZoomed ? "全体を表示" : "文字を大きく";
+    /* 開いた直後はカード全体を見せる。いきなり拡大で開くと、どの口コミを見ているのか
+       分からないまま本文の途中から始まってしまう。拡大は「文字を大きく」で明示的に */
+    lbBox.classList.remove("zoomed");
+    lbZoom.setAttribute("aria-pressed", "false");
+    lbZoom.textContent = "文字を大きく";
     lbBox.scrollTop = 0; lbBox.scrollLeft = 0;
     showLB();
   }
