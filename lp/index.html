@@ -295,8 +295,6 @@
       linear-gradient(180deg, var(--olive) 0%, rgba(85,96,74,.55) 10%, rgba(85,96,74,0) 26%),
       linear-gradient(0deg,   var(--olive) 0%, rgba(85,96,74,.55) 10%, rgba(85,96,74,0) 26%),
       var(--concept-img,none)}
-  .botanical{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    width:66%;max-width:240px;height:auto;color:rgba(217,190,134,.5);pointer-events:none}
   .hairline-gold{height:1px;width:100%;background:linear-gradient(90deg,transparent,rgba(217,190,134,.6),transparent);margin:6px 0 22px}
 
   /* ===================== REASONS ===================== */
@@ -503,6 +501,9 @@
      文字だけ巨大になって粗が出るうえ、最長の口コミが1090pxになり画面に収まらない。
      枠は 386 + 左右パディング14px で 414px 上限にし、等倍を超えないようにしている */
   .carousel{position:relative;max-width:414px;margin-inline:auto}
+  /* スマホは画面幅に張り付いて等倍の0.82倍までしか下がらず、拡大表示（上限も画面幅）との差が
+     6%しかなくて「拡大した感じがしない」。一覧側を思い切って下げ、読むのは拡大側に寄せる */
+  @media (max-width:599px){ .carousel{max-width:300px} }
   .carousel-view{overflow:hidden;border-radius:14px;transition:height .6s var(--ease)}
   .carousel-track{display:flex;align-items:flex-start;transition:transform .7s var(--ease)}
   /* figure の UA デフォルト margin:1em 40px を消す。放置するとスライドが右にずれて切れる */
@@ -661,8 +662,10 @@
 
   /* ===================== MOBILE SECTION RAIL ===================== */
   /* PC はヘッダーナビがあるので、ナビが隠れる 900px 以下でだけ出す */
+  /* touch-action:none がないと、レール上で指を動かした時にページ側のスクロールが優先されて
+     なぞって移動できない（タップでしか動かせなくなる）*/
   .rail{position:fixed;right:4px;top:50%;transform:translateY(-50%);z-index:55;
-    display:none;flex-direction:column;gap:4px;align-items:flex-end}
+    display:none;flex-direction:column;gap:4px;align-items:flex-end;touch-action:none}
   @media (max-width:900px){ .rail{display:flex} }
   .rail-item{display:flex;align-items:center;justify-content:flex-end;gap:9px;
     padding:8px 2px 8px 0;min-height:44px;-webkit-tap-highlight-color:transparent}
@@ -689,8 +692,12 @@
   .lb-box{width:min(640px,92vw);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-md);
     transform:scale(.94);transition:transform .5s var(--ease)}
   .lb.on .lb-box{transform:none}
-  .lb-close{position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;
-    background:rgba(251,248,242,.15);color:#F3EEE2;display:flex;align-items:center;justify-content:center}
+  /* z-index が要る。.lb-box は transform を持つのでDOM順で閉じるボタンより上に描画され、
+     モーダルが縦いっぱいになる画面（縦の短いスマホ）でボタンが裏に隠れる。
+     写真の上に重なっても見えるよう、背景も少し濃くしている */
+  .lb-close{position:absolute;top:20px;right:20px;z-index:2;width:44px;height:44px;border-radius:50%;
+    background:rgba(30,26,22,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    color:#F3EEE2;display:flex;align-items:center;justify-content:center}
   .lb-close svg{width:22px;height:22px}
 
   /* ---- モーダル：口コミ拡大モード ----
@@ -748,7 +755,10 @@
   @media (max-width:640px){
     .lb{padding:16px}
     .lb-box.is-content{max-height:calc(100svh - 56px)}
+    /* 元画像は 900x563（ほぼ16:10）。スマホだけ 2/1 に切るので上下が2割トリミングされる。
+       中央basisだと m-s3（ヘッドマッサージ）の頭頂部が切れるので、この写真だけ上寄せにする */
     .ms-photo{aspect-ratio:2/1}
+    .ms-photo.m-s3-img{background-position:center 15%}
     .ms-body{padding:20px 20px 22px}
     .ms-body h3{font-size:1.3rem;margin:.42em 0 .1em}
     .ms-body p{font-size:.9rem;line-height:1.85}
@@ -907,16 +917,6 @@
         <div data-reveal class="d1">
           <div class="concept-figure">
             <div class="concept-photo" role="img" aria-label="ジャグジーを備えた、やわらかな灯りの施術ルーム"></div>
-            <svg class="botanical" viewBox="0 0 200 220" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true">
-            <path d="M100 210V40"/>
-            <path d="M100 60C100 60 70 55 58 30C86 33 100 60 100 60Z" fill="currentColor" fill-opacity="0.12"/>
-            <path d="M100 60C100 60 130 55 142 30C114 33 100 60 100 60Z" fill="currentColor" fill-opacity="0.12"/>
-            <path d="M100 100C100 100 66 96 52 66C84 70 100 100 100 100Z" fill="currentColor" fill-opacity="0.1"/>
-            <path d="M100 100C100 100 134 96 148 66C116 70 100 100 100 100Z" fill="currentColor" fill-opacity="0.1"/>
-            <path d="M100 142C100 142 70 138 58 112C86 116 100 142 100 142Z" fill="currentColor" fill-opacity="0.08"/>
-            <path d="M100 142C100 142 130 138 142 112C114 116 100 142 100 142Z" fill="currentColor" fill-opacity="0.08"/>
-            <circle cx="100" cy="34" r="6" fill="currentColor" fill-opacity="0.5" stroke="none"/>
-          </svg>
           </div>
         </div>
       </div>
@@ -1562,6 +1562,9 @@
   var dock = document.getElementById("dock");
   var lastY = window.pageYOffset || 0, ticking = false;
   var parallaxEls = document.querySelectorAll("[data-parallax]");
+  var parallaxLimit = window.innerHeight, parallaxIdle = false;
+  addEventListener("resize", function(){ parallaxLimit = window.innerHeight; parallaxIdle = false; },
+                   {passive:true});
   function onScroll(){
     var y = window.pageYOffset || document.documentElement.scrollTop || 0;
     if(head){ head.classList.toggle("scrolled", y > 40); }
@@ -1575,11 +1578,17 @@
         dock.classList.remove("shrink");
       }
     }
-    /* parallax */
+    /* parallax。ヒーローを通り過ぎたら書き換えない。
+       以前は最下部でも translate3d(0,2700px,0) を毎フレーム書いていて、
+       画面外の大きなレイヤーを動かし続けるぶんスクロールが重かった */
     if(!reduce){
-      for(var i=0;i<parallaxEls.length;i++){
-        var sp = parseFloat(parallaxEls[i].getAttribute("data-parallax"))||0.15;
-        parallaxEls[i].style.transform = "translate3d(0,"+(y*sp)+"px,0)";
+      var past = y > parallaxLimit;
+      if(!(past && parallaxIdle)){
+        for(var i=0;i<parallaxEls.length;i++){
+          var sp = parseFloat(parallaxEls[i].getAttribute("data-parallax"))||0.15;
+          parallaxEls[i].style.transform = "translate3d(0,"+((past?parallaxLimit:y)*sp)+"px,0)";
+        }
+        parallaxIdle = past;
       }
     }
     lastY = y;
@@ -1857,7 +1866,51 @@
     }
     addEventListener("scroll", railOnScroll, {passive:true});
     addEventListener("resize", railOnScroll, {passive:true});
-    railItems.forEach(function(a){ a.addEventListener("click", railShowLabel); });
+
+    /* レールから飛ぶときはスムーススクロールを使わない。
+       このページは15,000px近くあり、端から端へのスムーススクロールは
+       その間ずっとreveal・パララックス・ヘッダー更新を走らせるので一瞬固まる */
+    function railGo(i){
+      var t = railTargets[i];
+      if(!t) return;
+      var y = t.getBoundingClientRect().top + (window.pageYOffset || 0) - 68;
+      window.scrollTo({top: y < 0 ? 0 : y, behavior: "auto"});
+      railUpdate();
+      railShowLabel();
+    }
+
+    /* なぞって移動する。指の下にあるドットが変わったらその区間へ飛ぶ */
+    var railDragging = false, railMoved = false;
+    function railIndexAt(clientY){
+      for(var i = 0; i < railItems.length; i++){
+        var r = railItems[i].getBoundingClientRect();
+        if(clientY >= r.top && clientY <= r.bottom) return i;
+      }
+      return -1;
+    }
+    rail.addEventListener("pointerdown", function(e){
+      railDragging = true; railMoved = false;
+      if(rail.setPointerCapture) rail.setPointerCapture(e.pointerId);
+    });
+    rail.addEventListener("pointermove", function(e){
+      if(!railDragging) return;
+      var i = railIndexAt(e.clientY);
+      if(i >= 0 && i !== railCurrent){ railMoved = true; railGo(i); }
+    });
+    function railEnd(e){
+      if(!railDragging) return;
+      railDragging = false;
+      if(!railMoved){                       /* 動かさなければタップ扱い */
+        var i = railIndexAt(e.clientY);
+        if(i >= 0) railGo(i);
+      }
+    }
+    rail.addEventListener("pointerup", railEnd);
+    rail.addEventListener("pointercancel", function(){ railDragging = false; });
+    /* href によるジャンプは上の処理と二重になるので止める */
+    railItems.forEach(function(a){
+      a.addEventListener("click", function(e){ e.preventDefault(); });
+    });
     railUpdate();
   }
 
@@ -1909,12 +1962,16 @@
     clone.removeAttribute("role");
     clone.style.cursor = "default";
     lbBox.appendChild(clone);
-    lbBox.scrollTop = 0; lbBox.scrollLeft = 0;
     lb.classList.add("is-review-open");
     lb.setAttribute("aria-label", "お客様の声の拡大表示");
     lbZoom.hidden = false;
-    lbZoom.setAttribute("aria-pressed", "false");
-    lbZoom.textContent = "文字を大きく";
+    /* スマホは等倍で開いても画面幅に縛られて文字が大きくならない（＝タップした意味がない）。
+       拡大ボタンを出す幅＝等倍では読めない幅なので、そこでは最初から拡大して開く */
+    var startZoomed = innerWidth < 600;   /* 拡大ボタンを出すブレークポイントと同じ値 */
+    lbBox.classList.toggle("zoomed", startZoomed);
+    lbZoom.setAttribute("aria-pressed", startZoomed ? "true" : "false");
+    lbZoom.textContent = startZoomed ? "全体を表示" : "文字を大きく";
+    lbBox.scrollTop = 0; lbBox.scrollLeft = 0;
     showLB();
   }
   lbZoom.addEventListener("click", function(){
