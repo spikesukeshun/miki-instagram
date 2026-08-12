@@ -497,14 +497,19 @@
 
   /* ===================== VOICE CAROUSEL ===================== */
   .voice{background:linear-gradient(180deg,var(--cream),var(--bone))}
-  .carousel{position:relative;max-width:760px;margin-inline:auto}
-  .carousel-view{overflow:hidden;border-radius:18px;transition:height .6s var(--ease)}
-  .carousel-track{display:flex;align-items:flex-start;transition:transform .7s var(--ease)}
   /* 中身はホットペッパーの口コミ画面のスクショ。上端（女性/30代…の行）と下端（予約時の
-     クーポン・メニュー）で切り揃え、幅1158pxに統一済みなので枠は余白だけ持たせる */
+     クーポン・メニュー）で切り揃え、幅1158pxに統一済み。
+     元は402ptの画面を3倍で撮ったものなので 1158/3 = 386px が等倍。ここを超えて引き伸ばすと
+     文字だけ巨大になって粗が出るうえ、最長の口コミが1090pxになり画面に収まらない。
+     枠は 386 + 左右パディング14px で 414px 上限にし、等倍を超えないようにしている */
+  .carousel{position:relative;max-width:414px;margin-inline:auto}
+  .carousel-view{overflow:hidden;border-radius:14px;transition:height .6s var(--ease)}
+  .carousel-track{display:flex;align-items:flex-start;transition:transform .7s var(--ease)}
   /* figure の UA デフォルト margin:1em 40px を消す。放置するとスライドが右にずれて切れる */
-  .vcard{flex:0 0 100%;margin:0;padding:clamp(10px,1.6vw,16px);background:#fff}
-  .vcard img{display:block;width:100%;height:auto;border-radius:6px}
+  .vcard{flex:0 0 100%;margin:0;padding:clamp(10px,1.6vw,14px);background:#fff}
+  .vcard img{display:block;width:100%;height:auto;border-radius:5px;cursor:zoom-in}
+  .vcard img:focus-visible{outline:2px solid var(--gold-deep);outline-offset:3px}
+  .voice-zoom-hint{text-align:center;margin-top:14px;font-size:.8rem;letter-spacing:.06em;color:var(--ink-mute)}
   .carousel-nav{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:26px}
   .cbtn{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);
     display:flex;align-items:center;justify-content:center;transition:transform .4s var(--ease),border-color .4s,color .4s}
@@ -687,6 +692,31 @@
   .lb-close{position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;
     background:rgba(251,248,242,.15);color:#F3EEE2;display:flex;align-items:center;justify-content:center}
   .lb-close svg{width:22px;height:22px}
+
+  /* ---- モーダル：口コミ拡大モード ----
+     スマホでは本文が約10.5pxまで小さくなり、そのままでは読めない。等倍表示のまま
+     ページの他の要素を消して見せる「全体表示」と、横スクロールしてでも文字を大きくする
+     「拡大」の2段階にしている。1段階では画面幅の制約でどちらかが必ず犠牲になるため */
+  .lb-box.is-review{width:min(620px,100%);max-height:calc(100svh - 128px);
+    overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:12px}
+  .lb-box.is-review img{display:block;width:100%;height:auto;border-radius:0}
+  /* 175%だけだと広い画面で2.6倍まで伸びて字がやたら大きくなる。660pxで頭打ちにする
+     （このとき本文の行送りは約31px＝一般的な本文より少し大きいくらい）*/
+  .lb-box.is-review.zoomed img{width:min(175%,660px);max-width:none}
+  .lb.is-review-open{padding:24px 24px 92px}
+  .lb-zoom{position:absolute;left:50%;transform:translateX(-50%);bottom:26px;
+    padding:.6em 1.35em;border-radius:999px;border:1px solid rgba(243,238,226,.34);
+    background:rgba(251,248,242,.15);color:#F3EEE2;font-size:.85rem;letter-spacing:.08em;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    transition:background .3s var(--ease),border-color .3s var(--ease)}
+  .lb-zoom:hover{background:rgba(251,248,242,.26);border-color:rgba(243,238,226,.6)}
+  @media (max-width:640px){
+    /* 上は閉じるボタン、下は拡大ボタンの分を空ける。詰めるとカードの角に重なる */
+    .lb.is-review-open{padding:74px 10px 84px}
+    .lb-box.is-review{max-height:calc(100svh - 168px)}
+  }
+  /* 600px以上あれば等倍表示のままでも本文が15px相当になるので拡大ボタンは出さない */
+  @media (min-width:600px){ .lb-zoom{display:none} .lb.is-review-open{padding:24px} }
 
   /* ---- モーダル：文章モード（画像モードは従来どおり .lb-box のまま） ---- */
   .lb-box.is-content{background:var(--bone);max-height:calc(100svh - 64px);overflow-y:auto;
@@ -1165,6 +1195,7 @@
           <div class="dots" id="vdots" aria-label="お客様の声の切り替え"></div>
           <button class="cbtn" id="vnext" aria-label="次の声へ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
         </div>
+        <p class="voice-zoom-hint">タップ／クリックで拡大表示できます</p>
         <p class="ba-note">ホットペッパービューティーに投稿された口コミをそのまま掲載しています。<br>感想には個人差があり、同じ結果を保証するものではありません。</p>
       </div>
       <div class="cta-row center" style="justify-content:center">
@@ -1518,6 +1549,7 @@
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="画像の拡大表示">
   <button class="lb-close" id="lbClose" aria-label="閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   <div class="lb-box" id="lbBox"></div>
+<button class="lb-zoom" id="lbZoom" aria-pressed="false" hidden>文字を大きく</button>
 </div>
 
 <script>
@@ -1632,15 +1664,30 @@
     function prev(){ go(idx-1); }
     document.getElementById("vnext").addEventListener("click", next);
     document.getElementById("vprev").addEventListener("click", prev);
-    /* swipe */
-    var sx = null;
-    track.addEventListener("pointerdown", function(e){ sx = e.clientX; });
+    /* swipe。スワイプと「タップで拡大」を同じ要素で受けるので、指がほぼ動かなかった
+       ときだけタップとみなす（スワイプの終わりで拡大が開くのを防ぐ）*/
+    var sx = null, sy = null;
+    track.addEventListener("pointerdown", function(e){ sx = e.clientX; sy = e.clientY; });
     track.addEventListener("pointerup", function(e){
       if(sx===null) return;
-      var dx = e.clientX - sx;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
       if(Math.abs(dx) > 45){ dx < 0 ? next() : prev(); }
-      sx = null;
+      else if(Math.abs(dx) < 10 && Math.abs(dy) < 10 && e.target.tagName === "IMG"){
+        openReview(e.target);
+      }
+      sx = null; sy = null;
     });
+    /* キーボードからも開けるようにする */
+    for(var v=0; v<total; v++){
+      (function(im){
+        if(!im) return;
+        im.setAttribute("tabindex", "0");
+        im.setAttribute("role", "button");
+        im.addEventListener("keydown", function(e){
+          if(e.key==="Enter" || e.key===" "){ e.preventDefault(); openReview(im); }
+        });
+      })(slides[v].querySelector("img"));
+    }
     /* 自動送りはしない。長文の口コミを読んでいる途中で流れると読めなくなる */
     /* 画面幅が変わるとスライドの高さも変わる。resize イベントだけだと画像のデコードや
        フォント差し替えのあとに取り残されるので、スライド自身の寸法を監視する */
@@ -1818,6 +1865,7 @@
   var lb = document.getElementById("lb");
   var lbBox = document.getElementById("lbBox");
   var lbClose = document.getElementById("lbClose");
+  var lbZoom = document.getElementById("lbZoom");
   var lbTrigger = null;
   var FOCUSABLE = 'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])';
 
@@ -1828,12 +1876,16 @@
   }
   function closeLB(){
     lb.classList.remove("on");
+    lb.classList.remove("is-review-open");
+    lbZoom.hidden = true;
     document.body.style.overflow = "";
     lb.removeAttribute("aria-labelledby");
     if(lbTrigger && lbTrigger.focus){ lbTrigger.focus(); lbTrigger = null; }
   }
   function openLB(src){
     lbTrigger = document.activeElement;
+    lbZoom.hidden = true;
+    lb.classList.remove("is-review-open");
     lbBox.className = "lb-box";
     lbBox.innerHTML = "";
     var clone = src.cloneNode(true);
@@ -1846,8 +1898,37 @@
     lbBox.appendChild(clone);
     showLB();
   }
+  /* 口コミスクショ用。等倍では画面幅に縛られて文字が小さいので、開いたうえで
+     さらに「文字を大きく」できるようにする（横スクロールと引き換えに拡大する）*/
+  function openReview(img){
+    lbTrigger = document.activeElement;
+    lbBox.className = "lb-box is-review";
+    lbBox.innerHTML = "";
+    var clone = img.cloneNode(true);
+    clone.removeAttribute("tabindex");
+    clone.removeAttribute("role");
+    clone.style.cursor = "default";
+    lbBox.appendChild(clone);
+    lbBox.scrollTop = 0; lbBox.scrollLeft = 0;
+    lb.classList.add("is-review-open");
+    lb.setAttribute("aria-label", "お客様の声の拡大表示");
+    lbZoom.hidden = false;
+    lbZoom.setAttribute("aria-pressed", "false");
+    lbZoom.textContent = "文字を大きく";
+    showLB();
+  }
+  lbZoom.addEventListener("click", function(){
+    var on = lbBox.classList.toggle("zoomed");
+    lbZoom.setAttribute("aria-pressed", on ? "true" : "false");
+    lbZoom.textContent = on ? "全体を表示" : "文字を大きく";
+    /* 拡大したら横位置を中央に寄せる。左端のままだと余白から読み始めることになる */
+    lbBox.scrollLeft = on ? (lbBox.scrollWidth - lbBox.clientWidth) / 2 : 0;
+  });
+
   function openModal(srcEl){
     lbTrigger = document.activeElement;
+    lbZoom.hidden = true;
+    lb.classList.remove("is-review-open");
     lbBox.className = "lb-box is-content";
     lbBox.innerHTML = srcEl.innerHTML;
     lbBox.scrollTop = 0;
