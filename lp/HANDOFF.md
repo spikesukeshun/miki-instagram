@@ -246,7 +246,7 @@ favicon は 🌿 で固定（変更するとタブの見た目が変わり別ペ
   （ID `1Qe7RQIB0yW9VSbyfRoIs7m9Yw4eVjPsy` / 1206x1505・お茶と水のグラス。2026-08-13 差し替え。
   旧版はユーザーが Drive 上で `旧IMG_0155.jpg` にリネーム済み）。
   縦長を 2/1 に切ると中央basisではカップが下に切れるので
-  `.ms-photo.m-s4-img{background-position:center 65%}` で下寄せ。800x998 / WebP q80（39KB）で埋め込み。
+  `.ms-photo.m-s4-img{background-position:center 72%}` で下寄せ（65%だとトレイの下辺が切れる）。800x998 / WebP q80（39KB）で埋め込み。
   残りの5枚は中央のままで問題ない。
   **写真を差し替えたら、この2/1トリミングで被写体が切れないか必ず見ること。**
 
