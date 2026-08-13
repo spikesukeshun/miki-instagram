@@ -719,6 +719,18 @@
   .rail.show-label .rail-item.on .rail-label{max-width:10em;opacity:1;padding:.15em .9em}
   .rail-item:focus-visible .rail-label{max-width:10em;opacity:1;padding:.15em .9em}
   @media (prefers-reduced-motion: reduce){ .rail-label{transition:none} }
+  /* 指をレールに置いている間は、ドット脇の小さいラベルは親指の下に入って読めない。
+     その間だけ画面中央に大きく出す（スクロールで切り替わったときは従来の小さいラベル）*/
+  .rail.touching .rail-item.on .rail-label{max-width:0;opacity:0;padding:0}
+  .rail-hud{position:fixed;left:50%;top:50%;z-index:60;pointer-events:none;
+    transform:translate(-50%,-50%) scale(.92);opacity:0;
+    font-family:var(--serif);font-size:1.34rem;font-weight:600;letter-spacing:.09em;color:var(--ink);
+    background:rgba(251,248,242,.96);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+    border:1px solid var(--line-soft);border-radius:18px;padding:.62em 1.35em;white-space:nowrap;
+    box-shadow:0 14px 36px rgba(44,39,35,.20);
+    transition:opacity .16s var(--ease),transform .16s var(--ease)}
+  .rail-hud.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  @media (prefers-reduced-motion: reduce){ .rail-hud{transition:opacity .16s linear} }
 
   /* ===================== LIGHTBOX ===================== */
   .lb{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
@@ -1488,6 +1500,8 @@
   <a class="rail-item" href="#access" aria-label="アクセス へ移動"><span class="rail-label">アクセス</span><span class="rail-dot" aria-hidden="true"></span></a>
   <a class="rail-item" href="#profile" aria-label="プロフィール へ移動"><span class="rail-label">プロフィール</span><span class="rail-dot" aria-hidden="true"></span></a>
 </nav>
+<!-- レールを指でなぞっている間だけ出す、画面中央の大きい区間名 -->
+<div class="rail-hud" id="railHud" aria-hidden="true"></div>
 
 <!-- ===================== FIXED DOCK CTA ===================== -->
 <div class="dock" id="dock" aria-label="予約への固定リンク">
@@ -1622,44 +1636,6 @@
 (function(){
   "use strict";
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  /* ---- 触覚フィードバック（レールの区間が切り替わったときの「コッ」）----
-     iOS Safari は Vibration API を実装していないので navigator.vibrate は使えない。
-     iOS 17.4 で入った <input type="checkbox" switch> は、ラベルを押すと
-     システムの触覚フィードバックが鳴る。その副作用を借りている。
-     ⚠ 正式なAPIではないのでAppleが塞ぐ可能性がある。鳴らなくなっても
-     見た目と動作は変わらない（触覚が無くなるだけ）作りにしてあること。
-     Android は navigator.vibrate、非対応環境は何もしない。 */
-  var hapticSwitch = null;
-  function initHaptics(){
-    if(navigator.vibrate) return;                 /* Android系はAPIがある */
-    var label = document.createElement("label");
-    label.setAttribute("aria-hidden", "true");
-    /* position:fixed が必須。absolute だとラベルのクリックでチェックボックスに
-       フォーカスが移り、ブラウザがそれを画面内に入れようとして
-       ページが先頭までスクロールしてしまう（実測: scrollY 9000 → 0）。
-       fixed なら常に画面内なのでスクロールが起きない */
-    label.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;overflow:hidden;" +
-      "clip:rect(0 0 0 0);clip-path:inset(50%);pointer-events:none;opacity:0";
-    var box = document.createElement("input");
-    box.type = "checkbox";
-    box.setAttribute("switch", "");               /* iOS17.4+ でスイッチになる */
-    box.tabIndex = -1;
-    label.appendChild(box);
-    document.body.appendChild(label);
-    hapticSwitch = label;
-  }
-  function haptic(){
-    try{
-      if(navigator.vibrate){ navigator.vibrate(8); return; }
-      if(!hapticSwitch) return;
-      var prev = document.activeElement;
-      hapticSwitch.click();
-      /* クリックでフォーカスが隠しスイッチに移るので元に戻す */
-      if(prev && prev !== document.activeElement && prev.focus) prev.focus({preventScroll:true});
-    }catch(e){}
-  }
-  initHaptics();
 
   /* ---- header scroll state + fixed dock shrink/grow ---- */
   var head = document.getElementById("siteHead");
@@ -2034,18 +2010,32 @@
       }
       return -1;
     }
+    /* 指を置いている間の表示。ドット脇のラベルは親指の下に入って読めないので、
+       画面中央に大きく出す。指を離したら畳んで、通常の小さいラベルに戻す */
+    var railHud = document.getElementById("railHud");
+    function railHudShow(i){
+      if(!railHud || !railItems[i]) return;
+      var lb = railItems[i].querySelector(".rail-label");
+      railHud.textContent = lb ? lb.textContent : "";
+      railHud.classList.add("on");
+      rail.classList.add("touching");
+    }
+    function railHudHide(){
+      if(railHud) railHud.classList.remove("on");
+      rail.classList.remove("touching");
+    }
     function railPreview(i){
       if(i < 0 || i === railCurrent) return;
       railCurrent = i;
       railPick = i;
       railMark(i);
-      railShowLabel();
-      haptic();                 /* 区間が変わった瞬間だけ鳴る（早期returnで連打を防いでいる）*/
+      railHudShow(i);
     }
     rail.addEventListener("pointerdown", function(e){
       railDragging = true;
       railPick = railIndexAt(e.clientY);
       railPreview(railPick);
+      railHudShow(railPick);      /* 同じ区間を掴み直したときも出す */
       if(rail.setPointerCapture) rail.setPointerCapture(e.pointerId);
     });
     rail.addEventListener("pointermove", function(e){
@@ -2056,13 +2046,15 @@
     function railEnd(){
       if(!railDragging) return;
       railDragging = false;
+      railHudHide();
       if(railPick >= 0) railGo(railPick);
       railPick = -1;
     }
     rail.addEventListener("pointerup", railEnd);
     /* 中断されたら移動しない。ドットは実際のスクロール位置に戻す */
     rail.addEventListener("pointercancel", function(){
-      railDragging = false; railPick = -1; railCurrent = -1; railUpdate();
+      railDragging = false; railPick = -1; railCurrent = -1;
+      railHudHide(); railUpdate();
     });
     /* href によるジャンプは上の処理と二重になるので止める */
     railItems.forEach(function(a){
