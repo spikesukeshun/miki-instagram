@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
+    <!-- 内部向けダッシュボード。GitHub Pages で誰でも開ける状態なので検索結果には出さない。
+         ⚠ robots.txt では防げない（プロジェクトページはサブパス配信で、robots.txt は
+         spikesukeshun.github.io 直下＝別リポジトリ管轄のため）。meta robots が唯一の手段。
+         ⚠ ここは Vite のソース。docs/index.html を直接直してもビルドで巻き戻る。 -->
+    <meta name="robots" content="noindex, nofollow" />
     <title>MIKI Instagram AIダッシュボード</title>
   </head>
   <body>
