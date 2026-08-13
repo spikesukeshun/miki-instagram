@@ -10,6 +10,11 @@
 | 公開URL | https://claude.ai/code/artifact/0339725a-6a87-493d-b337-dd920153489f |
 | git | ブランチ **`lp/conversion-landing-page`**。origin に push 済み |
 
+### 📤 公開作業は `PUBLISH.md` を見ること
+「どこに置くか（Artifact / GitHub Pages / 独自ドメイン）」と、
+**Artifact以外に置くなら先に必要な作業（HTMLの殻・OGP）** は
+**`lp/PUBLISH.md`** に分離した。制作の話はこのファイル、公開の話はあちら。
+
 ### ⚠️ 更新時の必須手順
 別セッションから更新する場合、Artifact ツールに **`url` パラメータで上記URLを渡すこと**。
 渡さないと**新しいURLが発行され、既存リンクが更新されない**。
