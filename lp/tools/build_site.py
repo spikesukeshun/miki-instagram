@@ -277,12 +277,16 @@ def build_privacy_notice(conf):
     return f"""
 <div style="background:#F4EDE1;border-top:1px solid rgba(44,39,35,.07);
             padding:18px 20px;text-align:center">
-  <p style="margin:0 auto;max-width:52em;font-size:11px;line-height:1.9;color:#8A8073;
+  <p style="margin:0 auto;max-width:52em;font-size:11px;line-height:2;color:#8A8073;
             font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif">
-    当サイトはアクセス状況の把握のため Cookie を用いた Google アナリティクスを利用しています。
-    <a href="/privacy.html" style="color:#8C6D33">プライバシーポリシー</a>
-    ／ <a href="{GOOGLE_PARTNER_SITES}" target="_blank" rel="noopener noreferrer"
-          style="color:#8C6D33">Google による情報の使用について</a>
+    <span style="display:inline-block">当サイトはアクセス状況の把握のため
+      Cookie を用いた Google アナリティクスを利用しています。</span>
+    <span style="display:inline-block;white-space:nowrap">
+      <a href="/privacy.html" style="color:#8C6D33">プライバシーポリシー</a>
+      <span style="opacity:.5;padding:0 .4em">／</span>
+      <a href="{GOOGLE_PARTNER_SITES}" target="_blank" rel="noopener noreferrer"
+         style="color:#8C6D33">Google による情報の使用について</a>
+    </span>
   </p>
 </div>"""
 
