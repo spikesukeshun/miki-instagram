@@ -1623,6 +1623,44 @@
   "use strict";
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  /* ---- 触覚フィードバック（レールの区間が切り替わったときの「コッ」）----
+     iOS Safari は Vibration API を実装していないので navigator.vibrate は使えない。
+     iOS 17.4 で入った <input type="checkbox" switch> は、ラベルを押すと
+     システムの触覚フィードバックが鳴る。その副作用を借りている。
+     ⚠ 正式なAPIではないのでAppleが塞ぐ可能性がある。鳴らなくなっても
+     見た目と動作は変わらない（触覚が無くなるだけ）作りにしてあること。
+     Android は navigator.vibrate、非対応環境は何もしない。 */
+  var hapticSwitch = null;
+  function initHaptics(){
+    if(navigator.vibrate) return;                 /* Android系はAPIがある */
+    var label = document.createElement("label");
+    label.setAttribute("aria-hidden", "true");
+    /* position:fixed が必須。absolute だとラベルのクリックでチェックボックスに
+       フォーカスが移り、ブラウザがそれを画面内に入れようとして
+       ページが先頭までスクロールしてしまう（実測: scrollY 9000 → 0）。
+       fixed なら常に画面内なのでスクロールが起きない */
+    label.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;overflow:hidden;" +
+      "clip:rect(0 0 0 0);clip-path:inset(50%);pointer-events:none;opacity:0";
+    var box = document.createElement("input");
+    box.type = "checkbox";
+    box.setAttribute("switch", "");               /* iOS17.4+ でスイッチになる */
+    box.tabIndex = -1;
+    label.appendChild(box);
+    document.body.appendChild(label);
+    hapticSwitch = label;
+  }
+  function haptic(){
+    try{
+      if(navigator.vibrate){ navigator.vibrate(8); return; }
+      if(!hapticSwitch) return;
+      var prev = document.activeElement;
+      hapticSwitch.click();
+      /* クリックでフォーカスが隠しスイッチに移るので元に戻す */
+      if(prev && prev !== document.activeElement && prev.focus) prev.focus({preventScroll:true});
+    }catch(e){}
+  }
+  initHaptics();
+
   /* ---- header scroll state + fixed dock shrink/grow ---- */
   var head = document.getElementById("siteHead");
   var dock = document.getElementById("dock");
@@ -2002,6 +2040,7 @@
       railPick = i;
       railMark(i);
       railShowLabel();
+      haptic();                 /* 区間が変わった瞬間だけ鳴る（早期returnで連打を防いでいる）*/
     }
     rail.addEventListener("pointerdown", function(e){
       railDragging = true;
