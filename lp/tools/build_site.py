@@ -282,7 +282,7 @@ def build_privacy_notice(conf):
     <span style="display:inline-block">当サイトはアクセス状況の把握のため
       Cookie を用いた Google アナリティクスを利用しています。</span>
     <span style="display:inline-block;white-space:nowrap">
-      <a href="/privacy.html" style="color:#8C6D33">プライバシーポリシー</a>
+      <a href="/privacy" style="color:#8C6D33">プライバシーポリシー</a>
       <span style="opacity:.5;padding:0 .4em">／</span>
       <a href="{GOOGLE_PARTNER_SITES}" target="_blank" rel="noopener noreferrer"
          style="color:#8C6D33">Google による情報の使用について</a>
@@ -316,7 +316,7 @@ def write_privacy_page(conf):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>プライバシーポリシー｜MIKI</title>
 <meta name="description" content="当サイトにおけるアクセス解析および個人情報の取り扱いについて。">
-<link rel="canonical" href="{url}privacy.html">
+<link rel="canonical" href="{url}privacy">
 <link rel="icon" href="{favicon_data_uri()}">
 <style>
   :root{{color-scheme:light}}
