@@ -1,0 +1,20 @@
+{
+  "_comment": "Web版(Cloudflare Workers)のビルド設定。lp/index.html は変更せず、build_site.py がこれを読んで dist/ を作る。Artifact版には一切影響しない。",
+  "url": "https://www.esthe-miki.workers.dev/",
+  "title": "MIKI｜六本木の痩身・ブライダルエステ｜隠れ家リゾートサロン",
+  "description": "六本木駅から徒歩3分。働く女性とプレ花嫁のための痩身・ブライダルエステ。CIDESCOインターナショナルライセンスを持つMIKIが、疲れをほどきながら理想の美ボディへ導きます。ご予約はDMまたはホットペッパービューティーから。",
+  "og_title": "疲れをほどいて、美しいからだへ。｜MIKI 六本木",
+  "og_image_text": [
+    "MIKI",
+    "六本木・隠れ家リゾートサロン"
+  ],
+  "instagram": "https://www.instagram.com/estmiki/",
+  "price_range": "¥6,980〜¥23,040",
+  "area": "東京都港区六本木",
+  "_tokens_comment": "美喜さんが Search Console / Bing / GA4 で取得した値をここに入れる。空ならタグを出力しない。",
+  "google_site_verification": "",
+  "indexnow_key": "",
+  "ga4_measurement_id": "",
+  "_source_hash": "e210fa5df7f6b70d",
+  "_last_modified": "2026-08-14"
+}

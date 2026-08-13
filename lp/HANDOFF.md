@@ -6,18 +6,33 @@
 
 | 項目 | 値 |
 |---|---|
-| ソース | `/Users/shunsuke/Desktop/美喜のinstagram/lp/index.html`（単一ファイル・310KB） |
-| 公開URL | https://claude.ai/code/artifact/0339725a-6a87-493d-b337-dd920153489f |
+| ソース | `/Users/shunsuke/Desktop/美喜のinstagram/lp/index.html`（単一ファイル・2.8MB） |
+| Artifact URL | https://claude.ai/code/artifact/0339725a-6a87-493d-b337-dd920153489f |
+| **Web公開URL** | **https://www.esthe-miki.workers.dev/**（Cloudflare Workers） |
 | git | ブランチ **`lp/conversion-landing-page`**。origin に push 済み |
 
 ### 📤 公開作業は `PUBLISH.md` を見ること
-「どこに置くか（Artifact / GitHub Pages / 独自ドメイン）」と、
-**Artifact以外に置くなら先に必要な作業（HTMLの殻・OGP）** は
-**`lp/PUBLISH.md`** に分離した。制作の話はこのファイル、公開の話はあちら。
+公開先は **Cloudflare Workers に決定**（GitHub Pages は規約で不適格だった）。
+経緯・ビルドの仕組み・SEO・残作業はすべて **`lp/PUBLISH.md`**。
+制作の話はこのファイル、公開の話はあちら。
 
-### ⚠️ 更新時の必須手順
-別セッションから更新する場合、Artifact ツールに **`url` パラメータで上記URLを渡すこと**。
-渡さないと**新しいURLが発行され、既存リンクが更新されない**。
+### ⚠️ 更新時の必須手順（**2か所ある**）
+
+`lp/index.html` が唯一の正で、**Artifact版とWeb版の両方がここから派生する。
+片方だけ更新すると乖離する。**
+
+1. **Artifact**：Artifact ツールに **`url` パラメータで上記URLを渡すこと**。
+   渡さないと**新しいURLが発行され、既存リンクが更新されない**。favicon は 🌿 固定
+2. **Web版**：ビルドしてデプロイする（⚠ wrangler は Node 22+ が必要）
+
+   ```bash
+   /usr/bin/python3 lp/tools/build_site.py
+   source ~/.nvm/nvm.sh && nvm use 24 && npx wrangler deploy --config lp/wrangler.jsonc
+   ```
+
+⚠ **`lp/index.html` に `<!doctype>` や `<head>` を書き足さないこと。**
+Web版に必要な殻・画像の外部化・SEO用headは `lp/tools/build_site.py` が付ける。
+ここに書き足すと Artifact 経路が壊れる。
 
 ```
 Artifact(file_path: ".../lp/index.html",

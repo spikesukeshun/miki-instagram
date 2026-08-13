@@ -32,6 +32,9 @@ token_drive.json
 dashboard/node_modules/
 dashboard/dist/
 
+# LPのWeb公開版（lp/tools/build_site.py が lp/index.html から再生成する）
+lp/dist/
+
 # 分析用のデータキャッシュ（スクリプトが再生成する。大きいのでコミットしない）
 posts_cache.json
 post_classifications.json
