@@ -27,10 +27,15 @@ Artifact 版は今までどおり動く（バックアップ兼プレビュー�
 |---|---|---|
 | 1 | Cloudflare アカウント作成 | ✅ 完了 |
 | 2 | `wrangler login` | ✅ 完了 |
-| 3 | **GA4 プロパティ作成** → 測定IDを `--ga4-id` でビルドに渡す | ⬜ 未 |
-| 4 | **Google Search Console 登録** → トークンを `--gsc-token` で渡す | ⬜ 未 |
-| 5 | **Bing Webmaster Tools 登録**（GSCからインポート） | ⬜ 未 |
-| 6 | Instagram プロフィールのURLに `?utm_source=instagram` を付ける | ⬜ 未 |
+| 3 | GA4 プロパティ作成・測定ID `G-MWWZTQ1CE9` を反映 | ✅ 完了 |
+| 4 | Google Search Console 登録（**Googleアナリティクス方式で認証**）・sitemap送信・インデックス登録リクエスト | ✅ 完了 |
+| 5 | Instagram プロフィールのURLに `?utm_source=instagram` を付ける | ✅ 完了 |
+| 6 | IndexNow 送信（キー `93830b83e0113fb54c4dd82aff2fcb57`） | ✅ 完了（HTTP 202） |
+| 7 | **Bing Webmaster Tools 登録**（GSCからインポート） | ⬜ 未 |
+
+⚠ **Search Console は「HTMLタグ」ではなく「Googleアナリティクス」方式で認証した。**
+GA4のタグが head に入っているため、トークンの埋め込みと再デプロイが不要になる。
+そのため `site.json` の `google_site_verification` は空のままでよい。
 
 ⚠ **GA4を有効にすると `privacy.html` が自動生成され、フッターに告知が入る。**
 Google アナリティクス利用規約が要求するため（→ 3-2章）。GA4を入れないビルドでは
@@ -284,6 +289,24 @@ source ~/.nvm/nvm.sh && nvm use 24 && npx wrangler deploy --config lp/wrangler.j
 ```
 
 ⚠ **wrangler は Node 22+ が必要。** 既定は v20.14.0 なので `nvm use 24` を必ず挟む。
+
+### 内容を大きく変えたら IndexNow に通知する
+
+Bing（＝ChatGPTの検索が参照するインデックス）へ即座に再クロールを促せる。
+Google は sitemap と通常のクロールに任せるので送信不要。
+
+```bash
+KEY=93830b83e0113fb54c4dd82aff2fcb57
+curl -sS -X POST https://api.indexnow.org/indexnow \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d "{\"host\":\"www.esthe-miki.workers.dev\",\"key\":\"$KEY\",
+       \"keyLocation\":\"https://www.esthe-miki.workers.dev/$KEY.txt\",
+       \"urlList\":[\"https://www.esthe-miki.workers.dev/\"]}"
+```
+
+HTTP 202 なら受理。⚠ キーファイル `/{KEY}.txt` が配信されていることが前提
+（`site.json` の `indexnow_key` を消すとファイルごと消えて送信が弾かれる）。
+⚠ 毎回の細かい修正で叩かないこと。頻繁な送信はスパム扱いされうる。
 
 ---
 
