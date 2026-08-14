@@ -327,6 +327,82 @@ def build_iab_fix(conf):
 </script>"""
 
 
+def build_hp_fallback(conf):
+    """ホットペッパーのクーポンURLがエラーになった人に逃げ道を出す。
+
+    コース別リンク `/CSP/kr/reserve/afterCoupon?...&couponId=...` は
+    **ホットペッパー側の予約セッションを前提とした途中のURL**で、外から直接叩くと
+    「予約エラー（Cookieは有効になっていますか？）」が出る。実ブラウザで5コースとも再現済み。
+    ⚠ Instagram のアプリ内ブラウザは Cookie が隔離されているためセッションを持たず、
+      **主要な流入層でほぼ確実に踏む**。
+
+    ⚠ エラーはホットペッパー側で起きるのでLPからは検知できない。
+      代わりに「**押した後すぐ戻ってきた**」ことを検知して逃げ道を出す。
+      正常に予約へ進んだ人はすぐ戻ってこないので、出ない。
+
+    逃げ道の行き先は `?storeId=&staffId=` （コールドでも必ず開き、MIKI指名も保持される）。
+    コースは事前選択されないが、お客様が一覧から選べる。
+    ⚠ コールドで動きつつコースを事前選択できるURLは、調べた限り存在しなかった。
+    """
+    m = re.search(r"[?&]storeId=([A-Za-z0-9]+)", conf.get("hotpepper_default", ""))
+    if not conf.get("hotpepper_default"):
+        raise SystemExit('site.json に "hotpepper_default"（未選択時の予約URL）が必要')
+    safe = conf["hotpepper_default"]
+
+    return f"""
+<div id="hpfb" hidden style="position:fixed;top:0;left:0;right:0;z-index:9999;
+     background:#55604A;color:#F3EEE2;padding:12px 14px;
+     font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif;font-size:13px;
+     line-height:1.7;box-shadow:0 2px 14px rgba(0,0,0,.18)">
+  <div style="max-width:44em;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <span style="flex:1">予約ページが開けませんでしたか？
+      <a href="{safe}" style="color:#F0D9A0;text-decoration:underline;white-space:nowrap"
+         data-hpfb-go>こちらからお試しください</a></span>
+    <button type="button" data-hpfb-close aria-label="閉じる"
+            style="background:none;border:0;color:#CFCBBE;font-size:20px;
+                   line-height:1;padding:4px 6px;cursor:pointer">&times;</button>
+  </div>
+</div>
+<script>
+(function(){{
+  var K='hp_left_at', BAR=document.getElementById('hpfb');
+  if(!BAR) return;
+  var g=function(n,p){{ if(typeof gtag==='function') gtag('event',n,p||{{}}); }};
+
+  // ホットペッパーのクーポンURLを踏んだ時刻を控える
+  document.addEventListener('click',function(e){{
+    var a=e.target.closest&&e.target.closest('a[href*="beauty.hotpepper.jp"]');
+    if(!a||a.hasAttribute('data-hpfb-go')) return;
+    // 未選択URLはそもそもエラーにならないので対象外
+    if(a.getAttribute('href').indexOf('afterCoupon')<0) return;
+    try{{ sessionStorage.setItem(K, String(Date.now())); }}catch(_){{}}
+  }},true);
+
+  var show=function(){{
+    var t=0;
+    try{{ t=parseInt(sessionStorage.getItem(K)||'0',10); }}catch(_){{}}
+    if(!t) return;
+    var d=Date.now()-t;
+    try{{ sessionStorage.removeItem(K); }}catch(_){{}}
+    // 3秒〜3分で戻ってきた＝開けなかった可能性が高い。
+    // 即座（3秒未満）はタブ切替などの誤検知、3分超は普通に検討して戻ってきた人。
+    if(d<3000||d>180000) return;
+    BAR.hidden=false;
+    g('hotpepper_bounced',{{seconds:Math.round(d/1000)}});
+  }};
+  window.addEventListener('pageshow',show);
+  document.addEventListener('visibilitychange',function(){{ if(!document.hidden) show(); }});
+
+  BAR.querySelector('[data-hpfb-close]').addEventListener('click',function(){{
+    BAR.hidden=true; g('hotpepper_bounced_dismiss');
+  }});
+  BAR.querySelector('[data-hpfb-go]').addEventListener('click',function(){{
+    g('hotpepper_bounced_retry');
+  }});
+}})();
+</script>"""
+
+
 def build_privacy_notice(conf):
     """GA4を入れる場合だけ、フッターに告知とポリシーへのリンクを出す。
 
@@ -719,7 +795,7 @@ def validate_conf(conf):
     if key and not re.fullmatch(r"[A-Za-z0-9-]{8,128}", key):
         raise SystemExit(f"indexnow_key が不正（英数字とハイフンのみ・8〜128文字）: {key!r}")
 
-    for field in ("title", "description", "instagram", "area", "price_range", "site_name"):
+    for field in ("title", "description", "instagram", "area", "price_range", "site_name", "hotpepper_default"):
         if not conf.get(field):
             raise SystemExit(f'site.json の "{field}" が空。埋めてからビルドすること')
 
@@ -783,6 +859,7 @@ def main():
     page = ("<!doctype html>\n<html lang=\"ja\">\n<head>\n"
             + build_head(conf, ogp, preloads)
             + "\n</head>\n<body>\n" + html
+            + build_hp_fallback(conf)
             + build_privacy_notice(conf)
             + build_iab_fix(conf)
             + "\n</body>\n</html>\n")
