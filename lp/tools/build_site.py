@@ -280,6 +280,56 @@ GOOGLE_PARTNER_SITES = "https://policies.google.com/technologies/partner-sites"
 GA_OPTOUT = "https://tools.google.com/dlpage/gaoptout/"
 
 
+def build_iab_fix(conf):
+    """Instagram のアプリ内ブラウザで DM リンクがログイン画面になる問題への対策。
+
+    プロフィール欄のリンクを踏むと Instagram の**アプリ内ブラウザ**（IAB）でLPが開く。
+    IAB はアプリのログインセッションを共有しない隔離された WebView なので、
+    そこから `ig.me/m/...` を踏むと `instagram.com/m/...` に転送され、
+    **すでにアプリにログインしているのにログイン画面が出る**（ユーザー報告・2026-08-14）。
+
+    ⚠ Instagram には「特定の相手とのDM画面を直接開く」URLスキームが存在しない。
+      使えるのは `instagram://user?username=` （プロフィール）と
+      `instagram://direct-inbox`（DM一覧）だけ。後者は相手を探す手間が増えるので、
+      プロフィールに渡して「メッセージ」ボタンから送ってもらうのが最善。
+
+    ⚠ href は書き換えない。書き換えると GA4 のクリック計測（href で判定している）が
+      外れる。クリックを横取りして遷移先だけ差し替える。
+    ⚠ ホットペッパーのリンクは IAB でも正常に動くので触らない。
+    """
+    user = re.search(r"instagram\.com/([^/?#]+)", conf.get("instagram", ""))
+    if not user:
+        raise SystemExit('site.json の "instagram" からユーザー名を取り出せない')
+    name = user.group(1)
+
+    return f"""
+<script>
+(function(){{
+  // Instagram / Facebook のアプリ内ブラウザだけが対象。通常のブラウザでは
+  // ig.me がそのまま DM を開けるので何もしない。
+  if(!/Instagram|FBAN|FBAV/.test(navigator.userAgent||'')) return;
+  document.addEventListener('click',function(e){{
+    var a=e.target.closest&&e.target.closest('a[href]');
+    if(!a) return;
+    var href=a.getAttribute('href')||'';
+    if(href.indexOf('ig.me')<0 && href.indexOf('instagram.com/m/')<0) return;
+    e.preventDefault();
+    // スキームが効かなかったときだけプロフィールのWebへ落とす。
+    // （ログアウトでも一応プロフィールは見える。DMのログイン壁よりはまし）
+    var fallback=setTimeout(function(){{
+      location.href='https://www.instagram.com/{name}/';
+    }},1200);
+    var cancel=function(){{ clearTimeout(fallback); }};
+    window.addEventListener('pagehide',cancel,{{once:true}});
+    document.addEventListener('visibilitychange',function(){{
+      if(document.hidden) cancel();
+    }},{{once:true}});
+    location.href='instagram://user?username={name}';
+  }});
+}})();
+</script>"""
+
+
 def build_privacy_notice(conf):
     """GA4を入れる場合だけ、フッターに告知とポリシーへのリンクを出す。
 
@@ -732,6 +782,7 @@ def main():
             + build_head(conf, ogp, preloads)
             + "\n</head>\n<body>\n" + html
             + build_privacy_notice(conf)
+            + build_iab_fix(conf)
             + "\n</body>\n</html>\n")
 
     with open(os.path.join(DIST, "index.html"), "w", encoding="utf-8") as f:
