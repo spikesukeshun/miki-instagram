@@ -314,17 +314,14 @@ def build_iab_fix(conf):
     var href=a.getAttribute('href')||'';
     if(href.indexOf('ig.me')<0 && href.indexOf('instagram.com/m/')<0) return;
     e.preventDefault();
-    // スキームが効かなかったときだけプロフィールのWebへ落とす。
-    // （ログアウトでも一応プロフィールは見える。DMのログイン壁よりはまし）
-    var fallback=setTimeout(function(){{
-      location.href='https://www.instagram.com/{name}/';
-    }},1200);
-    var cancel=function(){{ clearTimeout(fallback); }};
-    window.addEventListener('pagehide',cancel,{{once:true}});
-    document.addEventListener('visibilitychange',function(){{
-      if(document.hidden) cancel();
-    }},{{once:true}});
-    location.href='instagram://user?username={name}';
+    // ⚠ instagram://user?username= は**実機で効かないことを確認済み**（2026-08-14）。
+    //    Instagram は自分のアプリ内ブラウザから自分のスキームへの受け渡しを許さない。
+    //    試行して待つと「押しても1.2秒なにも起きない」＝壊れたボタンに見えるので、
+    //    試さずプロフィールへ直行する。
+    // ⚠ 遷移先も結局ログインを促されるが、DMのURL（/m/）が素のログインフォームなのに対し、
+    //    プロフィールは アカウントが見える分ましという消極的な選択。
+    //    根本解決には「×でプロフィールに戻ってメッセージ」の案内が要る（ユーザー判断待ち）。
+    location.href='https://www.instagram.com/{name}/';
   }});
 }})();
 </script>"""
