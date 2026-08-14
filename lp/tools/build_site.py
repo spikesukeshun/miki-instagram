@@ -493,9 +493,13 @@ def build_head(conf, ogp, preloads):
         '<meta name="format-detection" content="telephone=no">',
         '<meta name="theme-color" content="#FBF8F2">',
     ]
-    if conf.get("google_site_verification"):
-        p.append(f'<meta name="google-site-verification" '
-                 f'content="{esc(conf["google_site_verification"])}">')
+    # 所有権確認メタ。空なら出さない。
+    # ⚠ Search Console は GA4 のタグで認証済みなので google 側は通常空でよい
+    #    （HTMLタグ方式に切り替えたくなったときのために残してある）。
+    for field, name in (("google_site_verification", "google-site-verification"),
+                        ("bing_site_verification", "msvalidate.01")):
+        if conf.get(field):
+            p.append(f'<meta name="{name}" content="{esc(conf[field])}">')
 
     p += [
         '<meta property="og:type" content="website">',
@@ -659,6 +663,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gsc-token", help="Search Console の所有権確認トークン（site.json に保存する）")
     ap.add_argument("--indexnow-key", help="IndexNow のキー（site.json に保存する）")
+    ap.add_argument("--bing-token", help="Bing Webmaster Tools の所有権確認トークン msvalidate.01（site.json に保存する）")
     ap.add_argument("--ga4-id", help="GA4 の測定ID G-XXXXXXXXXX（site.json に保存する）")
     args = ap.parse_args()
 
@@ -668,6 +673,8 @@ def main():
         conf["google_site_verification"] = args.gsc_token
     if args.indexnow_key:
         conf["indexnow_key"] = args.indexnow_key
+    if args.bing_token:
+        conf["bing_site_verification"] = args.bing_token
     if args.ga4_id:
         conf["ga4_measurement_id"] = args.ga4_id
 
