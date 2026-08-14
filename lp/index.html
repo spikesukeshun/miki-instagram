@@ -89,6 +89,10 @@
   .kicker.on-dark::before{background:#C9AE79}
 
   .eyebrow-jp{font-family:var(--sans);font-size:.82rem;letter-spacing:.18em;color:var(--ink-mute)}
+  /* 文節をひと塊にする印。日本語は語中どこでも折れるので、放っておくと
+     行末に「す。」だけ落ちたり「軽くな／って、」と割れたりする。
+     入る幅なら1行のまま、入らなければ文節の切れ目でだけ折り返す */
+  .nb{display:inline-block}
 
   /* ===================== BUTTONS ===================== */
   .btn{
@@ -187,17 +191,35 @@
       linear-gradient(90deg,var(--bone) 1%,rgba(251,248,242,.93) 22%,rgba(251,248,242,.45) 46%,rgba(251,248,242,0) 70%),
       var(--hero-img,none);
     background-size:cover;background-position:center right;background-repeat:no-repeat}
+  /* スマホは「写真が先・文字はあと」。背景に敷いて薄めるとサロンの空気が伝わらないので、
+     写真は上端の帯として実寸で見せ（施術ベッドが1画面目に入る位置に寄せる）、
+     文章と導線はその下にグリッドの2行目として置く（絶対配置をやめたので文字と重ならない） */
   @media (max-width:820px){
-    .hero-photo{background-position:center;
+    /* section の既定 padding-block を消して写真を画面最上部から始める（ヘッダーは写真に重なる） */
+    .hero{grid-template-rows:auto 1fr;align-items:stretch;padding-top:0}
+    .hero-photo{position:relative;inset:auto;z-index:0;grid-row:1;grid-column:1;
+      /* 下の文章ブロックに必要な高さを引いた残りを写真に配る（狭い端末では自動で縮む） */
+      height:clamp(96px,calc(100svh - 585px),320px);
       background-image:
-        linear-gradient(180deg,var(--bone) 2%,rgba(251,248,242,.9) 22%,rgba(251,248,242,.4) 48%,rgba(251,248,242,.55) 78%,var(--bone) 100%),
-        var(--hero-img,none)}
+        /* ヘッダーを重ねる帯。px指定なのは、帯の高さが変わっても覆う量を一定にするため */
+        linear-gradient(180deg,rgba(251,248,242,.94),rgba(251,248,242,.62) 46px,rgba(251,248,242,.16) 78px,rgba(251,248,242,0) 106px),
+        /* 下端をクリーム地に溶かして、文章ブロックとの境目を作らない */
+        linear-gradient(180deg,transparent 76%,rgba(251,248,242,.5) 92%,var(--bone) 100%),
+        var(--hero-img,none);
+      /* 横は幅基準で切る（帯が高くなっても部屋の写る範囲が狭まらない）。
+         縦は下寄せにして、施術ベッドを帯の中に入れる */
+      background-size:auto,auto,165% auto;
+      /* 92%まで下げるとベッドの生地だけになる。帯が薄い端末でも浴槽とベッドが
+         両方入るよう、切り位置は少し上げてある */
+      background-position:center top,center top,center 66%}
+    .hero-veil{display:none}
+    .hero-inner{grid-row:2;grid-column:1;align-self:end;padding-top:clamp(16px,3vh,30px)}
   }
   .hero-veil{position:absolute;inset:0;z-index:-1;pointer-events:none;
     background:linear-gradient(90deg,rgba(251,248,242,.35),transparent 44%)}
   .hero-inner{width:min(1120px,100%);margin-inline:auto;padding-inline:var(--pad)}
   .hero h1{max-width:15ch}
-  .hero .lede{max-width:38ch;margin-top:1.25em;font-size:clamp(.92rem,1.15vw,1.01rem);line-height:1.95}
+  .hero .lede{max-width:38ch;margin-top:1.15em;font-size:clamp(.84rem,1.02vw,.94rem);line-height:1.9}
   .hero-eyebrow{margin-bottom:1.5em}
   /* .kicker.jp(0,2,0) を上書きするため、クラス3つ分の詳細度で指定する */
   .kicker.jp.hero-eyebrow{font-size:clamp(1.15rem,1.9vw,1.32rem);letter-spacing:.09em;
@@ -208,11 +230,32 @@
   .kicker.jp.hero-eyebrow::before{width:34px;margin-top:.85em;flex:none;
     background:var(--gold-deep);opacity:1}
   /* MIKI の願いを添える一文 */
-  .hero-wish{position:relative;margin-top:1.35em;padding-top:1.1em;max-width:64ch;
-    font-family:var(--serif);font-size:clamp(.97rem,1.3vw,1.1rem);line-height:1.95;
+  .hero-wish{position:relative;margin-top:1.3em;padding-top:1.05em;max-width:64ch;
+    font-family:var(--serif);font-size:clamp(.84rem,1.1vw,.98rem);line-height:1.9;
     color:var(--ink);font-weight:600;letter-spacing:.02em}
   .hero-wish::before{content:"";position:absolute;left:0;top:0;width:34px;height:1px;background:var(--gold);opacity:.9}
-  @media (max-width:520px){ .hero-wish{margin-top:1.2em;padding-top:1.05em} }
+  /* スマホは1画面目の文字量を抑える。手動の改行は入れず、行幅なりに2行で折る */
+  @media (max-width:820px){
+    .kicker.jp.hero-eyebrow{font-size:.97rem;line-height:1.6}
+    .hero-eyebrow{margin-bottom:1em}
+    .kicker.jp.hero-eyebrow::before{margin-top:.62em}
+    .hero .lede{margin-top:.9em}
+    /* 改行は入れたまま（「軽くなって、」の直後で切る）。外すと「軽くな／って、」と
+       語の途中で折れて読みにくい */
+    .hero-wish{margin-top:1em;padding-top:.85em;line-height:1.8}
+    /* 縦3段だと1画面目に収まらない。DMだけ横いっぱいの主導線にして、
+       残り2つは同じ段に並べる（導線は3つとも残す） */
+    .hero .cta-row{gap:8px;margin-top:18px}
+    .hero .cta-row .btn{flex:1 0 100%;padding:.78em 1.2em;font-size:.92rem}
+    .hero .cta-row .btn-ghost{flex:1 1 auto;justify-content:center;
+      padding:.72em .95em;font-size:.79rem;white-space:nowrap}
+    .hero .cta-row .btn-ghost.btn-sm{flex:0 1 auto;padding:.72em .95em;font-size:.79rem}
+  }
+  /* ⚠ ここに `@media (max-height: …)` を足さないこと。
+     スマホのURLバーはスクロールで隠れ、そのたびにビューポート高が変わってメディアクエリが
+     再評価される。高さで文字サイズを切り替えると「写真が見えている時と見えていない時で
+     文字の大きさが違う」状態になり、上下スクロールのたびにレイアウトが跳ねる（2026-08-14 修正）。
+     縦の調整は svh（URLバーの開閉で変化しない）を使った .hero-photo の height だけで行う。 */
   .scroll-ind{position:absolute;right:34px;bottom:40px;z-index:2;
     display:flex;flex-direction:column;align-items:center;gap:9px;color:var(--ink-mute)}
   @media (max-width:760px){ .scroll-ind{display:none} }
@@ -519,7 +562,11 @@
   /* スマホは画面幅に張り付いて等倍の0.82倍までしか下がらず、拡大表示（上限も画面幅）との差が
      6%しかなくて「拡大した感じがしない」。一覧側を思い切って下げ、読むのは拡大側に寄せる */
   @media (max-width:599px){ .carousel{max-width:300px} }
-  .carousel-view{overflow:hidden;border-radius:14px;transition:height .6s var(--ease)}
+  /* touch-action は「指が触れた要素とその祖先」の共通部分で決まる。view 側にも
+     書いておかないと、当たり判定が track の外（カードの余白など）に落ちたときに
+     auto に戻り、横の動きをブラウザがスクロールとして持っていってしまう */
+  .carousel-view{overflow:hidden;border-radius:14px;transition:height .6s var(--ease);
+    touch-action:pan-y}
   /* touch-action:pan-y が必須。指定が無いとブラウザが横の指の動きもスクロール判定に
      使ってしまい、pointercancel でスワイプが消える（＝「たまに縦に動く・反応が鈍い」）。
      pan-y なら縦スクロールはブラウザ、横はこちらで受け取れる */
@@ -539,6 +586,15 @@
   .dots{display:flex;gap:9px;align-items:center}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--sand);transition:all .4s var(--ease)}
   .dot.on{background:var(--gold-deep);width:26px;border-radius:999px}
+  /* PCは送りボタンを画像の左右に置く。下の並びまで視線とカーソルを落とさずに送れる。
+     帯の高さは口コミごとに違うので、JS の fit() が実測値を --view-h に入れる */
+  @media (min-width:900px){
+    .carousel .cbtn{position:absolute;top:calc(var(--view-h,300px) / 2 - 23px);z-index:2;
+      background:rgba(255,255,255,.94);box-shadow:var(--shadow-sm)}
+    .carousel #vprev{left:-72px}
+    .carousel #vnext{right:-72px}
+    .carousel-nav{gap:0;margin-top:20px}
+  }
 
   /* ===================== FLOW ===================== */
   .flow-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:14px;counter-reset:flow}
@@ -888,8 +944,8 @@
     <div class="hero-inner">
       <p class="kicker jp hero-eyebrow rise d1">働く女性とプレ花嫁の 痩身・ブライダルエステ</p>
       <h1 class="display rise d2">疲れをほどいて、<br>美しいからだへ。</h1>
-      <p class="lede rise d3">忙しい毎日の疲れを癒し、最高の美ボディ&amp;美肌へ。<br>都会の真ん中に佇む、隠れ家リゾートサロン。</p>
-      <p class="hero-wish rise d4">MIKIの施術を受けた後には、身体だけでなく心も軽くなって、<br>また笑顔で明日を迎えてほしい。</p>
+      <p class="lede rise d3">忙しい毎日の疲れを癒し、最高の美ボディ&amp;美肌へ。</p>
+      <p class="hero-wish rise d4"><span class="nb">MIKIの施術を受けた後には、</span><span class="nb">身体だけでなく心も軽くなって、</span><br>また笑顔で明日を迎えてほしい。</p>
       <div class="cta-row rise d5">
         <a class="btn" href="https://ig.me/m/estmiki" target="_blank" rel="noopener">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.1 7.5L3.5 20.5l1.6-5.2A8.4 8.4 0 1 1 21 11.5Z"/></svg>
@@ -1223,7 +1279,7 @@
           <span class="ts"><b>2</b>DMが開いたら入力欄に貼り付け</span>
           <span class="ts"><b>3</b>送信</span>
         </p>
-        <p class="tmpl-hint">スマホは入力欄を長押し、パソコンは Ctrl（⌘）+ V で貼り付けできます。<br>コースを選んでいる場合は、コース名が入った状態でコピーされます。</p>
+        <p class="tmpl-hint"><span class="nb">スマホは入力欄を長押し、</span><span class="nb">パソコンは Ctrl（⌘）+ V で貼り付けできます。</span><br><span class="nb">コースを選んでいる場合は、</span><span class="nb">コース名が入った状態でコピーされます。</span></p>
       </div>
     </div>
   </section>
@@ -1649,14 +1705,18 @@
     var y = window.pageYOffset || document.documentElement.scrollTop || 0;
     if(head){ head.classList.toggle("scrolled", y > 40); }
     if(dock){
-      var goingDown = y > lastY + 4;
-      var goingUp   = y < lastY - 4;
+      /* しきい値が小さいとiOSの慣性スクロールやラバーバンドで往復判定になり、
+         ドックが縮んだり戻ったりしてちらつく。しきい値を超えるまで基準点(lastY)を
+         動かさないので、ゆっくりスクロールでも移動量が溜まって必ず判定できる */
+      var goingDown = y > lastY + 12;
+      var goingUp   = y < lastY - 12;
       if(y > 260){
         if(goingDown) dock.classList.add("shrink");
         else if(goingUp) dock.classList.remove("shrink");
       } else {
         dock.classList.remove("shrink");
       }
+      if(goingDown || goingUp) lastY = y;
     }
     /* parallax。ヒーローを通り過ぎたら書き換えない。
        以前は最下部でも translate3d(0,2700px,0) を毎フレーム書いていて、
@@ -1671,7 +1731,6 @@
         parallaxIdle = past;
       }
     }
-    lastY = y;
     ticking = false;
   }
   window.addEventListener("scroll", function(){
@@ -1741,8 +1800,16 @@
     }
     var dots = dotsWrap.children;
     /* 口コミは文章量がまちまちでスライドの高さが揃わない。枠を現在のスライドの高さに
-       追従させる（CSSの transition で滑らかに縮む）*/
-    function fit(){ view.style.height = slides[idx].offsetHeight + "px"; }
+       追従させる（CSSの transition で滑らかに縮む）。
+       --view-h はPCで送りボタンを画像の縦中央に置くために使う */
+    var carousel = view.parentNode;
+    var dragging = false;
+    function fit(){
+      if(dragging) return;      /* ドラッグ中に高さが変わると指の下でカードが動く */
+      var h = slides[idx].offsetHeight;
+      view.style.height = h + "px";
+      carousel.style.setProperty("--view-h", h + "px");
+    }
     function go(n){
       idx = (n + total) % total;
       track.style.transform = "translateX(" + (-idx*100) + "%)";
@@ -1755,16 +1822,32 @@
     document.getElementById("vprev").addEventListener("click", prev);
     /* swipe。指にカードを追従させ、離した時点で送るか戻すかを決める。
        追従が無いと、閾値を超えるまで何も起きないので「反応が鈍い」と感じる。
-       スワイプと「タップで拡大」を同じ要素で受けるので、指がほぼ動かなかった
-       ときだけタップとみなす（スワイプの終わりで拡大が開くのを防ぐ）*/
-    var sx = null, sy = null, sTime = 0, axis = null;
+       スワイプと「タップで拡大」を同じ場所で受けるので、指がほぼ動かなかった
+       ときだけタップとみなす（スワイプの終わりで拡大が開くのを防ぐ）。
+
+       ⚠ 受け口を track にしないこと（2026-08-14 修正）。track は1枚送るたびに
+       translateX で画面外へ動き、可視カードは track のボックスからはみ出した
+       子要素になる。この状態だと2枚目以降でジェスチャを取りこぼすことがある。
+       位置の変わらない .carousel-view で pointerdown を受け、move/up/cancel は
+       window で受ける（ブラウザがイベントの宛先を変えてもジェスチャが切れない）*/
+    var sx = null, sy = null, sTime = 0, axis = null, lastDx = 0, downTarget = null;
     function drawDrag(px){
       track.style.transform = "translateX(calc(" + (-idx*100) + "% + " + px + "px))";
     }
-    track.addEventListener("pointerdown", function(e){
-      sx = e.clientX; sy = e.clientY; sTime = Date.now(); axis = null;
+    function commitSwipe(dx, dt){
+      /* 幅の12%動かすか、速く弾けば送る。距離だけで判定すると速い操作を取りこぼす */
+      var far = Math.abs(dx) > (view.clientWidth || 1) * 0.12;
+      var fast = Math.abs(dx) > 12 && Math.abs(dx) / (dt || 1) > 0.35;
+      if(far || fast){ dx < 0 ? next() : prev(); }
+      else { go(idx); }                         /* 足りなければ元の位置へ戻す */
+    }
+    function resetSwipe(){ sx = null; sy = null; axis = null; dragging = false; downTarget = null; }
+    view.addEventListener("pointerdown", function(e){
+      if(e.button > 0) return;                  /* 右クリック・中クリックは無視 */
+      sx = e.clientX; sy = e.clientY; sTime = Date.now();
+      axis = null; lastDx = 0; dragging = false; downTarget = e.target;
     });
-    track.addEventListener("pointermove", function(e){
+    window.addEventListener("pointermove", function(e){
       if(sx === null) return;
       var dx = e.clientX - sx, dy = e.clientY - sy;
       if(!axis){
@@ -1773,32 +1856,32 @@
         if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
         axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
         if(axis === "x"){
+          dragging = true;
           track.style.transition = "none";
-          if(track.setPointerCapture) track.setPointerCapture(e.pointerId);
+          try{ view.setPointerCapture(e.pointerId); }catch(err){}
         }
       }
-      if(axis === "x") drawDrag(dx);
+      if(axis === "x"){ lastDx = dx; drawDrag(dx); }
     });
-    function endSwipe(e){
+    window.addEventListener("pointerup", function(e){
       if(sx === null) return;
       track.style.transition = "";
-      if(axis === "x"){
-        var dx = e.clientX - sx, dt = Date.now() - sTime || 1;
-        /* 幅の12%動かすか、速く弾けば送る。距離だけで判定すると速い操作を取りこぼす */
-        var far = Math.abs(dx) > (view.clientWidth || 1) * 0.12;
-        var fast = Math.abs(dx) > 12 && Math.abs(dx) / dt > 0.35;
-        if(far || fast){ dx < 0 ? next() : prev(); }
-        else { go(idx); }                       /* 足りなければ元の位置へ戻す */
-      } else if(axis === null && e.target.tagName === "IMG"){
-        openReview(e.target);                   /* 指が動いていない＝タップ */
+      dragging = false;
+      if(axis === "x"){ commitSwipe(e.clientX - sx, Date.now() - sTime); }
+      else if(axis === null && downTarget && downTarget.tagName === "IMG"){
+        openReview(downTarget);                 /* 指が動いていない＝タップ */
       }
-      sx = null; sy = null; axis = null;
-    }
-    track.addEventListener("pointerup", endSwipe);
-    track.addEventListener("pointercancel", function(){
+      resetSwipe(); fit();
+    });
+    window.addEventListener("pointercancel", function(){
       if(sx === null) return;
-      track.style.transition = ""; go(idx);     /* 中断されたら戻すだけ */
-      sx = null; sy = null; axis = null;
+      track.style.transition = "";
+      dragging = false;
+      /* 中断でも、すでに送る量まで動いていたら送る。ここで必ず元へ戻すと、
+         ブラウザがスクロール判定に切り替えた瞬間にスワイプが消えてしまう */
+      if(axis === "x"){ commitSwipe(lastDx, Date.now() - sTime); }
+      else { go(idx); }
+      resetSwipe(); fit();
     });
     /* キーボードからも開けるようにする */
     for(var v=0; v<total; v++){
