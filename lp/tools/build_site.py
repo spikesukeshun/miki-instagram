@@ -253,12 +253,20 @@ document.addEventListener('click',function(e){{
   var href=a.getAttribute('href')||'';
   var sel=document.querySelector('[data-hp][aria-pressed="true"]');
   var course=sel?(sel.textContent||'').replace(/\\s+/g,' ').trim().slice(0,40):'未選択';
+  var lead=null;
   if(href.indexOf('ig.me')>-1||href.indexOf('instagram.com/m/')>-1){{
     gtag('event','cta_dm',{{course:course,link_url:href}});
+    lead='instagram_dm';
   }} else if(href.indexOf('beauty.hotpepper.jp')>-1){{
     var m=href.match(/couponId=(CP\\d+)/);
     gtag('event','cta_hotpepper',{{course:course,coupon:m?m[1]:'なし',link_url:href}});
+    lead='hotpepper';
   }}
+  // GA4の推奨イベント。これを送らないと、ビジネス目標「見込み顧客の発掘」に
+  // 紐づく組み込みレポート（リード獲得など）が永久に空のままになる。
+  // ⚠ 上の独自イベントと二重計上になるので、**キーイベントに指定するのは
+  //    generate_lead だけにすること**。cta_* はコース別の内訳を見るための詳細。
+  if(lead) gtag('event','generate_lead',{{lead_source:lead,course:course}});
 }},true);
 </script>"""
 
