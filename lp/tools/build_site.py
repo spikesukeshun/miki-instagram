@@ -252,7 +252,12 @@ document.addEventListener('click',function(e){{
   if(!a) return;
   var href=a.getAttribute('href')||'';
   var sel=document.querySelector('[data-hp][aria-pressed="true"]');
-  var course=sel?(sel.textContent||'').replace(/\\s+/g,' ').trim().slice(0,40):'未選択';
+  // ⚠ カードの textContent を切って使わないこと。「おすすめ VIPコース 150 min
+  //    平日 23,800円 から 20%OFF」のような値になり、**料金改定やバッジ変更のたびに
+  //    GA4上で別のコースに分裂して過去と比較できなくなる**。
+  //    data-menu は LP 自身がドック表示に使っている正式名で、価格とは独立している。
+  var course=sel?(sel.getAttribute('data-menu')
+                  ||(sel.textContent||'').replace(/\\s+/g,' ').trim().slice(0,40)):'未選択';
   var lead=null;
   if(href.indexOf('ig.me')>-1||href.indexOf('instagram.com/m/')>-1){{
     gtag('event','cta_dm',{{course:course,link_url:href}});
