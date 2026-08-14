@@ -173,8 +173,8 @@
 
   /* ===================== HERO ===================== */
   .hero{min-height:100svh;display:grid;align-items:end;padding-bottom:clamp(84px,13vh,150px);overflow:hidden;isolation:isolate}
-  /* 狭い画面では固定ドックの高さぶん余白を足し、CTAが隠れないようにする */
-  @media (max-width:640px){ .hero{padding-bottom:calc(142px + env(safe-area-inset-bottom,0px))} }
+  /* ヒーローの間はドックを出さないので、下の余白はドック用に取らない
+     （狭い画面ぶんは下の max-width:820px ブロックで指定している）*/
   .hero-bg{position:absolute;inset:-8% 0;z-index:-3;
     background:
       radial-gradient(120% 90% at 78% 8%,rgba(152,160,132,.34),transparent 55%),
@@ -195,11 +195,15 @@
      写真は上端の帯として実寸で見せ（施術ベッドが1画面目に入る位置に寄せる）、
      文章と導線はその下にグリッドの2行目として置く（絶対配置をやめたので文字と重ならない） */
   @media (max-width:820px){
-    /* section の既定 padding-block を消して写真を画面最上部から始める（ヘッダーは写真に重なる） */
-    .hero{grid-template-rows:auto 1fr;align-items:stretch;padding-top:0}
+    /* section の既定 padding-block を消して写真を画面最上部から始める（ヘッダーは写真に重なる）。
+       下はホームインジケータぶんだけ空ける（ドックはヒーローの間は出ない） */
+    .hero{grid-template-rows:auto 1fr;align-items:stretch;padding-top:0;
+      padding-bottom:calc(clamp(18px,3vh,28px) + env(safe-area-inset-bottom,0px))}
     .hero-photo{position:relative;inset:auto;z-index:0;grid-row:1;grid-column:1;
-      /* 下の文章ブロックに必要な高さを引いた残りを写真に配る（狭い端末では自動で縮む） */
-      height:clamp(96px,calc(100svh - 585px),320px);
+      /* 下の文章ブロックに必要な高さを引いた残りを写真に配る（狭い端末では自動で縮む）。
+         env() を引いているのは、ホームインジケータのある端末で下余白が増えたぶん
+         写真も同じだけ縮めて、合計が1画面に収まるようにするため */
+      height:clamp(200px,calc(100svh - 448px - env(safe-area-inset-bottom,0px)),360px);
       background-image:
         /* ヘッダーを重ねる帯。px指定なのは、帯の高さが変わっても覆う量を一定にするため */
         linear-gradient(180deg,rgba(251,248,242,.94),rgba(251,248,242,.62) 46px,rgba(251,248,242,.16) 78px,rgba(251,248,242,0) 106px),
@@ -1699,12 +1703,23 @@
   var lastY = window.pageYOffset || 0, ticking = false;
   var parallaxEls = document.querySelectorAll("[data-parallax]");
   var parallaxLimit = window.innerHeight, parallaxIdle = false;
-  addEventListener("resize", function(){ parallaxLimit = window.innerHeight; parallaxIdle = false; },
-                   {passive:true});
+  /* ヒーローを見ている間はドックを出さない。ヒーロー自身がDM・ホットペッパー・
+     メニューの3導線を持っているので入口は減らず、そのぶんの下余白（従来142px）を
+     写真に回せる。狭い端末で写真が96pxしか残らなかったのはこの余白が理由 */
+  var hero = document.getElementById("hero"), heroRun = 0;
+  function measureHero(){
+    heroRun = hero ? Math.max(0, hero.offsetTop + hero.offsetHeight * 0.55) : 0;
+  }
+  measureHero();
+  addEventListener("resize", function(){
+    parallaxLimit = window.innerHeight; parallaxIdle = false; measureHero();
+  }, {passive:true});
+  addEventListener("load", measureHero);
   function onScroll(){
     var y = window.pageYOffset || document.documentElement.scrollTop || 0;
     if(head){ head.classList.toggle("scrolled", y > 40); }
     if(dock){
+      dock.classList.toggle("hide-dock", y < heroRun);
       /* しきい値が小さいとiOSの慣性スクロールやラバーバンドで往復判定になり、
          ドックが縮んだり戻ったりしてちらつく。しきい値を超えるまで基準点(lastY)を
          動かさないので、ゆっくりスクロールでも移動量が溜まって必ず判定できる */
@@ -1739,7 +1754,6 @@
   onScroll();
 
   /* ---- hero entrance ---- */
-  var hero = document.getElementById("hero");
   if(hero){ requestAnimationFrame(function(){ hero.classList.add("ready"); }); }
 
   /* ---- reveal on scroll ---- */
