@@ -1,6 +1,7 @@
 {
   "_comment": "Web版(Cloudflare Workers)のビルド設定。lp/index.html は変更せず、build_site.py がこれを読んで dist/ を作る。Artifact版には一切影響しない。",
   "url": "https://www.esthe-miki.workers.dev/",
+  "site_name": "MIKI",
   "title": "MIKI｜六本木の痩身・ブライダルエステ｜隠れ家リゾートサロン",
   "description": "六本木駅から徒歩3分。働く女性とプレ花嫁のための痩身・ブライダルエステ。CIDESCOインターナショナルライセンスを持つMIKIが、疲れをほどきながら理想の美ボディへ導きます。ご予約はDMまたはホットペッパービューティーから。",
   "og_title": "疲れをほどいて、美しいからだへ。｜MIKI 六本木",

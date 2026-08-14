@@ -533,8 +533,13 @@ def build_jsonld(conf):
                 "@type": "WebSite",
                 "@id": url + "#website",
                 "url": url,
-                "name": conf["title"],
+                # ⚠ 検索結果に出る「サイト名」の元。**短い名前**を入れること。
+                #    ここに長いタイトルを入れると og:site_name と信号が食い違い、
+                #    Googleがドメイン名（workers.dev＝Cloudflare）を出す方に倒れる。
+                "name": conf["site_name"],
+                "alternateName": conf["title"],
                 "inLanguage": "ja",
+                "publisher": {"@id": url + "#miki"},
             },
         ],
     }
@@ -569,7 +574,7 @@ def build_head(conf, ogp, preloads):
         f'<meta property="og:image" content="{url}{ogp}">',
         '<meta property="og:image:width" content="1200">',
         '<meta property="og:image:height" content="630">',
-        '<meta property="og:site_name" content="MIKI">',
+        f'<meta property="og:site_name" content="{esc(conf["site_name"])}">',
         '<meta property="og:locale" content="ja_JP">',
         '<meta name="twitter:card" content="summary_large_image">',
         f'<meta name="twitter:title" content="{esc(conf.get("og_title", conf["title"]))}">',
@@ -714,7 +719,7 @@ def validate_conf(conf):
     if key and not re.fullmatch(r"[A-Za-z0-9-]{8,128}", key):
         raise SystemExit(f"indexnow_key が不正（英数字とハイフンのみ・8〜128文字）: {key!r}")
 
-    for field in ("title", "description", "instagram", "area", "price_range"):
+    for field in ("title", "description", "instagram", "area", "price_range", "site_name"):
         if not conf.get(field):
             raise SystemExit(f'site.json の "{field}" が空。埋めてからビルドすること')
 
