@@ -196,6 +196,9 @@ def generate_preview_html(filenames: list, caption: str, hashtags: str, post_dat
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache">
+    <!-- 投稿前のプレビュー。GitHub Pages 上で誰でも開けるので検索結果には出さない。
+         ⚠ robots.txt では防げない（プロジェクトページはサブパス配信のため）。 -->
+    <meta name="robots" content="noindex, nofollow">
     <title>投稿プレビュー - MIKI</title>
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
