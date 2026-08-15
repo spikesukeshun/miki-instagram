@@ -82,7 +82,7 @@ SLIDES = [
     {
         "filename": "slide6.jpg",
         "type": "cta",
-        "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
+        "title": "MIKI指名  Instagram限定20%OFF\n（VIPコースのみ）",
         "body": "美容と健康に興味がある。\n素直に自分と向き合える。\nそんな花嫁様、ぜひ会いに来てください",
         "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
     },
@@ -430,6 +430,11 @@ def generate_cover(img, slide):
     return canvas.convert("RGB")
 
 
+# 直近の _slide_frame() が決めた (要求ratio, 実際ratio)。generate_with_slides()
+# がスライドごとに読み、本文が長すぎて写真ゾーンが縮んだ枚を警告するために使う。
+_LAST_PHOTO_ZONE = (0.0, 0.0)
+
+
 def _slide_frame(img, slide, default_ratio=0.35, content_h=0,
                  min_band_padding=80, drop_photo_below_ratio=0.10):
     """text/list/cta スライドの背景を組み立てる。
@@ -441,6 +446,7 @@ def _slide_frame(img, slide, default_ratio=0.35, content_h=0,
     自動縮小する（本文が写真エリアに食い込むのを防止）。さらに必要 photo_h が
     drop_photo_below_ratio を下回る場合は写真を完全に省略して全面クリーム化する
     （極端に薄いスリット写真は見栄えが悪いため）。"""
+    global _LAST_PHOTO_ZONE
     requested_ratio = float(slide.get("slide_photo_h_ratio", default_ratio))
     requested_ratio = max(0.0, min(0.6, requested_ratio))
 
@@ -454,6 +460,8 @@ def _slide_frame(img, slide, default_ratio=0.35, content_h=0,
             ratio = 0.0
     else:
         ratio = requested_ratio
+
+    _LAST_PHOTO_ZONE = (requested_ratio, ratio)
 
     canvas = Image.new("RGBA", (W, H), CREAM)
     if ratio > 0 and img is not None:
@@ -764,15 +772,32 @@ def generate_with_slides(slides: list):
         "raw": generate_raw,
     }
 
+    global _LAST_PHOTO_ZONE
+    shrunk = []
+
     for i, slide in enumerate(slides, 1):
         print(f"  {i}/{len(slides)}枚目を生成中...")
         bg = load_background(slide["filename"])
+        _LAST_PHOTO_ZONE = (0.0, 0.0)
         result = generators[slide["type"]](bg, slide)
+        requested, actual = _LAST_PHOTO_ZONE
+        # 本文が長いと _slide_frame() が写真ゾーンを削る。1枚だけ写真が小さい
+        # カルーセルになるので、気づけるようにここで挙げる。
+        if requested > 0 and actual < requested - 0.001:
+            shrunk.append((i, requested, actual))
         output_path = os.path.join(OUTPUT_DIR, f"carousel_{i:02d}.jpg")
         result.save(output_path, "JPEG", quality=95)
         print(f"  保存: {output_path}")
 
     print(f"\n完了！{OUTPUT_DIR}/ フォルダに{len(slides)}枚保存されました")
+
+    if shrunk:
+        print("\n⚠️  本文が長く、写真ゾーンが自動縮小されたスライドがあります")
+        print("   （他スライドと写真の大きさが揃わなくなります）")
+        for i, requested, actual in shrunk:
+            print(f"   - スライド{i}: {requested:.2f} → {actual:.3f} "
+                  f"（{int(H * requested)}px → {int(H * actual)}px）")
+        print("   → 本文を1〜3行短くすると他スライドと揃います")
 
 
 if __name__ == "__main__":

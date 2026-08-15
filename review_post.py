@@ -21,8 +21,8 @@ EMOJI_PATTERN = re.compile(
     flags=re.UNICODE,
 )
 
-CTA_REQUIRED_TITLE = "MIKI指名 初回限定20%OFF（VIPコースのみ）"
-CTA_REQUIRED_TITLE_ALT = "MIKI指名 初回限定20%OFF\n（VIPコースのみ）"
+CTA_REQUIRED_TITLE = "MIKI指名 Instagram限定20%OFF（VIPコースのみ）"
+CTA_REQUIRED_TITLE_ALT = "MIKI指名 Instagram限定20%OFF\n（VIPコースのみ）"
 
 
 def count_emojis(text: str) -> int:
@@ -61,8 +61,8 @@ def check_caption_forbidden_chars(caption: str) -> tuple[bool, str]:
 
 
 def check_caption_has_cta(caption: str) -> tuple[bool, str]:
-    if "MIKI指名 初回限定20%OFF（VIPコースのみ）" not in caption:
-        return False, "キャプション末尾にCTA「MIKI指名 初回限定20%OFF（VIPコースのみ）」がありません"
+    if "MIKI指名 Instagram限定20%OFF（VIPコースのみ）" not in caption:
+        return False, "キャプション末尾にCTA「MIKI指名 Instagram限定20%OFF（VIPコースのみ）」がありません"
     return True, "キャプションCTA ✓"
 
 
