@@ -25,6 +25,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import urllib.parse
 from datetime import date
 
@@ -776,6 +777,42 @@ def write_indexnow(conf):
 
 # ---------------------------------------------------------------- main
 
+def warn_if_unpushed():
+    """未コミット・未pushがあれば知らせる。
+
+    ⚠ デプロイ（wrangler）は git を一切経由しないので、**公開サイトは正しく動いたまま
+    ローカルにしかないコードが溜まる**。サイトが動いている以上、気づく手がかりが無い。
+    実際 2026-08-15 に5コミットぶん溜まっていた。
+
+    ビルドは止めない（デプロイを妨げる方が害が大きい）。気づかせるだけ。
+    """
+    def git(*args):
+        try:
+            r = subprocess.run(["git", "-C", LP_DIR, *args],
+                               capture_output=True, text=True, timeout=10)
+            return r.stdout.strip() if r.returncode == 0 else None
+        except Exception:
+            return None
+
+    if git("rev-parse", "--git-dir") is None:
+        return                                    # git管理外なら黙る
+
+    dirty = git("status", "--porcelain")
+    ahead = git("rev-list", "--count", "@{u}..HEAD")
+    msgs = []
+    if dirty:
+        msgs.append(f"未コミットの変更が {len(dirty.splitlines())} 件")
+    if ahead and ahead != "0":
+        msgs.append(f"未pushのコミットが {ahead} 件")
+    elif ahead is None:
+        msgs.append("このブランチはまだ push されていない（upstream 未設定）")
+
+    if msgs:
+        print("\n  ⚠ " + " / ".join(msgs))
+        print("     デプロイは git を経由しないので、公開サイトは正しく動いたまま")
+        print("     ローカルにしかないコードが溜まる。デプロイ後に commit / push すること。")
+
+
 def validate_conf(conf):
     """設定の検証は **dist を消す前に** まとめて行う。
 
@@ -880,6 +917,8 @@ def main():
           f"{100*(1-html_bytes/src_bytes):.1f}% 削減)")
     print(f"  img/       : {img_bytes/1024:>7.0f} KB  ({len(os.listdir(IMGDIR))} ファイル)")
     print(f"  合計       : {(html_bytes+img_bytes)/1024:>7.0f} KB")
+
+    warn_if_unpushed()
 
 
 if __name__ == "__main__":
