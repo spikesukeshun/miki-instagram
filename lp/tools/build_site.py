@@ -245,7 +245,35 @@ def build_ga4(conf):
 window.dataLayer=window.dataLayer||[];
 function gtag(){{dataLayer.push(arguments)}}
 gtag('js',new Date());
-gtag('config','{mid}');
+
+// ── 関係者（美喜さん・MIKIさん）のアクセスを計測から外す ──
+// ?internal=1 で登録、?internal=0 で解除。端末・ブラウザごとに一度ずつ必要。
+// ⚠ GA4標準のIP指定は使えない。スマホは回線でIPが変わるため。
+// ⚠ GA4側で データフィルタ「内部トラフィック」を**「有効」**にしないと除外されない
+//    （初期状態は「テスト」で、素通ししてしまう）。
+var K='ga_internal', internal=false;
+try{{
+  var q=new URLSearchParams(location.search);
+  if(q.get('internal')==='1'){{ localStorage.setItem(K,'1'); }}
+  if(q.get('internal')==='0'){{ localStorage.removeItem(K); }}
+  internal = localStorage.getItem(K)==='1';
+  if(q.has('internal')){{
+    // 切り替えたことが分かるように知らせる（本人しか踏まないURLなので簡素に）
+    document.addEventListener('DOMContentLoaded',function(){{
+      var d=document.createElement('div');
+      d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;padding:14px;'
+        +'text-align:center;font:13px sans-serif;color:#F3EEE2;background:'
+        +(internal?'#55604A':'#8C6D33');
+      d.textContent = internal
+        ? 'この端末のアクセスは計測から除外されます（解除するには ?internal=0 を付けて開く）'
+        : 'この端末の除外を解除しました。以降のアクセスは計測されます。';
+      document.body.appendChild(d);
+      setTimeout(function(){{ d.remove(); }},6000);
+    }});
+  }}
+}}catch(_){{}}
+
+gtag('config','{mid}', internal ? {{traffic_type:'internal'}} : {{}});
 
 // 予約導線のクリック計測。選択中のコースも一緒に送る。
 document.addEventListener('click',function(e){{
