@@ -1,12 +1,12 @@
 # MIKI サロン LP — 引き継ぎ
 
-最終更新: 2026-08-13
+最終更新: 2026-08-16
 
 ## 1. 成果物
 
 | 項目 | 値 |
 |---|---|
-| ソース | `/Users/shunsuke/Desktop/美喜のinstagram/lp/index.html`（単一ファイル・310KB） |
+| ソース | `/Users/shunsuke/Desktop/美喜のinstagram/lp/index.html`（単一ファイル・**2.8MB**／画像29点をすべて data URI で内包） |
 | 公開URL | https://claude.ai/code/artifact/0339725a-6a87-493d-b337-dd920153489f |
 | git | ブランチ **`lp/conversion-landing-page`**。origin に push 済み |
 
@@ -356,16 +356,21 @@ with socketserver.TCPServer(("127.0.0.1",8128), H) as s: s.serve_forever()
 口コミの拡大表示のように**JSで開いた状態**を撮りたいときは、サーバ側の TAIL にクリックを注入する
 クエリ（`review=0|1`）を足すのが早い。in-app の `computer` スクショはこのページでは不安定なので使わない。
 
-### スクリーンショット（in-appプレビューは不安定）
-`mcp__Claude_Browser__computer` の scroll/screenshot は**このページでハングまたは空白になる**。
-代わりに **ヘッドレスChromeで全ページを1枚撮り、PILで切り出す**：
-```bash
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu \
-  --hide-scrollbars --force-device-scale-factor=1 --run-all-compositor-stages-before-draw \
-  --virtual-time-budget=20000 --window-size=1180,12000 \
-  --screenshot=out.png "http://localhost:8128/?tall=860"
-```
-オリーブ色 `rgb(85,96,74)` の帯を検出するとVIPカード位置を特定できる。
+### スクリーンショット
+⚠ **この節は上の「スクリーンショットの撮り方（2026-08-13 更新）」が正。**
+かつてここには `/Applications/Google Chrome.app` を直接叩くコマンドを書いていたが、
+**それをやると起動中のユーザーのChromeに新しいウィンドウが開く**（実際に指摘を受けた）。
+必ず `chrome-headless-shell` を使うこと。
+
+全ページを1枚撮ってPILで切り出すやり方自体は有効。
+`scratchpad/shot.sh <出力> <URL> [幅] [高さ]` がその実装。
+
+**ページの一部だけなら in-app ブラウザでも撮れる。**
+`serve.py` の `/frame?off=<Y>&vh=<高さ>` で任意の位置を切り出したページを返せるので、
+`resize_window` でビューポートを合わせてから `computer{action:"screenshot"}` すれば済む
+（全ページを撮ろうとするとハングするが、クリップすれば安定する）。
+なお **ページが非常に縦長だと headless の描画が間に合わず、下の方の画像が白く抜ける**ことがある。
+`tall` を小さくしてページ全体を短くするか、`--virtual-time-budget` を伸ばす。
 
 ### 機能検証はJSで同期的に
 `mcp__Claude_Browser__javascript_tool` は動作する。`requestAnimationFrame` 依存の検証は**paneのframe loop停止でハングする**ので避け、同期的にDOM/クラス/テキストを読む。
@@ -398,6 +403,15 @@ with socketserver.TCPServer(("127.0.0.1",8128), H) as s: s.serve_forever()
 見出し=明朝（Hiragino Mincho ProN系）／本文=Hiragino Sans系／欧文ラベル=Optima系
 ```
 - CTAアクセントはページ全体で**ゴールド1色に統一**（要件）。
+- **オリーブ（緑）を使い続けるかは 2026-08-13 に検証済み。結論＝現行のまま。**
+  ページの他の色は bone/cream/sand/gold/wood/ink すべて **色相 67〜91°** の暖色帯に固まっており、
+  **olive/sage の 120〜128° だけが唯一そこから外れている**。これはページに背骨を与える意図的な配置。
+  - 弱点は**金(81°)との色相差が47°**であること。30°以内＝同系、90°以上＝対比、の**どちらでもない間隔**。
+  - 代案を3つ検証した（明度・彩度を現行と1:1で揃え、色相だけ回して比較）：
+    エスプレッソ62°／ティール200°／オーベルジーヌ352°。**ユーザー判断で現行維持。**
+  - **エスプレッソ（茶）系は採用しないこと。** 木タウペとの色差が ΔE2000 = 9.5 しかなく（同系の域）、
+    金のCTAボタンと暖色の写真が背景に沈む。実測で確認済み。
+  - コントラストは現行で本文 5.74 / 強調(#F0DBAE) 4.89 と AA を満たしている。**色を変える理由は無い。**
 - **単一ライトデザインに意図的にコミット**（`color-scheme:light` 固定。dark設定の閲覧者にも暖色のまま見せる）。
 - セクション余白は `section{padding-block:clamp(72px,11vw,112px)}`。
   **上限は 140px → 112px（2026-08-13 ユーザー承認）**。セクションの区切りがPCで約260px→約224pxになる。
