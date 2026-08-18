@@ -82,7 +82,7 @@ SLIDES = [
     {
         "filename": "slide6.jpg",
         "type": "cta",
-        "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）",
+        "title": "MIKI指名  Instagram限定20%OFF\n（VIPコースのみ）",
         "body": "美容と健康に興味がある。\n素直に自分と向き合える。\nそんな花嫁様、ぜひ会いに来てください",
         "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ",
     },

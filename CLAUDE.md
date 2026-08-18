@@ -65,7 +65,7 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
   （`soft pink` のデフォルトは 2026-08-09 に廃止）
 - **スライド本文（text/body）の一人称は「私」。** MIKIはタイトルのみ
 - **CTAスライドのタイトルは固定文言**（修正依頼でも変更しない）：
-  `MIKI指名 初回限定20%OFF\n（VIPコースのみ）`
+  `MIKI指名 Instagram限定20%OFF\n（VIPコースのみ）`
 - **キャプション**: 1〜2行目に主要キーワードの導入文（毎回固有の一文）→ 空行 → 3行目から
   「MIKIです。」／1000〜1500文字／絵文字3〜5個／`——` と英字の混入禁止／末尾に必ずCTA
 - **`alt_text` は文章で書く**（キーワード羅列はNG）

@@ -35,7 +35,7 @@ SYSTEM_PROMPT = """あなたはエステティシャンMIKIのInstagram投稿コ
 ## ブランドメッセージ
 - 土台となる肌・体・メンタルを整えることが全ての美しさの根幹
 - 丁寧・温かみがある・押し付けがましくない文体
-- CTAは「MIKI指名 初回限定20%OFF（VIPコースのみ）」「DMからご相談」
+- CTAは「MIKI指名 Instagram限定20%OFF（VIPコースのみ）」「DMからご相談」
 
 ## ターゲット
 - 20代後半〜40代の女性
@@ -72,7 +72,7 @@ list（リスト）:
   {"filename": "bg03.jpg", "type": "list", "title": "タイトル", "items": ["項目1（全角20文字以内）", "項目2", ...], "footer": "締めの一言（省略可）", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 cta（コールトゥアクション）:
-  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  初回限定20%OFF\n（VIPコースのみ）", "body": "本文（改行は\\nで）", "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
+  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  Instagram限定20%OFF\n（VIPコースのみ）", "body": "本文（改行は\\nで）", "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 ## bg_strategyの判断基準
 各スライドに bg_strategy を必ず指定してください。
