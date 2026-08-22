@@ -40,6 +40,8 @@ dashboard/
 ├── fetch_dashboard_data.py   # Graph API → data/dashboard_data.json
 ├── data/
 │   ├── dashboard_data.json   # データスナップショット（ビルド時に埋め込み）
+│   │                         # posting_slots は check_week_slots.py の SLOTS から書き出す
+│   │                         # （投稿枠の数字をダッシュボード側に二重に持たないため）
 │   └── theme_overrides.json  # テーマ分類の手動上書き（media_id → theme）
 │                             # main repo の theme_overrides.json とマージされる（重複は main repo 優先）
 ├── scripts/make_artifact.mjs # dist/index.html → dist/artifact.html（Artifact用）

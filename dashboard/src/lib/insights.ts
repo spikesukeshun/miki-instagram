@@ -64,6 +64,42 @@ function deltas(cur: PeriodKpi | null, prev: PeriodKpi | null): KpiDelta[] {
 
 const fmtVal = (v: number | null, isRate: boolean) => (isRate ? fmtPct(v) : fmtInt(v));
 
+/**
+ * 誘導率（プロフィール閲覧÷リーチ）と、その分子であるプロフィール閲覧の実数が
+ * 逆向きに動いたときだけ、分母（リーチ）で説明する所見を返す。
+ * リーチが閲覧より大きく落ちれば率は上がる ＝ 露出の問題で中身の問題ではない、を明文化する。
+ */
+function reconcileRateAndCount(ds: KpiDelta[]): Finding | null {
+  const rate = ds.find((d) => d.key === "pvRate");
+  const count = ds.find((d) => d.key === "profileViews");
+  const reach = ds.find((d) => d.key === "reach");
+  if (!rate?.delta || !count?.delta || !reach?.delta) return null;
+  if (Math.abs(rate.delta) < 0.1 || Math.abs(count.delta) < 0.1) return null;
+  // 同じ向きに動いたなら矛盾して見えないので何も言わない
+  if (rate.delta > 0 === count.delta > 0) return null;
+
+  const rateUp = rate.delta > 0;
+  const line =
+    `リーチ ${fmtInt(reach.prev)} → ${fmtInt(reach.cur)}（${fmtDeltaPct(reach.delta)}）に対し、` +
+    `プロフィール閲覧は ${fmtInt(count.prev)} → ${fmtInt(count.cur)}（${fmtDeltaPct(count.delta)}）。` +
+    `誘導率は ${fmtPct(rate.prev)} → ${fmtPct(rate.cur)}（${fmtDeltaPct(rate.delta)}）`;
+  return rateUp
+    ? {
+        title: "誘導率↑と閲覧数↓は矛盾しない（分母のリーチが減ったため）",
+        detail: `${line}。閲覧の減り方のほうがリーチの減り方より小さいので、割り算の結果である率は上がった`,
+        why:
+          "誘導率＝プロフィール閲覧÷リーチ。分母（リーチ＝露出）が減ると、中身が同じでも率は上がる。" +
+          "この期間は「届いた人は減ったが、届いた人がプロフィールに行く確率は上がった」＝露出の問題であって、投稿の中身の問題ではない",
+      }
+    : {
+        title: "誘導率↓と閲覧数↑は矛盾しない（分母のリーチが増えたため）",
+        detail: `${line}。リーチの伸びのほうが閲覧の伸びより大きいので、割り算の結果である率は下がった`,
+        why:
+          "誘導率＝プロフィール閲覧÷リーチ。分母（リーチ＝露出）が増えると、中身が同じでも率は下がる。" +
+          "この期間は「届いた人は増えたが、届いた人がプロフィールに行く確率は下がった」＝新しく届いた層に刺さっていないサイン",
+      };
+}
+
 export function analyzeWeek(
   cmp: PeriodComparison,
   periodPosts: ScoredPost[],
@@ -96,6 +132,21 @@ export function analyzeWeek(
         detail: line,
         why: `重要度★${d.stars}の指標が前期間より10%以上下がったため。DM予約への導線上、優先的に立て直す必要がある`,
       });
+    }
+  }
+
+  // 「誘導率が改善」と「プロフィール閲覧が低下」は分子が同じで分母が違うだけなので、
+  // 両方が同時に出ると矛盾して見える。関係を1件の分析としてここで明示する。
+  const denominatorNote = reconcileRateAndCount(ds);
+  if (denominatorNote) {
+    causes.push(denominatorNote);
+    // パネル間で行き来できるよう、元の2件から原因分析を指させる
+    for (const list of [good, improve]) {
+      for (const f of list) {
+        if (f.title.startsWith("プロフィール誘導率") || f.title.startsWith("プロフィール閲覧")) {
+          f.detail += "　※「原因分析」の先頭を参照";
+        }
+      }
     }
   }
 

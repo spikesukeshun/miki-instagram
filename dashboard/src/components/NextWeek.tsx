@@ -1,7 +1,7 @@
-import { CalendarDays, Clock3, Images, Lightbulb, MousePointerClick, Type } from "lucide-react";
+import { AlertTriangle, CalendarDays, Lightbulb } from "lucide-react";
 import type { Strategy } from "../lib/strategy";
 import { themeDef } from "../config";
-import { WEEKDAYS_JA, fmtInt } from "../lib/format";
+import { fmtInt } from "../lib/format";
 import { Badge, Card, CardContent, CardHeader, CardTitle, SectionHeader, ThemeBadge } from "./ui";
 import { FadeIn } from "./Motion";
 
@@ -10,16 +10,30 @@ const rangeInt = (r: [number, number] | null) =>
 const rangePct = (r: [number, number] | null) =>
   r ? `${(r[0] * 100).toFixed(1)}〜${(r[1] * 100).toFixed(1)}%` : "—";
 
-/** ⑧ 来週の投稿戦略（過去実績学習ベースの提案） */
+/** ⑧ 来週の投稿戦略。投稿枠は実運用の固定枠、テーマだけ実績から選ぶ */
 export function NextWeek({ strategy }: { strategy: Strategy }) {
+  const slots = strategy.weekPlan.map((s) => `${s.weekdayLabel}${s.timeLabel}`).join(" / ");
   return (
     <section id="nextweek" aria-labelledby="nextweek-title">
       <SectionHeader
         index="08"
         title="来週の投稿戦略"
-        desc="過去実績（テーマ統計・曜日×時間・カルーセル枚数×スコア）から自動生成した次週プラン。想定値は該当テーマの実績平均±25%です。"
+        desc={`投稿枠は実運用の固定枠（${slots}）。テーマはテーマ別の実績スコアから自動選定しています。想定値は該当テーマの実績平均±25%です。`}
       />
       <FadeIn>
+        {strategy.scheduleDrift && (
+          <Card className="mb-3 border-l-2 border-l-[var(--serious)]">
+            <CardContent className="flex items-start gap-2 pt-4 text-xs leading-relaxed text-ink-2">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-serious" aria-hidden />
+              <span>
+                設定上の投稿枠（{strategy.scheduleDrift.expected.join(" / ")}）と、直近8週の実際の投稿
+                （{strategy.scheduleDrift.actual.join(" / ")}）がズレています。
+                運用を変えたなら <code>check_week_slots.py</code> の <code>SLOTS</code> を直してください。
+              </span>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 週3投稿プラン */}
         <div className="mb-3 grid gap-3 md:grid-cols-3">
           {strategy.weekPlan.map((s) => {
@@ -40,6 +54,9 @@ export function NextWeek({ strategy }: { strategy: Strategy }) {
                   <ThemeBadge cssVar={t.cssVar} label={t.label} />
                 </div>
                 <p className="mt-2 flex-1 text-xs leading-relaxed text-ink-2">{s.angle}</p>
+                {s.slotNote && (
+                  <p className="mt-2 text-[10px] leading-relaxed text-muted">{s.slotNote}</p>
+                )}
                 {rec && (
                   <p className="tnum mt-2 border-t border-line pt-2 text-[10px] leading-relaxed text-muted">
                     想定リーチ {rangeInt(rec.expectedReach)} ／ 想定保存率 {rangePct(rec.expectedSaveRate)}
@@ -52,101 +69,31 @@ export function NextWeek({ strategy }: { strategy: Strategy }) {
           })}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          {/* テーマランキング */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-1.5">
-                <Lightbulb className="size-4 text-accent" aria-hidden />
-                おすすめテーマランキング
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="flex flex-col gap-2.5">
-                {strategy.themeRanking.map((r) => {
-                  const t = themeDef(r.theme);
-                  return (
-                    <li key={r.theme} className="flex items-start gap-2.5 text-xs">
-                      <span className="tnum mt-0.5 w-4 shrink-0 font-serif text-accent">{r.rank}</span>
-                      <div>
-                        <ThemeBadge cssVar={t.cssVar} label={t.label} />
-                        <p className="mt-1 leading-relaxed text-muted">{r.reason}</p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            </CardContent>
-          </Card>
-
-          {/* 曜日・時間・枚数 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-1.5">
-                <Clock3 className="size-4 text-accent" aria-hidden />
-                おすすめ投稿枠・カルーセル枚数
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 text-xs">
-              <div>
-                <p className="mb-1.5 font-medium text-ink-2">実績の良い曜日×時間（平均スコア順）</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {strategy.bestSlots.map((s, i) => (
-                    <Badge key={i} variant={i === 0 ? "accent" : "default"}>
-                      {WEEKDAYS_JA[s.weekday]}曜{s.hour}時台 ・ {Math.round(s.avgScore)}点（{s.count}件）
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div className="border-t border-line pt-3">
-                <p className="mb-1 flex items-center gap-1.5 font-medium text-ink-2">
-                  <Images className="size-3.5 text-accent" aria-hidden />
-                  推奨カルーセル枚数: {strategy.slideCount.label}
-                </p>
-                <p className="leading-relaxed text-muted">{strategy.slideCount.detail}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* CTA・タイトル改善 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-1.5">
-                <MousePointerClick className="size-4 text-accent" aria-hidden />
-                CTA改善案・プロフィール誘導改善案
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs leading-relaxed text-ink-2">
-                {strategy.ctaIdeas.map((c, i) => (
-                  <li key={`c${i}`}>{c}</li>
-                ))}
-                {strategy.pvRateIdeas.map((c, i) => (
-                  <li key={`p${i}`}>{c}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-1.5">
-                <Type className="size-4 text-accent" aria-hidden />
-                タイトル改善案・保存率向上案
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs leading-relaxed text-ink-2">
-                {strategy.titleIdeas.map((c, i) => (
-                  <li key={`t${i}`}>{c}</li>
-                ))}
-                {strategy.saveRateIdeas.map((c, i) => (
-                  <li key={`s${i}`}>{c}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+        {/* テーマランキング */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-1.5">
+              <Lightbulb className="size-4 text-accent" aria-hidden />
+              おすすめテーマランキング
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="grid gap-2.5 sm:grid-cols-2">
+              {strategy.themeRanking.map((r) => {
+                const t = themeDef(r.theme);
+                return (
+                  <li key={r.theme} className="flex items-start gap-2.5 text-xs">
+                    <span className="tnum mt-0.5 w-4 shrink-0 font-serif text-accent">{r.rank}</span>
+                    <div>
+                      <ThemeBadge cssVar={t.cssVar} label={t.label} />
+                      <p className="mt-1 leading-relaxed text-muted">{r.reason}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </CardContent>
+        </Card>
       </FadeIn>
     </section>
   );

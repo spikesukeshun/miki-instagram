@@ -63,6 +63,17 @@ from load_env import load_from_zshrc  # noqa: E402
 # キーワードや重みを変える時は必ず共有モジュール側を直すこと。
 from theme_classifier import classify_by_caption  # noqa: E402
 
+# 実運用の投稿枠（月22:00 / 木21:00 / 金22:00）は check_week_slots.py の SLOTS が正。
+# ダッシュボード側に同じ数字を書くと必ず片方が腐るので、ここでスナップショットに載せて
+# 画面はそれを読むだけにする。取れなくても致命ではない（TS側にフォールバックがある）ため、
+# 週次のデータ取得ごと落とさないよう握りつぶす。
+sys.path.insert(0, str(_repo_path_for("check_week_slots.py")))
+try:
+    from check_week_slots import SLOTS as _RAW_SLOTS  # noqa: E402
+except Exception as e:  # pragma: no cover - 環境依存
+    print(f"⚠️ check_week_slots.SLOTS を読めませんでした（posting_slots は省略）: {e}")
+    _RAW_SLOTS = None
+
 load_from_zshrc()
 
 TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
@@ -242,6 +253,16 @@ def fetch_account_weekly() -> list[dict]:
     return sorted(weeks, key=lambda w: w["week_start"])
 
 
+def posting_slots():  # -> list[dict] | None（/usr/bin/python3 が 3.9 のため注釈は書かない）
+    """check_week_slots.SLOTS を [{"weekday": 0, "hour": 22}, ...] に直す（0=月）。"""
+    if not _RAW_SLOTS:
+        return None
+    return [
+        {"weekday": int(wd), "hour": int(hhmm.split(":")[0])}
+        for wd, hhmm in _RAW_SLOTS
+    ]
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--insights-since", default=INSIGHTS_SINCE,
@@ -325,6 +346,8 @@ def main():
         "account_daily": daily,
         "account_weekly": weekly,
         "posts": sorted(posts, key=lambda p: p["timestamp"] or "", reverse=True),
+        # 実運用の投稿枠（check_week_slots.py の SLOTS 由来）。画面の「来週の投稿戦略」が読む。
+        "posting_slots": posting_slots(),
         # 毎週の更新時に Claude Code が本物の所見を書き込むための欄（任意）
         "claude_comment": None,
     }
