@@ -26,30 +26,32 @@
 **Artifact は既定で非公開。** 他人が見られる状態にするには、ページの共有メニューから
 ユーザー本人が共有操作をする必要がある（この操作はAIからは実行できない）。
 
-### 1-1. `lp/dist/` は「ビルド出力」ではない。**消すと復元できない**
+### 1-1. `lp/dist/` は配信物の実体。**作り方は別ブランチにある**
 
 Cloudflare に配信しているのは `lp/index.html` ではなく **`lp/dist/` の中身**。
-2.8MB の単一 HTML を「166KB の `index.html` ＋ `img/` の webp 29枚」に分割したもので、
-**この分割を行うスクリプトはリポジトリに無い**（手作業で行われた）。
+2.8MB の単一 HTML を「166KB の `index.html` ＋ `img/` の webp 29枚」に分割し、
+`privacy.html` / `robots.txt` / `sitemap.xml` / `404.html` / `ogp.jpg` / `_headers` /
+IndexNow の認証ファイルまで生成しているのは **`lp/tools/build_site.py`**。
 
-さらに `dist/` には **`index.html` から再生成できないファイル**が入っている:
+⚠️ **`build_site.py` / `wrangler.jsonc` / `site.json` はこのブランチ
+（`lp/conversion-landing-page`）に無い。** 揃っているのは
+**`claude/page-publish-mechanism-5904d1`**（このブランチの48コミット先の子孫）だけ。
+**LPのビルド・デプロイ作業はそちらのブランチで行うこと。**
 
-| ファイル | 何か | ソースにあるか |
-|---|---|---|
-| `privacy.html` | プライバシーポリシー（独立ページ） | ❌ `lp/index.html` に存在しない |
-| `robots.txt` / `sitemap.xml` | クロール制御・サイトマップ | ❌ 同上 |
-| `404.html` | 404ページ | ❌ 同上 |
-| `ogp.jpg` | OGP画像（2-2 参照） | ❌ 同上 |
-| `_headers` | Cloudflare のキャッシュ・セキュリティヘッダ | ❌ 同上 |
-| `93830b83e0113fb54c4dd82aff2fcb57.txt` | **Cloudflare のドメイン所有権認証ファイル**。消すとドメイン認証が外れうる | ❌ 同上 |
+```bash
+/usr/bin/python3 lp/tools/build_site.py
+source ~/.nvm/nvm.sh && nvm use 24 && npx wrangler deploy --config lp/wrangler.jsonc
+```
+（wrangler は Node 22+ が必要。既定の v20 のままだと動かない）
 
-**したがって `lp/dist/` を「ビルド生成物だから消してよい」と判断してはいけない。**
-2026-08-22 に、作業用 worktree を削除しようとして実際にこれを失いかけた
-（`lp/dist` はその worktree にしか無く、メインリポジトリには存在しなかった）。
-同日、メインリポジトリへ退避したうえで `lp/conversion-landing-page` に**コミット済み**。
+LPの中身を直すときは **`lp/index.html`（唯一の正）を直して build し直す**。
+`dist/` を直接編集しない。次のビルドで上書きされる。
 
-LPの中身を直すときは **`lp/index.html`（ソース）と `lp/dist/index.html`（配信物）の両方**を
-更新する必要がある。片方だけ直しても公開ページは変わらない。
+**なお `dist/` は「一時ファイルだから消してよい」ではない。**
+2026-08-22 時点で `lp/dist/` は作業用 worktree にしか存在せず、その worktree を
+削除しようとして公開中の配信物のローカルコピーを失いかけた。ビルドし直せるとはいえ、
+上記の別ブランチに切り替えて Node 24 を用意しないと再生成できないので、
+**消す前に「今すぐ再ビルドできる状態か」を確かめること。**
 
 ---
 
