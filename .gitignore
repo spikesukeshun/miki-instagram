@@ -46,6 +46,11 @@ report_*.txt
 !assets/*.png
 !lp/*.png
 
+# LPの配信物。lp/index.html から lp/tools/build_site.py が生成する
+# （ビルド一式は claude/page-publish-mechanism-5904d1 にある）。
+# ソースと配信物の2重管理を避けるため追跡しない → lp/PUBLISH.md 1-1
+lp/dist/
+
 # design_lab（ローカル実験用サンドボックス — design_lab/README.md 参照）
 design_lab/output/
 design_lab/sample_bg/

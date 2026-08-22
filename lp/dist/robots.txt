@@ -1,6 +1,0 @@
-# MIKI LP — 検索エンジン・AIクローラともに全面許可
-User-agent: *
-Allow: /
-Content-Signal: search=yes, ai-input=yes, ai-train=yes
-
-Sitemap: https://www.esthe-miki.workers.dev/sitemap.xml
