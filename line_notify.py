@@ -12,32 +12,54 @@ def _get_user_ids() -> list:
             ids.append(val)
     return ids
 
-def send_line_message(message: str, user_ids: list = None):
-    """LINEに通知を送る。user_ids省略時は.envの全ユーザーに送信"""
+def _push(messages: list, user_ids: list = None) -> bool:
+    """LINE Messaging API の push でメッセージを送る。
+    全員に送れたときだけ True を返す（送信元で成否を判断できるようにするため）。"""
     token = (os.getenv("LINE_CHANNEL_ACCESS_TOKEN") or "").strip()
     if not token:
         print("LINE_CHANNEL_ACCESS_TOKEN が設定されていません")
-        return
+        return False
 
     targets = [uid.strip() for uid in (user_ids or _get_user_ids()) if uid and uid.strip()]
     if not targets:
         print("送信先のLINEユーザーIDが設定されていません")
-        return
+        return False
 
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
+    all_ok = True
     for user_id in targets:
         res = requests.post(
             "https://api.line.me/v2/bot/message/push",
             headers=headers,
-            json={"to": user_id, "messages": [{"type": "text", "text": message}]}
+            json={"to": user_id, "messages": messages}
         )
         if res.status_code != 200:
             print(f"LINE送信失敗 ({user_id}): {res.json()}")
+            all_ok = False
         else:
             print(f"LINE送信成功 ({user_id[:8]}...)")
+    return all_ok
+
+
+def send_line_message(message: str, user_ids: list = None):
+    """LINEに通知を送る。user_ids省略時は.envの全ユーザーに送信"""
+    return _push([{"type": "text", "text": message}], user_ids)
+
+
+def send_line_video(original_url: str, preview_url: str, user_ids: list = None):
+    """LINEに動画を送る。
+
+    original_url / preview_url はどちらも公開HTTPS（TLS1.2以上）である必要がある。
+    LINEの制限: 動画は mp4・200MB以下、サムネイルは JPEG/PNG・1MB以下。
+    """
+    return _push([{
+        "type": "video",
+        "originalContentUrl": original_url,
+        "previewImageUrl": preview_url,
+    }], user_ids)
 
 
 def notify_revision_done(row_num: int, menu_type: str, instruction: str, preview_url: str):

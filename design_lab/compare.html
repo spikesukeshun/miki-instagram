@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カルーセルデザイン比較 — design_lab</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
+    background: #f5f0e8;
+    color: #2b2522;
+    padding: 40px 20px 80px;
+  }
+  h1 {
+    font-family: 'Hiragino Mincho ProN', serif;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #876a3f;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    margin-bottom: 50px;
+  }
+  .variant {
+    max-width: 1280px;
+    margin: 0 auto 70px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 28px 36px;
+    box-shadow: 0 2px 14px rgba(60,40,30,0.08);
+  }
+  .variant h2 {
+    font-family: 'Hiragino Mincho ProN', serif;
+    font-size: 22px;
+    color: #2b2522;
+    margin-bottom: 4px;
+  }
+  .variant .desc {
+    font-size: 13px;
+    color: #876a3f;
+    margin-bottom: 22px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .row.menu-row { opacity: 0.92; }
+  .row img {
+    width: 100%;
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #ece6dc;
+  }
+  .row-label {
+    font-size: 11px;
+    color: #876a3f;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .grid-section {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    align-items: start;
+  }
+  .grid-section img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  .grid-section .grid-note {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #4a3d33;
+  }
+  .grid-section h3 {
+    font-family: 'Hiragino Mincho ProN', serif;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: #2b2522;
+  }
+  .lead {
+    max-width: 720px;
+    margin: 0 auto 50px;
+    font-size: 14px;
+    line-height: 1.9;
+    color: #4a3d33;
+    background: #fff;
+    padding: 24px 28px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(60,40,30,0.06);
+  }
+  .lead strong { color: #2b2522; }
+  .placeholder-warn {
+    background: #fff8ee;
+    border-left: 4px solid #d4a45a;
+    padding: 14px 18px;
+    margin-bottom: 30px;
+    font-size: 13px;
+    line-height: 1.7;
+    border-radius: 6px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+</head>
+<body>
+<h1>カルーセルデザイン比較</h1>
+<div class="subtitle">DESIGN LAB — 4 VARIANTS × 2 THEMES</div>
+
+<div class="lead">
+  既存の <code>generate_carousel.py</code> には一切手を加えず、<code>design_lab/</code> という独立サンドボックスで4つのデザイン方向を試作しました。
+  <br><br>
+  各案について <strong>「ライフ系投稿」と「メニュー系投稿」</strong> の2テーマで cover / text / list / cta の代表4枚＋プロフィールグリッド（3×3）を生成しています。
+  <br><br>
+  比較ポイント：(1) サムネイル（1枚目）の引きの強さ、(2) 通読のしやすさ、(3) プロフィール画面で9マス並んだ時の整い方、(4) サロンの雰囲気との相性。
+</div>
+
+<div class="placeholder-warn">
+  ⚠ 現在 <code>design_lab/sample_bg/</code> が空のため、写真エリアはプレースホルダー（クリーム地）で表示されています。MIKIさんから実物写真を10〜15枚いただいたあと <code>python3 design_lab/render_all.py</code> を再実行すれば、実物素材で再評価できます。
+</div>
+
+<!-- Variant A -->
+<div class="variant">
+  <h2>案A：明朝・余白主義（雑誌風）</h2>
+  <div class="desc">クリーム × 墨 × アクセント金。タイトルは明朝で大きく。下1/3にクリーム帯 → グリッドで横に揃う。</div>
+
+  <div class="row-label">LIFESTYLE — 週末のリセット時間</div>
+  <div class="row">
+    <img src="output/variant_a_magazine/lifestyle/01_cover.jpg" alt="A lifestyle cover">
+    <img src="output/variant_a_magazine/lifestyle/02_text.jpg" alt="A lifestyle text">
+    <img src="output/variant_a_magazine/lifestyle/03_list.jpg" alt="A lifestyle list">
+    <img src="output/variant_a_magazine/lifestyle/04_text.jpg" alt="A lifestyle text2">
+    <img src="output/variant_a_magazine/lifestyle/05_cta.jpg" alt="A lifestyle cta">
+  </div>
+
+  <div class="row-label">BRIDAL — ブライダルエステの本当の役割</div>
+  <div class="row menu-row">
+    <img src="output/variant_a_magazine/menu/01_cover.jpg" alt="A menu cover">
+    <img src="output/variant_a_magazine/menu/02_text.jpg" alt="A menu text">
+    <img src="output/variant_a_magazine/menu/03_list.jpg" alt="A menu list">
+    <img src="output/variant_a_magazine/menu/04_text.jpg" alt="A menu text2">
+    <img src="output/variant_a_magazine/menu/05_cta.jpg" alt="A menu cta">
+  </div>
+
+  <div class="grid-section">
+    <img src="output/variant_a_magazine/grid_3x3.jpg" alt="A grid 3x3">
+    <div class="grid-note">
+      <h3>プロフィールグリッド</h3>
+      下のクリーム帯がきれいに横一列に揃い、雑誌の見開きのような秩序が出る案。<br><br>
+      タイトルは明朝で読みやすく、写真エリアにはMIKIさん提供の素材が入る想定。<br><br>
+      <strong>合うシーン</strong>：高単価・落ち着いたサロンの王道。海外のホテル系アカウントに近い空気感。
+    </div>
+  </div>
+</div>
+
+<!-- Variant B -->
+<div class="variant">
+  <h2>案B：モノクロ＋差し色（ミニマル）</h2>
+  <div class="desc">写真をモノクロ化、文字は墨黒。ボルドー1色を差し色に。左寄せで作家性のあるギャラリー風。</div>
+
+  <div class="row-label">LIFESTYLE</div>
+  <div class="row">
+    <img src="output/variant_b_monochrome/lifestyle/01_cover.jpg" alt="B lifestyle cover">
+    <img src="output/variant_b_monochrome/lifestyle/02_text.jpg" alt="B lifestyle text">
+    <img src="output/variant_b_monochrome/lifestyle/03_list.jpg" alt="B lifestyle list">
+    <img src="output/variant_b_monochrome/lifestyle/04_text.jpg" alt="B lifestyle text2">
+    <img src="output/variant_b_monochrome/lifestyle/05_cta.jpg" alt="B lifestyle cta">
+  </div>
+
+  <div class="row-label">BRIDAL</div>
+  <div class="row menu-row">
+    <img src="output/variant_b_monochrome/menu/01_cover.jpg" alt="B menu cover">
+    <img src="output/variant_b_monochrome/menu/02_text.jpg" alt="B menu text">
+    <img src="output/variant_b_monochrome/menu/03_list.jpg" alt="B menu list">
+    <img src="output/variant_b_monochrome/menu/04_text.jpg" alt="B menu text2">
+    <img src="output/variant_b_monochrome/menu/05_cta.jpg" alt="B menu cta">
+  </div>
+
+  <div class="grid-section">
+    <img src="output/variant_b_monochrome/grid_3x3.jpg" alt="B grid 3x3">
+    <div class="grid-note">
+      <h3>プロフィールグリッド</h3>
+      モノクロ写真と紙地のコントラストが強く、ギャラリーや写真集のような印象。<br><br>
+      ボルドーの差し色がアクセントになり、個人作家のアカウントっぽい「作品感」が出る。<br><br>
+      <strong>合うシーン</strong>：MIKIさん個人のブランド性を強く打ち出したい場合。クラシックでハイセンス。
+    </div>
+  </div>
+</div>
+
+<!-- Variant C -->
+<div class="variant">
+  <h2>案C：くすみベージュ × 親密</h2>
+  <div class="desc">ベージュ × 焦茶 × ローズグレー。葉書風の構成。MIKIの署名を装飾的に添える。</div>
+
+  <div class="row-label">LIFESTYLE</div>
+  <div class="row">
+    <img src="output/variant_c_beige/lifestyle/01_cover.jpg" alt="C lifestyle cover">
+    <img src="output/variant_c_beige/lifestyle/02_text.jpg" alt="C lifestyle text">
+    <img src="output/variant_c_beige/lifestyle/03_list.jpg" alt="C lifestyle list">
+    <img src="output/variant_c_beige/lifestyle/04_text.jpg" alt="C lifestyle text2">
+    <img src="output/variant_c_beige/lifestyle/05_cta.jpg" alt="C lifestyle cta">
+  </div>
+
+  <div class="row-label">BRIDAL</div>
+  <div class="row menu-row">
+    <img src="output/variant_c_beige/menu/01_cover.jpg" alt="C menu cover">
+    <img src="output/variant_c_beige/menu/02_text.jpg" alt="C menu text">
+    <img src="output/variant_c_beige/menu/03_list.jpg" alt="C menu list">
+    <img src="output/variant_c_beige/menu/04_text.jpg" alt="C menu text2">
+    <img src="output/variant_c_beige/menu/05_cta.jpg" alt="C menu cta">
+  </div>
+
+  <div class="grid-section">
+    <img src="output/variant_c_beige/grid_3x3.jpg" alt="C grid 3x3">
+    <div class="grid-note">
+      <h3>プロフィールグリッド</h3>
+      全カバーが同じベージュ地で並ぶため、「シリーズもの」「絵葉書集」のような統一感。<br><br>
+      MIKI署名と細いローズ装飾線が、エステサロンらしい柔らかさと親密さを演出。<br><br>
+      <strong>合うシーン</strong>：「読み物・体験記」系のコンテンツ中心、MIKIの人柄でフォローしてもらう方向。
+    </div>
+  </div>
+</div>
+
+<!-- Variant D -->
+<div class="variant">
+  <h2>案D：テーマ別カラーパレット</h2>
+  <div class="desc">ライフ系／メニュー系／ブライダル系で配色を変える。構造は揃え、色レイヤーで一目で分かる。</div>
+
+  <div class="row-label">LIFESTYLE — クリーム × 墨</div>
+  <div class="row">
+    <img src="output/variant_d_themed/lifestyle/01_cover.jpg" alt="D lifestyle cover">
+    <img src="output/variant_d_themed/lifestyle/02_text.jpg" alt="D lifestyle text">
+    <img src="output/variant_d_themed/lifestyle/03_list.jpg" alt="D lifestyle list">
+    <img src="output/variant_d_themed/lifestyle/04_text.jpg" alt="D lifestyle text2">
+    <img src="output/variant_d_themed/lifestyle/05_cta.jpg" alt="D lifestyle cta">
+  </div>
+
+  <div class="row-label">BRIDAL — オフホワイト × シャンパンゴールド</div>
+  <div class="row menu-row">
+    <img src="output/variant_d_themed/menu/01_cover.jpg" alt="D menu cover">
+    <img src="output/variant_d_themed/menu/02_text.jpg" alt="D menu text">
+    <img src="output/variant_d_themed/menu/03_list.jpg" alt="D menu list">
+    <img src="output/variant_d_themed/menu/04_text.jpg" alt="D menu text2">
+    <img src="output/variant_d_themed/menu/05_cta.jpg" alt="D menu cta">
+  </div>
+
+  <div class="grid-section">
+    <img src="output/variant_d_themed/grid_3x3.jpg" alt="D grid 3x3">
+    <div class="grid-note">
+      <h3>プロフィールグリッド</h3>
+      LIFE / MENU / BRIDAL の3パレットが規則的に混ざるため、「ちゃんと運用されているアカウント」感。<br><br>
+      訪問者が一瞬で「何の話の投稿か」を視覚的に分類できる利点。<br><br>
+      <strong>合うシーン</strong>：投稿テーマを明確に切り分けて発信したい場合。実用性◎。
+    </div>
+  </div>
+</div>
+
+<div class="lead" style="text-align:center;">
+  気に入った案、もしくは「Aの構成にCの色味」のような組み合わせ要望があればお知らせください。<br>
+  方向性が決まったら本番 <code>generate_carousel.py</code> に最小差分で反映します。
+</div>
+
+</body>
+</html>

@@ -22,10 +22,8 @@ import os
 import subprocess
 import sys
 
-import gspread
-from google.oauth2.service_account import Credentials
-
 from load_env import load_from_zshrc
+from sheet_client import open_sheet
 from register_post import (
     GENERATED_DIR,
     GITHUB_OWNER,
@@ -36,19 +34,13 @@ from register_post import (
 
 load_from_zshrc()
 
-SCOPES = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive",
-]
 COL_DATETIME = 0
 COL_FILENAME = 2
 COL_STATUS = 6
 
 
 def get_sheet():
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
-    client = gspread.authorize(creds)
-    return client.open_by_key(os.getenv("SPREADSHEET_ID")).sheet1
+    return open_sheet()
 
 
 def collect_posted_slugs() -> list:
