@@ -19,11 +19,37 @@
 | ソース | `/Users/shunsuke/Desktop/美喜のinstagram/lp/index.html`（単一ファイル・**2.8MB**） |
 | ブランチ | `lp/conversion-landing-page` — **origin に push 済み・未pushコミット 0** |
 | 最新コミット | `e073a74` |
-| 現在の公開先 | Artifact `https://claude.ai/code/artifact/0339725a-6a87-493d-b337-dd920153489f` |
-| 埋め込み画像 | 29点すべて data URI（JPEG 14 / WebP 15）。**外部ファイル参照は0**。CSS・JSもインライン |
+| 現在の公開先 | **https://www.esthe-miki.workers.dev/**（Cloudflare Workers）＋ Artifact `https://claude.ai/code/artifact/0339725a-6a87-493d-b337-dd920153489f` |
+| 配信物の実体 | **`lp/dist/`**（下の 1-1 を必ず読む） |
+| 埋め込み画像 | ソースの `index.html` は29点すべて data URI（JPEG 14 / WebP 15）。**外部ファイル参照は0**。CSS・JSもインライン |
 
 **Artifact は既定で非公開。** 他人が見られる状態にするには、ページの共有メニューから
 ユーザー本人が共有操作をする必要がある（この操作はAIからは実行できない）。
+
+### 1-1. `lp/dist/` は「ビルド出力」ではない。**消すと復元できない**
+
+Cloudflare に配信しているのは `lp/index.html` ではなく **`lp/dist/` の中身**。
+2.8MB の単一 HTML を「166KB の `index.html` ＋ `img/` の webp 29枚」に分割したもので、
+**この分割を行うスクリプトはリポジトリに無い**（手作業で行われた）。
+
+さらに `dist/` には **`index.html` から再生成できないファイル**が入っている:
+
+| ファイル | 何か | ソースにあるか |
+|---|---|---|
+| `privacy.html` | プライバシーポリシー（独立ページ） | ❌ `lp/index.html` に存在しない |
+| `robots.txt` / `sitemap.xml` | クロール制御・サイトマップ | ❌ 同上 |
+| `404.html` | 404ページ | ❌ 同上 |
+| `ogp.jpg` | OGP画像（2-2 参照） | ❌ 同上 |
+| `_headers` | Cloudflare のキャッシュ・セキュリティヘッダ | ❌ 同上 |
+| `93830b83e0113fb54c4dd82aff2fcb57.txt` | **Cloudflare のドメイン所有権認証ファイル**。消すとドメイン認証が外れうる | ❌ 同上 |
+
+**したがって `lp/dist/` を「ビルド生成物だから消してよい」と判断してはいけない。**
+2026-08-22 に、作業用 worktree を削除しようとして実際にこれを失いかけた
+（`lp/dist` はその worktree にしか無く、メインリポジトリには存在しなかった）。
+同日、メインリポジトリへ退避したうえで `lp/conversion-landing-page` に**コミット済み**。
+
+LPの中身を直すときは **`lp/index.html`（ソース）と `lp/dist/index.html`（配信物）の両方**を
+更新する必要がある。片方だけ直しても公開ページは変わらない。
 
 ---
 
