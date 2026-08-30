@@ -74,6 +74,14 @@ except Exception as e:  # pragma: no cover - 環境依存
     print(f"⚠️ check_week_slots.SLOTS を読めませんでした（posting_slots は省略）: {e}")
     _RAW_SLOTS = None
 
+# コンバージョンLPのGA4計測（fetch_ga4_data.py）。サービスアカウント未設定なら None を返す。
+# ⚠ LPは後付けの計測なので、ここで落ちて Instagram 側の週次更新まで止めないこと。
+try:
+    from fetch_ga4_data import fetch_lp_data  # noqa: E402
+except Exception as e:  # pragma: no cover - 環境依存
+    print(f"⚠️ fetch_ga4_data を読めませんでした（lp は省略）: {e}")
+    fetch_lp_data = None
+
 load_from_zshrc()
 
 TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
@@ -253,6 +261,32 @@ def fetch_account_weekly() -> list[dict]:
     return sorted(weeks, key=lambda w: w["week_start"])
 
 
+def lp_data():  # -> dict | None（注釈を書かない理由は posting_slots と同じ）
+    """コンバージョンLPのGA4実測。未設定・失敗時は None を返して週次更新を続行する。
+
+    セットアップ手順は dashboard/GA4_SETUP.md。GA4_PROPERTY_ID と
+    GOOGLE_APPLICATION_CREDENTIALS が揃っていなければ静かに None。
+    """
+    if fetch_lp_data is None:
+        return None
+    try:
+        print("LP（GA4）取得中...")
+        data = fetch_lp_data()
+    except Exception as e:  # pragma: no cover - ネットワーク/認証エラー
+        print(f"⚠️ LPのGA4取得に失敗しました（lp は省略）: {e}")
+        return None
+    if data is None:
+        print("  未設定のためスキップ（→ dashboard/GA4_SETUP.md）")
+        return None
+    if "error" in data:
+        print(f"  ⚠️ {data['error']}")
+        return data
+    ig = sum(w.get("instagram_sessions", 0) for w in data.get("weeks", []))
+    hp = sum(w.get("cta_hotpepper", 0) for w in data.get("weeks", []))
+    print(f"  {len(data.get('weeks', []))}週分 / Instagram経由{ig}セッション / cta_hotpepper {hp}")
+    return data
+
+
 def posting_slots():  # -> list[dict] | None（/usr/bin/python3 が 3.9 のため注釈は書かない）
     """check_week_slots.SLOTS を [{"weekday": 0, "hour": 22}, ...] に直す（0=月）。"""
     if not _RAW_SLOTS:
@@ -348,6 +382,8 @@ def main():
         "posts": sorted(posts, key=lambda p: p["timestamp"] or "", reverse=True),
         # 実運用の投稿枠（check_week_slots.py の SLOTS 由来）。画面の「来週の投稿戦略」が読む。
         "posting_slots": posting_slots(),
+        # コンバージョンLPのGA4/Search Console実測。未設定なら None（画面はセクションごと出さない）。
+        "lp": lp_data(),
         # 毎週の更新時に Claude Code が本物の所見を書き込むための欄（任意）
         "claude_comment": None,
     }

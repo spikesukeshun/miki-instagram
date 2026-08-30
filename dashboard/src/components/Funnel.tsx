@@ -6,6 +6,7 @@ import { fmtInt, fmtPct } from "../lib/format";
 import { Badge, Card, CardContent, SectionHeader } from "./ui";
 import { FadeIn } from "./Motion";
 import type { ManualWeekInput } from "../lib/manualStore";
+import type { LpWeek } from "../types";
 
 interface Stage {
   key: string;
@@ -13,6 +14,8 @@ interface Stage {
   value: number | null;
   estimated: boolean;
   note?: string;
+  /** 前段比を「直前の行」ではなく特定の段と比べたいとき（例: LP訪問はプロフィール閲覧比） */
+  prevKey?: string;
 }
 
 /** ⑤ コンバージョンファネル（DM・予約はAPI非提供 → 手入力 or 推定） */
@@ -22,13 +25,29 @@ export function Funnel({
   manual,
   onManualChange,
   editable,
+  lpWeeks,
 }: {
   kpi: PeriodKpi | null;
   rangeLabel: string;
   manual: ManualWeekInput;
   onManualChange: (patch: Partial<ManualWeekInput>) => void;
   editable: boolean;
+  /** 表示中の期間に対応するLPの週。未計測なら空配列（→ 段ごと出さない） */
+  lpWeeks: LpWeek[];
 }) {
+  // ⚠ Instagram経由だけを足す。(direct)/(none) には海外からの自動化アクセスが
+  //   混ざっており（2026-08実測で41セッション中の大半）、混ぜると実態より多く見える。
+  const lp = useMemo(() => {
+    if (lpWeeks.length === 0) return null;
+    const sum = (pick: (w: LpWeek) => number) => lpWeeks.reduce((a, w) => a + pick(w), 0);
+    return {
+      sessions: sum((w) => w.instagram_sessions),
+      cta: sum((w) => w.instagram_cta_dm + w.instagram_cta_hotpepper),
+      ctaDm: sum((w) => w.instagram_cta_dm),
+      ctaHp: sum((w) => w.instagram_cta_hotpepper),
+    };
+  }, [lpWeeks]);
+
   const stages: Stage[] = useMemo(() => {
     const reach = kpi?.reach ?? null;
     const views = kpi?.views ?? null;
@@ -43,10 +62,30 @@ export function Funnel({
       { key: "views", label: "インプレッション", value: views, estimated: false, note: "表示回数（同一人物の再閲覧含む）" },
       { key: "pv", label: "プロフィール閲覧", value: pv, estimated: false, note: "投稿→プロフィールへ移動した数" },
       { key: "follow", label: "フォロー", value: follows, estimated: false, note: follows == null ? "APIは直近30日のみ" : "純増数" },
+      // LPを計測できている期間だけ2段を挟む。未設定・未計測の週では従来どおりの表示に戻る。
+      ...(lp
+        ? [
+            {
+              key: "lp",
+              label: "LP訪問",
+              value: lp.sessions,
+              estimated: false,
+              prevKey: "pv",
+              note: "Instagram経由のセッション（GA4実測）",
+            },
+            {
+              key: "cta",
+              label: "予約導線クリック",
+              value: lp.cta,
+              estimated: false,
+              note: `DM ${fmtInt(lp.ctaDm)} ／ ホットペッパー ${fmtInt(lp.ctaHp)}（GA4実測）`,
+            },
+          ]
+        : []),
       { key: "dm", label: "DM問い合わせ", value: dm, estimated: manual.dm == null, note: manual.dm == null ? "推定値（手入力で確定）" : "手入力値" },
       { key: "booking", label: "予約", value: booking, estimated: manual.booking == null, note: manual.booking == null ? "推定値（手入力で確定）" : "手入力値" },
     ];
-  }, [kpi, manual]);
+  }, [kpi, manual, lp]);
 
   const max = Math.max(...stages.map((s) => s.value ?? 0), 1);
   const reach = stages[0].value;
@@ -67,9 +106,14 @@ export function Funnel({
                   s.value == null ? 0 : Math.max(4, Math.pow(s.value / max, 0.45) * 100);
                 // インプレッションはリーチより大きくなる（同一人物の再閲覧）ため倍率で表示
                 const isViews = s.key === "views";
+                // 既定は直前の行と比べるが、prevKey があればその段と比べる
+                // （LP訪問は「フォロー比」だと意味がないのでプロフィール閲覧比にする）
+                const prev = s.prevKey
+                  ? stages.find((x) => x.key === s.prevKey)
+                  : stages[i - 1];
                 const convFromPrev =
-                  i > 0 && !isViews && s.value != null && stages[i - 1].value
-                    ? s.value / (stages[i - 1].value as number)
+                  i > 0 && !isViews && s.value != null && prev?.value
+                    ? s.value / (prev.value as number)
                     : null;
                 const frequency =
                   isViews && s.value != null && reach ? s.value / reach : null;
@@ -99,10 +143,19 @@ export function Funnel({
                       </span>
                     </div>
                     <span className="tnum col-start-2 -mt-1 text-[10px] text-muted sm:col-start-3 sm:mt-0">
-                      {frequency != null && `リーチの${frequency.toFixed(1)}倍（再閲覧含む）`}
-                      {convFromPrev != null && `前段から ${fmtPct(convFromPrev)}`}
-                      {convFromReach != null && ` ／ リーチ比 ${fmtPct(convFromReach, 2)}`}
-                      {convFromPrev == null && frequency == null && s.note && ` ${s.note}`}
+                      {/* 空の項目があっても区切りが先頭に残らないよう、組み立ててから join する
+                          （前段比が出ない行で「／ リーチ比…」と始まっていた） */}
+                      {[
+                        frequency != null && `リーチの${frequency.toFixed(1)}倍（再閲覧含む）`,
+                        convFromPrev != null &&
+                          (s.prevKey
+                            ? `${prev?.label}から ${fmtPct(convFromPrev)}`
+                            : `前段から ${fmtPct(convFromPrev)}`),
+                        convFromReach != null && `リーチ比 ${fmtPct(convFromReach, 2)}`,
+                        convFromPrev == null && frequency == null && s.note,
+                      ]
+                        .filter(Boolean)
+                        .join(" ／ ")}
                     </span>
                   </li>
                 );

@@ -59,6 +59,9 @@ export interface DashboardData {
   /** 実運用の投稿枠（0=月）。fetch_dashboard_data.py が check_week_slots.SLOTS から書き出す。
    *  古いスナップショットには無いので optional。 */
   posting_slots?: PostingSlot[];
+  /** コンバージョンLPのGA4実測。fetch_ga4_data.py 由来。
+   *  サービスアカウント未設定なら null（→ dashboard/GA4_SETUP.md）。 */
+  lp?: LpData | null;
   claude_comment: string | null;
 }
 
@@ -66,6 +69,57 @@ export interface DashboardData {
 export interface PostingSlot {
   weekday: number;
   hour: number;
+}
+
+/* ───────── コンバージョンLP（GA4 / Search Console） ───────── */
+
+export interface LpData {
+  fetched_at: string;
+  property_id?: string;
+  since?: string;
+  weeks?: LpWeek[];
+  sources?: LpSource[];
+  search_console?: LpSearchConsole;
+  /** 取得に失敗したときだけ入る（画面は素直にこの文言を出す） */
+  error?: string;
+}
+
+/** 月曜始まりJSTの週サマリ。account_weekly と同じ週の切り方に揃えてある。 */
+export interface LpWeek {
+  week_start: string;
+  partial: boolean;
+  sessions: number;
+  engaged_sessions: number;
+  avg_engagement_sec: number;
+  /** Instagram経由だけを抜いた数。ファネルはこちらを使う（Directには自動化アクセスが混ざるため） */
+  instagram_sessions: number;
+  instagram_engaged_sessions: number;
+  cta_dm: number;
+  cta_hotpepper: number;
+  generate_lead: number;
+  instagram_cta_dm: number;
+  instagram_cta_hotpepper: number;
+  instagram_generate_lead: number;
+}
+
+/** 参照元/メディア別の合計。実ユーザーと自動化アクセスを見分けるための行。 */
+export interface LpSource {
+  source_medium: string;
+  sessions: number;
+  engaged_sessions: number;
+  avg_engagement_sec: number;
+  cta_dm: number;
+  cta_hotpepper: number;
+  generate_lead: number;
+}
+
+export interface LpSearchConsole {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  /** 表示回数が少ないとGoogleが匿名化して返さない。空配列は異常ではない。 */
+  queries: { query: string; clicks: number; impressions: number; position: number }[];
 }
 
 /* ───────── 分析後の派生型 ───────── */

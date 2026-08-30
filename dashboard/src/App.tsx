@@ -150,6 +150,10 @@ export default function App() {
           manual={manual}
           editable={editable}
           onManualChange={(patch) => weekStarts[0] && updateWeek(weekStarts[0], patch)}
+          // LPの週は fetch_ga4_data.py が月曜始まりJSTで揃えてあるので週キーで突き合わせられる
+          lpWeeks={(dashboardData.lp?.weeks ?? []).filter((w) =>
+            weekStarts.includes(w.week_start),
+          )}
         />
         <Heatmap heatmap={analyzed.heatmap} />
         <AiAnalysis
