@@ -165,6 +165,44 @@ def check_backgrounds(slides: list) -> list[tuple[bool, str]]:
     return results
 
 
+LP_PROFILE_WORD = "プロフィール"
+LP_LINK_WORDS = ("リンク", "URL")
+
+
+def check_lp_guidance(caption: str, slides: list) -> list[tuple[bool, str]]:
+    """LP（予約導線ページ）への誘導を毎回入れる（恒久ルール・2026-08-30）。
+
+    キャプションと CTAスライドの subtitle の両方に、
+    「プロフィール」＋「リンク（または URL）」の誘導を書く。
+    プロフィール欄のリンクが LP の入口なので、DM 案内だけだと
+    ページを見てもらえないまま終わる。
+    """
+    results = []
+
+    if LP_PROFILE_WORD in caption and any(w in caption for w in LP_LINK_WORDS):
+        results.append((True, "キャプションのLP誘導（プロフィールのリンク）✓"))
+    else:
+        results.append(
+            (False, "キャプションに LP誘導がありません。"
+                    "「プロフィールのリンクから」などプロフィール欄のページへ促す一文を入れてください")
+        )
+
+    cta = next((x for x in slides if x.get("type") == "cta"), None)
+    if cta is None:
+        return results
+
+    subtitle = str(cta.get("subtitle", ""))
+    if LP_PROFILE_WORD in subtitle and any(w in subtitle for w in LP_LINK_WORDS):
+        results.append((True, "CTAスライドのLP誘導（プロフィールのリンク）✓"))
+    else:
+        results.append(
+            (False, f"CTAスライドの subtitle に LP誘導がありません（現在: {subtitle!r}）。"
+                    "「詳しいご案内は／プロフィールのリンクから」のように書いてください")
+        )
+
+    return results
+
+
 def check_image_positions(slides: list, content_path: str) -> list[tuple[bool, str]]:
     """過去に使った画像は、同じ位置（focus_y）で切り取る。
 
@@ -361,6 +399,9 @@ def run_review(content_path: str, revision_instruction: str = ""):
 
     # 過去に使った画像は同じ位置で切り取る
     all_results.extend(check_image_positions(slides, content_path))
+
+    # LP（プロフィールのリンク先ページ）への誘導は毎回入れる
+    all_results.extend(check_lp_guidance(caption, slides))
 
     # alt_textチェック
     all_results.append(check_alt_text(alt_text))
