@@ -29,9 +29,25 @@ Artifact 版は今までどおり動く（バックアップ兼プレビュー�
 | 2 | `wrangler login` | ✅ 完了 |
 | 3 | GA4 プロパティ作成・測定ID `G-MWWZTQ1CE9` を反映 | ✅ 完了 |
 | 4 | Google Search Console 登録（**Googleアナリティクス方式で認証**）・sitemap送信・インデックス登録リクエスト | ✅ 完了 |
-| 5 | Instagram プロフィールのURLに `?utm_source=instagram` を付ける | ✅ 完了 |
+| 5 | Instagram プロフィールのURLに UTMパラメータを付ける | ⚠ 要修正（下記） |
 | 6 | IndexNow 送信（キー `93830b83e0113fb54c4dd82aff2fcb57`） | ✅ 完了（HTTP 202） |
 | 7 | **Bing Webmaster Tools 登録**（GSCからインポート） | ⬜ 未 |
+
+⚠ **プロフィールのリンクは `utm_medium` まで付けること（2026-08-30 に不備が判明）。**
+
+当初 `?utm_source=instagram` だけを付けていたため、GA4上で参照元/メディアが
+**`instagram / (not set)`** になり警告が出ていた。`utm_source` を指定すると
+GA4の自動判定が上書きされ、`utm_medium` を書かない限りメディアが埋まらないため。
+
+実測（8/1〜8/28）では最大の流入塊27セッションがこのバケットに落ち、UTM無しで来た
+`instagram / social` の7セッションと分断されていた。正しい形は：
+
+```
+https://www.esthe-miki.workers.dev/?utm_source=instagram&utm_medium=social
+```
+
+⚠ 過去分は `instagram / (not set)` のまま残る（遡って再分類されない）。
+切り替え日を境に2つのバケットが並ぶので、期間比較のときは両方を足すこと。
 
 ⚠ **Search Console は「HTMLタグ」ではなく「Googleアナリティクス」方式で認証した。**
 GA4のタグが head に入っているため、トークンの埋め込みと再デプロイが不要になる。
