@@ -165,6 +165,66 @@ def check_backgrounds(slides: list) -> list[tuple[bool, str]]:
     return results
 
 
+def check_image_positions(slides: list, content_path: str) -> list[tuple[bool, str]]:
+    """過去に使った画像は、同じ位置（focus_y）で切り取る。
+
+    同じ Drive 写真を毎回ちがう高さで切ると、フィード上で別の写真に見える。
+    過去の content.json を集計し、同じ画像・同じスライド型で使われた
+    focus_y のどれとも一致しない場合に ❌ を出す。
+    意図的に別の位置にしたい時は、そのスライドに focus_y_reason を書く。
+    """
+    try:
+        from image_positions import past_positions, recommended_focus_y
+    except ImportError:
+        return [(True, "画像位置チェック（image_positions.py なし・スキップ）")]
+
+    directory = os.path.dirname(os.path.abspath(content_path)) or "."
+    results = []
+
+    for i, slide in enumerate(slides, 1):
+        name = slide.get("reuse_filename")
+        if not name or slide.get("bg_strategy") not in ("reuse", "edit"):
+            continue
+
+        stype = slide.get("type")
+        rows = past_positions(name, stype, directory, exclude=content_path)
+        if not rows:
+            continue  # 初めて使う画像・この型では初めて
+
+        past = {r["focus_y"] for r in rows}
+        current = slide.get("focus_y")
+        if current in past:
+            if len(past) > 1:
+                rec = recommended_focus_y(name, stype, directory, exclude=content_path)
+                results.append(
+                    (True, f"スライド{i}: {name[:28]} 過去の位置と一致（focus_y={current}）"
+                           f"— ただし過去に複数あり（多数派 {rec}）")
+                )
+            else:
+                results.append(
+                    (True, f"スライド{i}: {name[:28]} 過去の位置と一致（focus_y={current}）✓")
+                )
+            continue
+
+        if str(slide.get("focus_y_reason", "")).strip():
+            results.append(
+                (True, f"スライド{i}: {name[:28]} 過去と別位置（理由明記あり: "
+                       f"{slide['focus_y_reason'][:30]}）✓")
+            )
+            continue
+
+        rec = recommended_focus_y(name, stype, directory, exclude=content_path)
+        where = ", ".join(f"{r['file']}#{r['slide']}(focus_y={r['focus_y']})" for r in rows[:3])
+        results.append(
+            (False, f"スライド{i}: {name[:34]} は過去に別の位置で使われています\n"
+                    f"  今回: focus_y={current} / 過去: {where}\n"
+                    f"  → focus_y={rec} に揃えてください"
+                    f"（意図的に変える場合は focus_y_reason に理由を書く）")
+        )
+
+    return results
+
+
 def check_slides(slides: list) -> list[tuple[bool, str]]:
     results = []
 
@@ -298,6 +358,9 @@ def run_review(content_path: str, revision_instruction: str = ""):
 
     # 背景画像の指定チェック（Drive優先・AI生成の暗黙採用を防ぐ）
     all_results.extend(check_backgrounds(slides))
+
+    # 過去に使った画像は同じ位置で切り取る
+    all_results.extend(check_image_positions(slides, content_path))
 
     # alt_textチェック
     all_results.append(check_alt_text(alt_text))
