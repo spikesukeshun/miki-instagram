@@ -18,6 +18,8 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 | `memo` | ✅ | なぜこのテーマ・切り口にしたかの記録。→ シートF列 |
 | `alt_text` | ✅ | 代替テキスト。「何が写っていて何が起きているか」を1〜2文で |
 | `bg_prompt` | ✅ | **共通のフォールバックプロンプト**（下記）|
+| `menu` | ✅ | メニュー種別（シートB列）。省略時は `--menu` が必須で、どちらも無ければ `create_post.py` が停止する |
+| `post_datetime` | ✅ | 投稿日時 `YYYY/MM/DD HH:MM`。省略時は `--post-datetime` → ファイル名 `content_YYYY-MM-DD-HHMM.json` の順で解決。決まらなければ停止する |
 | `drive_theme` | 任意 | 新規生成した背景のDriveアップロード先テーマ。省略時はメニュー種別から自動判定（`create_post.py:678`）|
 | `_generated_dir` | ⛔️ | **`create_post.py` が自動追記**（`create_post.py:707`）。手書きしない |
 

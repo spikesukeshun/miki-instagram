@@ -96,8 +96,14 @@ python3 check_week_slots.py
 4. 画像生成とシート登録：
 
 ```bash
-python create_post.py --content-file content.json
+python create_post.py --content-file content_2026-09-04-2200.json
 ```
+
+**投稿日時とメニュー種別は content.json の `post_datetime` / `menu` から決まる。**
+決められない場合は `PostTargetUnresolved` で停止する（既定値は置かない）。
+`--post-datetime` / `--menu` を付ければそちらが優先される。
+過去日時の枠は既存のシート行と GitHub フォルダを実データごと上書きするため、
+`--allow-past` を明示しない限り停止する。
 
 `--content-file` を付けない `python create_post.py` は Groq に文章を自動生成させる旧経路。
 現在の運用では使わない（定時投稿の GitHub Actions は `post_scheduler.py` だけを実行する）。
@@ -127,7 +133,7 @@ seed が複数ある場合はスペース区切りで渡す。
 修正はすべて**チャット経由**（シート経由の自動修正フローは 2026-07-11 に廃止済み）。
 
 1. チャットで修正指示を受けて content.json を直す
-2. `python create_post.py --content-file content.json` を再実行
+2. `python create_post.py --content-file content_YYYY-MM-DD-HHMM.json` を再実行
 3. **修正指示文を渡して校閲する**（依頼内容が反映されたかも検証される）：
 
 ```bash
