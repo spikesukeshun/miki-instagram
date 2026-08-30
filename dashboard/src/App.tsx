@@ -50,7 +50,7 @@ export default function App() {
     [cmp, periodPosts, analyzed],
   );
   const strategy = useMemo(
-    () => buildStrategy(analyzed.themes, analyzed.heatmap, analyzed.insightPosts),
+    () => buildStrategy(analyzed.themes, analyzed.posts, dashboardData.posting_slots),
     [analyzed],
   );
 

@@ -56,7 +56,16 @@ export interface DashboardData {
   account_daily: AccountDaily[];
   account_weekly: AccountWeekly[];
   posts: RawPost[];
+  /** 実運用の投稿枠（0=月）。fetch_dashboard_data.py が check_week_slots.SLOTS から書き出す。
+   *  古いスナップショットには無いので optional。 */
+  posting_slots?: PostingSlot[];
   claude_comment: string | null;
+}
+
+/** 曜日（0=月）と時（JST）。実運用の投稿枠1つぶん。 */
+export interface PostingSlot {
+  weekday: number;
+  hour: number;
 }
 
 /* ───────── 分析後の派生型 ───────── */

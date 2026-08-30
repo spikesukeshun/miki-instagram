@@ -58,7 +58,7 @@ export function KpiGrid({ cmp, rangeLabel, right }: { cmp: PeriodComparison; ran
       delta: ratio(c?.pvRate, p?.pvRate),
       monthDelta: ratio(c?.pvRate, m?.pvRate),
       stars: 5,
-      note: "プロフィール閲覧 ÷ リーチ",
+      note: "プロフィール閲覧 ÷ リーチ。リーチが減ると率だけ上がることがある",
     },
     {
       key: "followers",

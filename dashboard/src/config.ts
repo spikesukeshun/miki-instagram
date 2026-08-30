@@ -1,4 +1,4 @@
-import type { ThemeKey } from "./types";
+import type { PostingSlot, ThemeKey } from "./types";
 
 /**
  * ダッシュボード全体の設定。
@@ -49,8 +49,12 @@ export const ANALYSIS = {
   referencePool: 140,
   /** 改善レポートに表示する投稿数 */
   reportPosts: 12,
-  /** ランキングに表示する投稿数 */
+  /** ランキングに表示する投稿数（折りたたみを開いたときの総数） */
   rankingPosts: 10,
+  /** ランキングで常時見せる件数。これ以降は折りたたむ */
+  rankingVisible: 3,
+  /** ランキングの対象期間（ヶ月）。古い投稿が上位を占め続けるのを防ぐ */
+  rankingWindowMonths: 6,
 } as const;
 
 /** ファネルのDM・予約が未入力のときに使う推定係数
@@ -66,15 +70,11 @@ export const STORAGE_KEY = "miki-ig-dashboard-manual-v1";
 /** 想定値レンジの幅（trailing平均 ×(1±この値)） */
 export const FORECAST_MARGIN = 0.25;
 
-/** 戦略提案で使うCTA・タイトル改善のテンプレート（実績パターン準拠） */
-export const CTA_LIBRARY = [
-  "「MIKI指名 初回限定20%OFF（VIPコースのみ）」を末尾に明記し、その直前に予約タイミングの一言（例：今週のご褒美に）を添える",
-  "「DMからご相談」の前に、相談のハードルを下げる一文（例：質問だけでも大丈夫です）を入れる",
-  "キャプション中盤に「保存しておくと便利です」の一文を入れ、保存からの再訪→DMの導線を作る",
-];
-
-export const TITLE_TIPS = [
-  "数字を入れる（例：式まで3ヶ月/週1回のご褒美/40代の肌）と保存率が上がりやすい",
-  "読者の悩みの言葉で始める（例：「なんだか疲れが取れない」）と自分ごと化されやすい",
-  "カバータイトルは13文字前後×2行まで。助詞止めを避け文節で改行する",
+/** 投稿枠のフォールバック（月22:00 / 木21:00 / 金22:00）。
+ *  正は check_week_slots.py の SLOTS で、通常は dashboard_data.json の posting_slots に
+ *  載って渡ってくる。ここは posting_slots を持たない古いスナップショット用。 */
+export const DEFAULT_POSTING_SLOTS: PostingSlot[] = [
+  { weekday: 0, hour: 22 },
+  { weekday: 3, hour: 21 },
+  { weekday: 4, hour: 22 },
 ];
