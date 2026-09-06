@@ -73,7 +73,7 @@ list（リスト）:
   {"filename": "bg03.jpg", "type": "list", "title": "タイトル", "items": ["項目1（全角20文字以内）", "項目2", ...], "footer": "締めの一言（省略可）", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 cta（コールトゥアクション）:
-  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  Instagram限定20%OFF\n（VIPコースのみ）", "body": "本文（改行は\\nで）", "subtitle": review_post.py の CTA_REQUIRED_SUBTITLE と完全一致（固定文言・変更禁止）, "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
+  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  Instagram限定20%OFF\n（VIPコースのみ）", "body": "本文（改行は\\nで）", "subtitle": <<CTA_SUBTITLE>>（固定文言・一字一句この通りに書く）, "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 ## bg_strategyの判断基準
 各スライドに bg_strategy を必ず指定してください。
@@ -156,6 +156,16 @@ reuse_indexは利用可能な過去画像リストの番号（0始まり）を�
   "bg_prompt": "generate指定スライド用の背景画像生成プロンプト（英語、例: Japanese esthetic salon, warm beige, no people, luxury spa interior）"
 }
 """
+
+# CTAスライドの subtitle は review_post.py の固定文言が正。
+# プロンプトに参照だけ書いても LLM は review_post.py を読めないので、
+# 実際の文言を JSON 文字列として埋め込む（文言の正は1か所のまま）。
+from review_post import CTA_REQUIRED_SUBTITLE as _CTA_SUBTITLE
+
+SYSTEM_PROMPT = SYSTEM_PROMPT.replace(
+    "<<CTA_SUBTITLE>>", json.dumps(_CTA_SUBTITLE, ensure_ascii=False)
+)
+
 
 BRIDAL_ADDON = """
 ## ブライダルエステ専用情報

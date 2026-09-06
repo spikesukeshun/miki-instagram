@@ -11,6 +11,7 @@ import sys
 import json
 import re
 import argparse
+import unicodedata
 
 EMOJI_PATTERN = re.compile(
     "[\U0001F300-\U0001F9FF"
@@ -37,9 +38,13 @@ CTA_REQUIRED_SUBTITLE = (
 def normalize_cta_subtitle(subtitle: str) -> str:
     """固定文言との比較用に正規化する。
 
-    行末の空白と、書かれていた場合の 💌 を落とす（💌 は描画時の自動付与が正）。
+    - NFC に揃える。描画側（generate_carousel.normalize_text）が NFC 正規化して
+      から描くので、校閲だけ素通しだと「画像は正しいのに校閲が落ちる」ズレが出る
+    - 行末の空白と、書かれていた場合の 💌 を落とす（💌 は描画時の自動付与が正）。
+      異体字セレクタ U+FE0F 付きの「💌️」でコピーされることがあるので一緒に外す
     """
-    lines = [re.sub(r"[\s\U0001F48C]+$", "", line) for line in str(subtitle).split("\n")]
+    text = unicodedata.normalize("NFC", str(subtitle))
+    lines = [re.sub(r"[\s\U0001F48C\uFE0F]+$", "", line) for line in text.split("\n")]
     return "\n".join(lines).strip()
 
 
@@ -213,9 +218,11 @@ def check_lp_guidance(caption: str, slides: list) -> list[tuple[bool, str]]:
     if LP_PROFILE_WORD in subtitle and any(w in subtitle for w in LP_LINK_WORDS):
         results.append((True, "CTAスライドのLP誘導（プロフィールのリンク）✓"))
     else:
+        # 文言は CTA_REQUIRED_SUBTITLE で固定済み。ここで別の書き方を勧めると
+        # 直した先で固定文言チェックに落ちる（助言が互いに矛盾する）ので案内を揃える
         results.append(
             (False, f"CTAスライドの subtitle に LP誘導がありません（現在: {subtitle!r}）。"
-                    "「詳しいご案内は／プロフィールのリンクから」のように書いてください")
+                    f"固定文言をそのまま使ってください:\n  「{CTA_REQUIRED_SUBTITLE}」")
         )
 
     return results
@@ -323,10 +330,16 @@ def check_slides(slides: list) -> list[tuple[bool, str]]:
                 results.append((True, f"スライド{i}（CTA）タイトル ✓"))
 
             # CTAスライドの subtitle 固定文言チェック（恒久ルール・2026-09-06）
-            if normalize_cta_subtitle(slide.get("subtitle", "")) != CTA_REQUIRED_SUBTITLE:
+            raw_subtitle = slide.get("subtitle")
+            if not isinstance(raw_subtitle, str) or not raw_subtitle.strip():
+                results.append(
+                    (False, f"スライド{i}（CTA）: subtitle がありません\n"
+                            f"  必須: 「{CTA_REQUIRED_SUBTITLE}」")
+                )
+            elif normalize_cta_subtitle(raw_subtitle) != CTA_REQUIRED_SUBTITLE:
                 results.append(
                     (False, f"スライド{i}（CTA）: subtitle が固定文言と違います\n"
-                            f"  現在: 「{slide.get('subtitle', '')}」\n"
+                            f"  現在: 「{raw_subtitle}」\n"
                             f"  必須: 「{CTA_REQUIRED_SUBTITLE}」")
                 )
             else:

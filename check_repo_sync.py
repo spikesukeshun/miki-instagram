@@ -185,6 +185,25 @@ def check_generate_guard() -> tuple[bool, str]:
     return True, "review_post.py の背景チェックあり ✓"
 
 
+def _is_compared_against(src: str, name: str) -> bool:
+    """定数 name が実際に比較（==/!=）に使われているかを AST で見る。
+
+    出現回数を数えるだけだと、エラーメッセージの f-string に名前が残っている
+    かぎり ✓ になり、肝心の比較行が消えていても気づけない。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Compare):
+            continue
+        for side in [node.left, *node.comparators]:
+            if isinstance(side, ast.Name) and side.id == name:
+                return True
+    return False
+
+
 def check_cta_subtitle_rule() -> tuple[bool, str]:
     """CTAスライドの subtitle 固定文言チェックが生きていること（恒久・2026-09-06）。
 
@@ -200,9 +219,10 @@ def check_cta_subtitle_rule() -> tuple[bool, str]:
     if "プロフィール" not in value or "リンク" not in value:
         return False, (f"CTA_REQUIRED_SUBTITLE に LP誘導（プロフィール／リンク）がありません"
                        f"（現在: {value!r}）")
-    if src.count("CTA_REQUIRED_SUBTITLE") < 2:
-        return False, ("CTA_REQUIRED_SUBTITLE が定義だけで使われていません— "
-                       "校閲で照合していないと固定文言が黙って変わる")
+    if not _is_compared_against(src, "CTA_REQUIRED_SUBTITLE"):
+        return False, ("CTA_REQUIRED_SUBTITLE が照合に使われていません— "
+                       "定義とエラーメッセージだけ残って比較が消えると、"
+                       "固定文言が黙って変わる")
     return True, "CTAスライドの subtitle は固定文言で照合 ✓"
 
 
