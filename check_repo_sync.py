@@ -185,12 +185,34 @@ def check_generate_guard() -> tuple[bool, str]:
     return True, "review_post.py の背景チェックあり ✓"
 
 
+def check_cta_subtitle_rule() -> tuple[bool, str]:
+    """CTAスライドの subtitle 固定文言チェックが生きていること（恒久・2026-09-06）。
+
+    subtitle は LP（プロフィールのリンク先）への唯一の導線なので、
+    回ごとに言い回しが変わると「どこを見ればいいか」が毎回ぶれる。
+    review_post.py が完全一致で止める実装になっているかを見る。
+    """
+    src = _read("review_post.py")
+    value = _literal_constant(src, "CTA_REQUIRED_SUBTITLE")
+    if value is None:
+        return False, ("review_post.py に CTA_REQUIRED_SUBTITLE がありません— "
+                       "CTAスライドの subtitle は毎回同じ固定文言にする恒久ルール")
+    if "プロフィール" not in value or "リンク" not in value:
+        return False, (f"CTA_REQUIRED_SUBTITLE に LP誘導（プロフィール／リンク）がありません"
+                       f"（現在: {value!r}）")
+    if src.count("CTA_REQUIRED_SUBTITLE") < 2:
+        return False, ("CTA_REQUIRED_SUBTITLE が定義だけで使われていません— "
+                       "校閲で照合していないと固定文言が黙って変わる")
+    return True, "CTAスライドの subtitle は固定文言で照合 ✓"
+
+
 RULE_CHECKS = [
     check_list_left_align,
     check_sheet_columns,
     check_no_silent_bg_fallback,
     check_bg_prompt_no_default,
     check_generate_guard,
+    check_cta_subtitle_rule,
 ]
 
 

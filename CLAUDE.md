@@ -66,6 +66,8 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
 - **スライド本文（text/body）の一人称は「私」。** MIKIはタイトルのみ
 - **CTAスライドのタイトルは固定文言**（修正依頼でも変更しない）：
   `MIKI指名 Instagram限定20%OFF\n（VIPコースのみ）`
+- **CTAスライドの `subtitle` も固定文言**（修正依頼でも変更しない）。
+  正は `review_post.py` の `CTA_REQUIRED_SUBTITLE`、文面は `rules/content-schema.md`
 - **LP誘導を毎回入れる。** キャプション本文と CTAスライドの `subtitle` の両方に
   「プロフィール」＋「リンク」を含める（`review_post.py` の `check_lp_guidance()` が停止させる）
 - **過去に使った画像は同じ `focus_y` で切る。** `python3 image_positions.py "<ファイル名>"` で

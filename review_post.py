@@ -24,6 +24,24 @@ EMOJI_PATTERN = re.compile(
 CTA_REQUIRED_TITLE = "MIKI指名 Instagram限定20%OFF（VIPコースのみ）"
 CTA_REQUIRED_TITLE_ALT = "MIKI指名 Instagram限定20%OFF\n（VIPコースのみ）"
 
+# CTAスライドの subtitle も固定文言（恒久ルール・2026-09-06）。
+# コースの流れと料金が LP にまとまっていることを、毎回同じ言葉で伝える。
+# 💌 は generate_carousel.py が描画時に最終行へ足すので、ここには書かない。
+CTA_REQUIRED_SUBTITLE = (
+    "コースの流れとご料金は\n"
+    "プロフィールのリンクにまとめています\n"
+    "気になる方はのぞいてみてください"
+)
+
+
+def normalize_cta_subtitle(subtitle: str) -> str:
+    """固定文言との比較用に正規化する。
+
+    行末の空白と、書かれていた場合の 💌 を落とす（💌 は描画時の自動付与が正）。
+    """
+    lines = [re.sub(r"[\s\U0001F48C]+$", "", line) for line in str(subtitle).split("\n")]
+    return "\n".join(lines).strip()
+
 
 def count_emojis(text: str) -> int:
     return sum(len(m) for m in EMOJI_PATTERN.findall(text))
@@ -303,6 +321,16 @@ def check_slides(slides: list) -> list[tuple[bool, str]]:
                 )
             else:
                 results.append((True, f"スライド{i}（CTA）タイトル ✓"))
+
+            # CTAスライドの subtitle 固定文言チェック（恒久ルール・2026-09-06）
+            if normalize_cta_subtitle(slide.get("subtitle", "")) != CTA_REQUIRED_SUBTITLE:
+                results.append(
+                    (False, f"スライド{i}（CTA）: subtitle が固定文言と違います\n"
+                            f"  現在: 「{slide.get('subtitle', '')}」\n"
+                            f"  必須: 「{CTA_REQUIRED_SUBTITLE}」")
+                )
+            else:
+                results.append((True, f"スライド{i}（CTA）subtitle 固定文言 ✓"))
 
             # CTAスライドbodyの禁止フレーズチェック
             CTA_BANNED_PHRASES = [

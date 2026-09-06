@@ -73,7 +73,7 @@ list（リスト）:
   {"filename": "bg03.jpg", "type": "list", "title": "タイトル", "items": ["項目1（全角20文字以内）", "項目2", ...], "footer": "締めの一言（省略可）", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 cta（コールトゥアクション）:
-  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  Instagram限定20%OFF\n（VIPコースのみ）", "body": "本文（改行は\\nで）", "subtitle": "ご予約・ご相談はDMからお気軽にどうぞ", "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
+  {"filename": "bgN.jpg", "type": "cta", "title": "MIKI指名  Instagram限定20%OFF\n（VIPコースのみ）", "body": "本文（改行は\\nで）", "subtitle": review_post.py の CTA_REQUIRED_SUBTITLE と完全一致（固定文言・変更禁止）, "bg_strategy": "reuse|edit|generate", "reuse_index": 番号}
 
 ## bg_strategyの判断基準
 各スライドに bg_strategy を必ず指定してください。
@@ -115,7 +115,7 @@ reuse_indexは利用可能な過去画像リストの番号（0始まり）を�
 - ctaスライドの"body": 2〜4行、読者への具体的な呼びかけ。1行10〜30文字
   - **必ず「〜はMIKIにお任せください。」「〜をMIKIにお任せください。」で締めること（恒久ルール）**
   - 禁止フレーズ（絶対に使わない）: 「MIKIに会いに来てください」「MIKIに会いにきてください」「まずはお気軽にDMでご連絡ください」「お気軽にDMでご連絡ください」
-  - subtitleに「ご予約・ご相談はDMからお気軽にどうぞ」があるためbodyに重複させない
+  - subtitleはLP誘導の固定文言（変更禁止）なのでbodyに重複させない
 
 ### キャプションの書き方
 - 段落の区切りは必ず\n\nを使うこと（段落間に空行を入れる）
