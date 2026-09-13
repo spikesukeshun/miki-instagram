@@ -876,6 +876,8 @@ def copy_extra_pages():
       入れ忘れていたら落とす。
     ⚠ ビルドが生成するファイル（index.html・robots.txt など）と同名なら落とす。
       黙って上書きするとLP本体が差し替わる。
+    ⚠ 先頭が _ のファイル（_headers・_redirects など）は落とす。Workers が制御ファイルとして
+      読むので、置くだけで本番LPを含むサイト全体の配信やURLを変えられてしまう。
     """
     extra = os.path.join(LP_DIR, "extra")
     if not os.path.isdir(extra):
@@ -885,12 +887,15 @@ def copy_extra_pages():
         src = os.path.join(extra, name)
         if name.startswith(".") or not os.path.isfile(src):
             continue
+        if name.startswith("_"):
+            raise SystemExit(f"lp/extra/{name} は制御ファイル扱いになる名前（先頭 _）。本番の配信を変えうるので中止")
         dst = os.path.join(DIST, name)
         if os.path.exists(dst):
             raise SystemExit(f"lp/extra/{name} がビルドの生成物と同名。LP本体を上書きするので中止")
-        if name.endswith(".html"):
+        if name.lower().endswith((".html", ".htm")):
             with open(src, encoding="utf-8") as f:
                 head = f.read(4000)
+            head = re.sub(r"<!--.*?-->", "", head, flags=re.S)   # コメントアウトした meta では通さない
             if not re.search(r"<meta[^>]+name=.robots.[^>]*noindex", head):
                 raise SystemExit(f"lp/extra/{name} に noindex が無い。関係者向けページが検索に出るので中止")
         shutil.copy2(src, dst)

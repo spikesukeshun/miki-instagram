@@ -41,7 +41,9 @@
   .tt{margin:0;font-weight:600;line-height:1.5}
   .td{margin:2px 0 8px;color:var(--soft);font-size:13px;line-height:1.65}
   .go{display:inline-block;padding:9px 22px;border-radius:999px;background:var(--gold);color:#F3EEE2;
-    text-decoration:none;font-weight:600;font-size:14px}
+    text-decoration:none;font-weight:600;font-size:14px;transition:opacity .2s}
+  /* 1つの試行の記録が付くまで、ほかのボタンは押せない（結果が別のテストに付くのを防ぐ） */
+  .go.busy{opacity:.35;pointer-events:none}
   .ob{margin:6px 0 0;font-size:12px;color:var(--olive)}
   table{border-collapse:collapse;width:100%;font-size:13px}
   td{padding:5px 6px;vertical-align:top;border-top:1px solid var(--line)}
@@ -63,7 +65,7 @@
     <ul>
       <li><b>Instagramアプリの中で</b>このページを開いてください。InstagramのDMでこのページのURLを送り、届いたリンクをタップすると再現できます。Safari や Chrome で直接開いても意味がありません。</li>
       <li><b>@estmiki 以外のアカウント</b>でログインした Instagram で試してください。自分宛てのDMでは正しく試せません。</li>
-      <li>1つ試したら Instagram アプリに戻り、このページから次のテストへ進んでください。</li>
+      <li>1つ試したら Instagram アプリに戻り、このページから次のテストへ進んでください。記録が付くまでの数秒間は、ほかのボタンは押せません。</li>
     </ul>
   </div>
 
@@ -106,12 +108,12 @@
     <summary>Android 向けのテスト</summary>
     <div class="t"><div class="tc">A1</div><div class="tb">
       <p class="tt">Chromeへ脱出 → 中継ページでタップ</p>
-      <p class="td">Chrome が開けば第1関門クリア。中継ページの「InstagramでDMを開く」（R1）をタップしてください。</p>
+      <p class="td">Chrome が開けば第1関門クリア。中継ページの「InstagramでDMを開く」（R1）をタップしてください。Play ストアが開いた場合は、その端末で Chrome が使えない状態です（結果は E）。</p>
       <a class="go" data-code="A1" href="#">試す</a><p class="ob" id="ob-A1"></p>
     </div></div>
     <div class="t"><div class="tc">A2</div><div class="tb">
       <p class="tt">Chromeへ脱出 → 中継ページから自動でDMへ</p>
-      <p class="td">タップ1回で完結する形。Chrome が開いたあと、自動で Instagram に切り替わるかを見ます。</p>
+      <p class="td">タップ1回で完結する形。Chrome が開いたあと、自動で Instagram に切り替わるかを見ます。Play ストアが開いた場合は結果 E です。</p>
       <a class="go" data-code="A2" href="#">試す</a><p class="ob" id="ob-A2"></p>
     </div></div>
     <div class="t"><div class="tc">A3</div><div class="tb">
@@ -146,7 +148,8 @@
 
   <div class="box">
     <h2>自動で記録した内容</h2>
-    <p class="note">ボタンを押したあと画面が切り替わったかを、このページが自動で記録しています。実際に見たことと合わせて送ってください。</p>
+    <p class="note">ボタンを押したあと画面が変わったかを、このページが自動で記録しています。記録は補助で、
+      別アプリに切り替わったのか Instagram が画面を覆ったのかまでは区別できません。<b>実際に見たこと（A〜F）</b>と合わせて送ってください。</p>
     <textarea id="summary" readonly></textarea>
     <div class="row">
       <button class="btn2" id="copy" type="button">まとめてコピー</button>
@@ -177,23 +180,30 @@
     if (/; wv\)/.test(ua)) return 'Androidのアプリ内ブラウザ';
     if (isAndroid && /Chrome\//.test(ua)) return 'Chrome（Android）';
     if (isIOS && /Safari\//.test(ua)) return 'Safari';
+    if (isIOS) return 'アプリ内ブラウザ（アプリ名は判定できず）';
     return 'その他のブラウザ';
   }
   var BROWSER = browserName();
   var OS = isIOS ? 'iPhone / iPad' : isAndroid ? 'Android' : 'パソコンなど';
+  var CODES = ['I1', 'I2', 'I3', 'I4', 'A1', 'A2', 'A3', 'C1'];
 
   // 行き先はこのページ自身のホストから組み立てる（ローカル検証でもそのまま動くように）
   var relay = host + '/dm-open';
-  var HREF = {
-    I1: 'x-safari-' + proto + '://' + relay,
-    I2: 'x-safari-' + proto + '://' + relay + '?auto=1',
-    I3: 'x-safari-https://ig.me/m/' + USER,
-    I4: (proto === 'https' ? 'googlechromes' : 'googlechrome') + '://' + relay,
-    A1: 'intent://' + relay + '#Intent;scheme=' + proto + ';package=com.android.chrome;end',
-    A2: 'intent://' + relay + '?auto=1#Intent;scheme=' + proto + ';package=com.android.chrome;end',
-    A3: 'intent://' + relay + '#Intent;scheme=' + proto + ';end',
-    C1: 'https://ig.me/m/' + USER
-  };
+  function hrefFor(code){
+    // I2 / A2 はタップ時刻を付ける。中継ページの自動遷移を「タップ1回につき1回」にするための印
+    var t = 't=' + Date.now();
+    switch (code) {
+      case 'I1': return 'x-safari-' + proto + '://' + relay;
+      case 'I2': return 'x-safari-' + proto + '://' + relay + '?auto=1&' + t;
+      case 'I3': return 'x-safari-https://ig.me/m/' + USER;
+      case 'I4': return (proto === 'https' ? 'googlechromes' : 'googlechrome') + '://' + relay;
+      case 'A1': return 'intent://' + relay + '#Intent;scheme=' + proto + ';package=com.android.chrome;end';
+      case 'A2': return 'intent://' + relay + '?auto=1&' + t + '#Intent;scheme=' + proto + ';package=com.android.chrome;end';
+      case 'A3': return 'intent://' + relay + '#Intent;scheme=' + proto + ';end';
+      case 'C1': return 'https://ig.me/m/' + USER;
+    }
+    return '#';
+  }
 
   document.getElementById('e-browser').textContent = BROWSER;
   document.getElementById('e-os').textContent = OS;
@@ -214,44 +224,80 @@
   }
   function render(){
     var o = load();
-    Object.keys(HREF).forEach(function(c){
+    CODES.forEach(function(c){
       var el = document.getElementById('ob-' + c);
       if (el) el.textContent = o[c] ? '自動記録 ' + o[c].at + '：' + o[c].msg : '';
     });
     var lines = ['【DM導線テスト】', '日時：' + new Date().toLocaleString('ja-JP'),
                  'ブラウザ：' + BROWSER, '端末：' + OS, 'UA：' + ua, '', '自動記録：'];
     var n = 0;
-    Object.keys(HREF).forEach(function(c){ if (o[c]) { lines.push('  ' + c + '：' + o[c].msg); n++; } });
+    CODES.forEach(function(c){ if (o[c]) { lines.push('  ' + c + '：' + o[c].msg); n++; } });
     if (!n) lines.push('  （まだありません）');
     lines.push('', '実際に起きたこと（例：I1：A／R1：B）：', '');
     document.getElementById('summary').value = lines.join('\n');
   }
 
-  [].forEach.call(document.querySelectorAll('a.go[data-code]'), function(a){
+  // ── タップ後の観察 ──
+  // ⚠ 書くのは「画面で起きた事実」だけ。別アプリに切り替わったのか、Instagram が自分の画面で
+  //    覆ったのかはページからは区別できないので、そこは実際に見た結果（A〜F）で判断する。
+  // ⚠ 試行は同時に1つだけ。続けて別のボタンを押すと、1回の切替が両方に記録されてしまう。
+  var buttons = [].slice.call(document.querySelectorAll('a.go[data-code]'));
+  var current = null;
+  function setBusy(on){ buttons.forEach(function(b){ b.classList.toggle('busy', on); }); }
+
+  function startTrial(code){
+    var t = { done: false, blurred: false, timer: null };
+    current = t;
+    setBusy(true);
+    record(code, '確認中…');
+
+    function finish(msg){
+      if (t.done) return;
+      t.done = true;
+      clearTimeout(t.timer);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('pagehide', onHide);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
+      if (current === t) { current = null; setBusy(false); }
+      record(code, msg);
+    }
+    function onVis(){
+      if (document.visibilityState === 'hidden') finish('画面が切り替わった（このページが隠れた）');
+    }
+    function onHide(){
+      // アプリ切替でも pagehide が先に届く端末があるので、その時点の表示状態で書き分ける
+      finish(document.visibilityState === 'hidden'
+        ? '画面が切り替わった（このページが隠れた）'
+        : 'このページを離れた（別のページへ移動した）');
+    }
+    function onBlur(){
+      // 確認の表示やアプリ選択の画面が出た可能性。選ぶのに時間がかかるので、ここでは確定しない
+      t.blurred = true;
+      clearTimeout(t.timer);
+      t.timer = setTimeout(function(){ finish('確認の表示や選択画面が出たまま30秒たった'); }, 30000);
+    }
+    function onFocus(){
+      if (!t.blurred) return;
+      clearTimeout(t.timer);
+      // 選んだ直後に切り替わることがあるので、少し待ってから確定する
+      t.timer = setTimeout(function(){ finish('確認の表示や選択画面が出たが、画面は切り替わらなかった'); }, 1500);
+    }
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', onHide);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+    t.timer = setTimeout(function(){ finish('2.5秒たっても画面は変わらなかった'); }, 2500);
+  }
+
+  buttons.forEach(function(a){
     var code = a.getAttribute('data-code');
-    a.href = HREF[code];
-    // ⚠ preventDefault しない。リンクのタップそのものをOSに渡すのがこのテストの目的。
-    a.addEventListener('click', function(){
-      var done = false, blurred = false;
-      function finish(msg){
-        if (done) return;
-        done = true;
-        document.removeEventListener('visibilitychange', onVis);
-        window.removeEventListener('pagehide', onHide);
-        window.removeEventListener('blur', onBlur);
-        record(code, msg);
-      }
-      function onVis(){ if (document.hidden) finish('別のアプリに切り替わった'); }
-      function onHide(){ finish('このページから別のページへ移動した（アプリ内ブラウザの中での移動）'); }
-      function onBlur(){ blurred = true; }
-      document.addEventListener('visibilitychange', onVis);
-      window.addEventListener('pagehide', onHide);
-      window.addEventListener('blur', onBlur);
-      record(code, '確認中…');
-      setTimeout(function(){
-        finish(blurred ? '画面は切り替わらず、フォーカスだけ外れた（確認の表示が出た可能性）'
-                       : '2.5秒たっても何も起きなかった');
-      }, 2500);
+    a.href = hrefFor(code);
+    a.addEventListener('click', function(e){
+      if (current && !current.done) { e.preventDefault(); return; }   // 前の試行の記録待ち
+      a.href = hrefFor(code);   // I2 / A2 のタップ時刻を付け直す（クリック後の遷移はこの値を使う）
+      // ⚠ ここで preventDefault しない。リンクのタップそのものをOSに渡すのがこのテストの目的。
+      startTrial(code);
     });
   });
 

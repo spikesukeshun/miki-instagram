@@ -110,9 +110,15 @@
     if (/; wv\)/.test(ua)) return 'Androidのアプリ内ブラウザ';
     if (isAndroid && /Chrome\//.test(ua)) return 'Chrome（Android）';
     if (isIOS && /Safari\//.test(ua)) return 'Safari';
+    if (isIOS) return 'アプリ内ブラウザ（アプリ名は判定できず）';
     return 'その他のブラウザ';
   }
-  var inIAB = /Instagram|FBAN|FBAV|Line\//.test(ua) || /; wv\)/.test(ua);
+  // ⚠ iOS で UA に "Safari/" が無いものはアプリ内ブラウザ（WKWebView）として扱う。
+  //    Instagram 以外のアプリ（Google アプリ・X など）から開いた場合もここで拾える。
+  //    iOS の Chrome / Firefox / Edge は UA に "Safari/" を含むので外部ブラウザ側に入る。
+  //    Android の Custom Tabs は通常の Chrome と UA が同じで区別できない（Instagram から
+  //    始めるこのテストでは起きにくい）。
+  var inIAB = /Instagram|FBAN|FBAV|Line\//.test(ua) || /; wv\)/.test(ua) || (isIOS && !/Safari\//.test(ua));
 
   var st = document.getElementById('st');
   document.getElementById('ua').textContent = ua;
@@ -130,19 +136,24 @@
   document.getElementById('r3').href = 'instagram://user?username=' + USER;
   document.getElementById('r2').onclick = function(){ location.href = DM; };
 
-  if (/[?&]auto=1(&|$)/.test(location.search)) {
+  var q = new URLSearchParams(location.search);
+  if (q.get('auto') === '1') {
     var box = document.getElementById('auto');
     box.hidden = false;
     if (inIAB) {
       box.className = 'box warn';
       box.innerHTML = '<h2>自動では開きません</h2>アプリ内ブラウザの中で自動遷移しても、ログイン画面になるだけなので止めています。';
     } else {
-      // 戻る操作でこのページに帰ってきたとき、また勝手に飛ばないよう1回だけにする
-      var FLAG = 'dmopen_auto_done', already = false;
+      // 自動遷移は「タップ1回につき1回」。戻る・再読み込みでは発火させない。
+      //   ・フラグは t（dm-test がタップ時刻を付ける）ごとに持つ → 新しいタップなら必ず発火する
+      //   ・reload / back_forward なら発火しない → sessionStorage が使えない環境でも再発火しない
+      var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
+      var revisit = nav.type === 'reload' || nav.type === 'back_forward';
+      var FLAG = 'dmopen_auto_' + (q.get('t') || 'none'), already = false;
       try { already = sessionStorage.getItem(FLAG) === '1'; sessionStorage.setItem(FLAG, '1'); } catch (_) {}
-      if (already) {
+      if (already || revisit) {
         box.className = 'box warn';
-        box.innerHTML = '<h2>自動遷移は1回だけです</h2>もう一度試すときは R1 / R2 を使ってください。';
+        box.innerHTML = '<h2>自動遷移は1回だけです</h2>戻ってきたときにまた勝手に飛ばないよう止めています。もう一度試すときは、テストページのボタンから入り直すか、R1 / R2 を使ってください。';
       } else {
         box.className = 'box ok';
         box.innerHTML = '<h2>このあと自動で Instagram を開きます</h2>切り替わらなかった場合は、その結果（例：I2：A／自動：D）を控えてから R1 を試してください。';

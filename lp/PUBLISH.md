@@ -441,8 +441,10 @@ Instagram のアプリ内ブラウザから DM（`ig.me/m/estmiki`）を開く�
 | `/dm-test` | テスト本体。手法ごとのボタン（iPhone: I1〜I4 / Android: A1〜A3 / 対照: C1）と、押した後の自動記録 |
 | `/dm-open` | 脱出先の中継ページ。脱出できたかを表示し、R1（タップ）/ R2（JSで遷移）/ R3（アプリのプロフィール）を試す。`?auto=1` は読み込み直後に自動遷移（1回だけ） |
 
-- ソースは `lp/extra/`。`build_site.py` の `copy_extra_pages()` が dist にそのまま置く
-  （noindex の無いHTML・生成物と同名のファイルは止まる）
+- ソースは `lp/extra/`。`build_site.py` の `copy_extra_pages()` が dist にそのまま置く。
+  次の場合は止まる：noindex の無いHTML（`.htm`・大文字拡張子・コメントアウトした meta も含む）／
+  生成物と同名のファイル／**先頭が `_` のファイル**（`_redirects` 等は Workers が制御ファイルとして読み、
+  置くだけで本番LPを含むサイト全体の配信を変えられるため）
 - **本番LP（index.html）からはリンクしていない。noindex。** 追加時は LP本体・privacy・404・
   robots・sitemap・ogp がバイト単位で本番と一致することを確かめてからデプロイした
 - 試し方：**@estmiki 以外のアカウント**の Instagram で、DM にこのURLを送ってリンクをタップする
