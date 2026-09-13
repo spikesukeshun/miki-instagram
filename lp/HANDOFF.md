@@ -95,6 +95,8 @@ favicon は 🌿 で固定（変更するとタブの見た目が変わり別ペ
 
 - **DMリンクは `https://ig.me/m/estmiki`**（Instagram公式のDMディープリンク。302→`instagram.com/m/estmiki`。アプリがあればDM画面が直接開く）。
   プロフィールURL `instagram.com/estmiki/` を使うのは**フッターのアカウントリンク1箇所のみ**。
+  ⚠ **Instagram のアプリ内ブラウザでは DM が開けない**（ログイン画面になる）。Web版はビルド時に
+  案内シートを足して対処している（→ `PUBLISH.md` 10章）。LP本体の DM リンクは `ig.me` のまま変えないこと。
 - **ホットペッパーのリンクは選択中コースで動的に切り替わる**。
   - 対象は `data-hp-target` 属性を持つアンカー（ヒーロー／選ばれる理由／メニュー下／流れ／最終CTA／固定ドック の6本）。
   - JSの `HP_DEFAULT` が未選択時のURL。各コースカードの `data-hp` 属性が選択時のURL。

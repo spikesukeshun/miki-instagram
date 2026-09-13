@@ -318,40 +318,142 @@ def build_iab_fix(conf):
     そこから `ig.me/m/...` を踏むと `instagram.com/m/...` に転送され、
     **すでにアプリにログインしているのにログイン画面が出る**（ユーザー報告・2026-08-14）。
 
-    ⚠ Instagram には「特定の相手とのDM画面を直接開く」URLスキームが存在しない。
-      使えるのは `instagram://user?username=` （プロフィール）と
-      `instagram://direct-inbox`（DM一覧）だけ。後者は相手を探す手間が増えるので、
-      プロフィールに渡して「メッセージ」ボタンから送ってもらうのが最善。
+    IAB の中から DM を開く手段は無いと実機で確かめた（→ lp/PUBLISH.md 10章）。
+    そこで DM ボタンが押されたら**案内シート**を出し、IAB を閉じてアプリの
+    「メッセージ」から送ってもらう。DMを使わない人向けにホットペッパーのボタンも並べる。
 
-    ⚠ href は書き換えない。書き換えると GA4 のクリック計測（href で判定している）が
-      外れる。クリックを横取りして遷移先だけ差し替える。
-    ⚠ ホットペッパーのリンクは IAB でも正常に動くので触らない。
+    ⚠ 実機で効かなかったもの。試し直さないこと：
+      - `instagram://user?username=` へ渡す（2026-08-14）
+      - `x-safari-https://` / `googlechromes://` で Safari・Chrome へ出る（2026-09-13・iOS）
+      iOS の Instagram IAB は http(s) 以外のスキームへの遷移を黙って捨てる（確認の表示も出ない）。
+      プロフィール（instagram.com/ユーザー名/）へ飛ばす旧対策も、行き先でログインを求められていた。
+
+    ⚠ href は書き換えない。GA4 のクリック計測（href で判定・capture で先に走る）が外れる。
+      クリックを横取りしてシートを出すだけにしているので、`cta_dm` / `generate_lead` の
+      数え方は導入前と同じ（ダッシュボードの `dashboard/fetch_ga4_data.py` がこの名前で集計している）。
+    ⚠ シートのホットペッパーボタンは、LP本体が選択中コースに合わせて書き換える
+      `[data-hp-target]` の href を開いた瞬間に写す。コース選択が引き継がれ、
+      GA4 でも通常の `cta_hotpepper` として数えられる。
+    ⚠ シートの中身は IAB でだけ JS で作る。通常のブラウザや検索エンジンには出さない。
     """
     user = re.search(r"instagram\.com/([^/?#]+)", conf.get("instagram", ""))
     if not user:
         raise SystemExit('site.json の "instagram" からユーザー名を取り出せない')
-    name = user.group(1)
+    # ⚠ <script> の中に置くので "</script>" で抜けられないよう < を \u003c にする（JSON-LD と同じ理由）
+    name = json.dumps(user.group(1)).replace("<", "\\u003c")
+    hp_default = json.dumps(conf.get("hotpepper_default", "")).replace("<", "\\u003c")
 
     return f"""
+<style>
+#iabg{{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(44,39,35,.5);-webkit-tap-highlight-color:transparent}}
+#iabg[hidden]{{display:none}}
+#iabg .iabg-box{{box-sizing:border-box;width:100%;max-width:30rem;max-height:92vh;overflow-y:auto;
+  overscroll-behavior:contain;background:#FBF8F2;color:#2C2723;border-radius:20px 20px 0 0;outline:0;
+  padding:26px 22px calc(18px + env(safe-area-inset-bottom,0px));
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP",sans-serif;
+  font-size:14px;line-height:1.8;box-shadow:0 -12px 40px rgba(44,39,35,.2);
+  animation:iabg-up .28s cubic-bezier(.22,.61,.36,1)}}
+@keyframes iabg-up{{from{{transform:translateY(24px);opacity:0}}to{{transform:none;opacity:1}}}}
+@media (prefers-reduced-motion:reduce){{#iabg .iabg-box{{animation:none}}}}
+#iabg .nb{{display:inline-block}}
+#iabg .iabg-h{{margin:0 0 10px;text-align:center;font-size:19px;font-weight:600;line-height:1.5;
+  font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif}}
+#iabg .iabg-lead{{margin:0 0 16px;color:#5C534A;font-size:13px}}
+#iabg ol{{list-style:none;margin:0 0 12px;padding:12px 16px;background:#F4EDE1;border-radius:14px}}
+#iabg li{{display:flex;gap:10px;align-items:flex-start;padding:5px 0}}
+#iabg li b{{flex:none;width:22px;height:22px;margin-top:2px;border-radius:50%;background:#55604A;
+  color:#F3EEE2;font-size:12px;font-weight:600;line-height:22px;text-align:center}}
+#iabg .iabg-tmpl{{margin:0 0 12px;color:#5C534A;font-size:12px}}
+#iabg .iabg-alt{{margin-top:16px;padding-top:14px;border-top:1px solid rgba(44,39,35,.12);text-align:center}}
+#iabg .iabg-alt p{{margin:0 0 8px;color:#8A8073;font-size:12px}}
+#iabg .iabg-hp{{display:block;padding:11px 16px;border:1px solid #8C6D33;border-radius:999px;background:#fff;
+  color:#8C6D33;font-size:14px;font-weight:600;text-decoration:none}}
+#iabg .iabg-close{{display:block;width:100%;margin-top:8px;padding:12px;border:0;background:none;
+  color:#5C534A;font:inherit;font-size:13px;cursor:pointer}}
+</style>
 <script>
 (function(){{
   // Instagram / Facebook のアプリ内ブラウザだけが対象。通常のブラウザでは
   // ig.me がそのまま DM を開けるので何もしない。
-  if(!/Instagram|FBAN|FBAV/.test(navigator.userAgent||'')) return;
+  var ua=navigator.userAgent||'';
+  if(!/Instagram|FBAN|FBAV/.test(ua)) return;
+  // ⚠ 「×で閉じるとプロフィールに戻る」のは Instagram から来た人だけ。
+  //    Facebook アプリで閉じると Facebook に戻るので、Instagram を開くところから案内する。
+  var IN_IG=/Instagram/.test(ua), APP=IN_IG?'Instagram':'Facebook';
+  var NAME={name}, HP_DEFAULT={hp_default}, box=null, prev=null, saved=null;
+
+  function build(){{
+    var d=document.createElement('div');
+    d.id='iabg'; d.hidden=true;
+    d.innerHTML='<div class="iabg-box" role="dialog" aria-modal="true" aria-labelledby="iabg-h" tabindex="-1">'
+      +'<p class="iabg-h" id="iabg-h"><span class="nb">DMは Instagram アプリから</span><span class="nb">お送りください</span></p>'
+      +'<p class="iabg-lead"><span class="nb">このページは '+APP+' の中で開いているため、</span>'
+      +'<span class="nb">ここから DM を開くとログイン画面になってしまいます。</span></p>'
+      +'<ol><li><b>1</b><span>'+(IN_IG?'画面上の「×」でこのページを閉じる':'Instagram アプリを開く')+'</span></li>'
+      +'<li><b>2</b><span><strong data-iabg-name></strong> のプロフィールで「メッセージ」をタップ</span></li></ol>'
+      +'<p class="iabg-tmpl" data-iabg-tmpl hidden><span class="nb">コピーした下書きは、</span>'
+      +'<span class="nb">メッセージの入力欄を長押しすると貼り付けられます。</span></p>'
+      +'<div class="iabg-alt"><p>DMを使わずに予約する場合</p>'
+      +'<a class="iabg-hp" data-iabg-hp href="#" target="_blank" rel="noopener">ホットペッパーで予約する</a></div>'
+      +'<button type="button" class="iabg-close" data-iabg-close>ページに戻る</button>'
+      +'</div>';
+    // site.json 由来の値は innerHTML に混ぜない
+    d.querySelector('[data-iabg-name]').textContent='@'+NAME;
+    document.body.appendChild(d);
+    d.addEventListener('click',function(e){{
+      if(e.target===d||e.target.closest('[data-iabg-close]')) close();
+    }});
+    // 予約ページから戻ってきたときにシートが開いたままにならないよう閉じておく
+    d.querySelector('[data-iabg-hp]').addEventListener('click',function(){{ setTimeout(close,0); }});
+    document.addEventListener('keydown',function(e){{
+      if(d.hidden) return;
+      if(e.key==='Escape'){{ close(); return; }}
+      if(e.key!=='Tab') return;
+      // フォーカスをシートの中に閉じ込める（裏のページのリンクへ抜けない）
+      var dlg=d.firstChild, f=dlg.querySelectorAll('a[href],button'), first=f[0], last=f[f.length-1];
+      var cur=document.activeElement;
+      if(!dlg.contains(cur)){{ e.preventDefault(); first.focus(); }}
+      else if(e.shiftKey && (cur===first||cur===dlg)){{ e.preventDefault(); last.focus(); }}
+      else if(!e.shiftKey && cur===last){{ e.preventDefault(); first.focus(); }}
+    }});
+    return d;
+  }}
+
+  function open(fromTmpl){{
+    if(!box) box=build();
+    // LP本体が選択中コースに合わせて書き換えている href をそのまま使う
+    var hp=document.querySelector('[data-hp-target]');
+    box.querySelector('[data-iabg-hp]').setAttribute('href',(hp&&hp.getAttribute('href'))||HP_DEFAULT);
+    // 「下書きをコピーしてDMを開く」から来た場合だけ貼り付けの案内を足す。
+    // LP本体が出すトーストはシートの裏に隠れるので消す。コピーに失敗していたら案内は出さない。
+    var toast=document.getElementById('toast'), msg=document.getElementById('toastMsg');
+    var copied=fromTmpl && !(msg && /できませんでした/.test(msg.textContent||''));
+    box.querySelector('[data-iabg-tmpl]').hidden=!copied;
+    if(toast) toast.classList.remove('on');
+    prev=document.activeElement;
+    box.hidden=false;
+    // iOS は html だけ止めても裏がスクロールすることがあるので body も止める（元の値は戻す）
+    var de=document.documentElement.style, bd=document.body.style;
+    if(!saved) saved=[de.overflow, bd.overflow];
+    de.overflow='hidden'; bd.overflow='hidden';
+    try{{ box.firstChild.scrollTop=0; box.firstChild.focus({{preventScroll:true}}); }}catch(_){{}}
+  }}
+
+  function close(){{
+    if(!box||box.hidden) return;
+    box.hidden=true;
+    if(saved){{ document.documentElement.style.overflow=saved[0]; document.body.style.overflow=saved[1]; saved=null; }}
+    try{{ if(prev&&prev.focus) prev.focus({{preventScroll:true}}); }}catch(_){{}}
+  }}
+
   document.addEventListener('click',function(e){{
     var a=e.target.closest&&e.target.closest('a[href]');
     if(!a) return;
     var href=a.getAttribute('href')||'';
     if(href.indexOf('ig.me')<0 && href.indexOf('instagram.com/m/')<0) return;
     e.preventDefault();
-    // ⚠ instagram://user?username= は**実機で効かないことを確認済み**（2026-08-14）。
-    //    Instagram は自分のアプリ内ブラウザから自分のスキームへの受け渡しを許さない。
-    //    試行して待つと「押しても1.2秒なにも起きない」＝壊れたボタンに見えるので、
-    //    試さずプロフィールへ直行する。
-    // ⚠ 遷移先も結局ログインを促されるが、DMのURL（/m/）が素のログインフォームなのに対し、
-    //    プロフィールは アカウントが見える分ましという消極的な選択。
-    //    根本解決には「×でプロフィールに戻ってメッセージ」の案内が要る（ユーザー判断待ち）。
-    location.href='https://www.instagram.com/{name}/';
+    open(a.hasAttribute('data-tmpl'));
   }});
 }})();
 </script>"""
