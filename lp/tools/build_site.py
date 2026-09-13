@@ -10,6 +10,7 @@
   - <img> に loading="lazy" を付ける
   - SEO 用の head（meta / OGP / JSON-LD）を足す
   - robots.txt / sitemap.xml / _headers / ogp.jpg を書き出す
+  - lp/extra/ の補助ページ（テスト用など・noindex 必須）をそのまま置く
 
 を行う。**`lp/index.html` には一切書き戻さない。** Artifact 版はそのまま生き続ける。
 
@@ -865,6 +866,39 @@ def validate_conf(conf):
             raise SystemExit(f'site.json の "{field}" が空。埋めてからビルドすること')
 
 
+def copy_extra_pages():
+    """lp/extra/ のファイルを dist/ にそのまま置く（LP本体とは独立した補助ページ）。
+
+    2026-09-13 に DM導線の実機テスト用ページ（/dm-test ・ /dm-open）を置くために追加。
+    役目を終えたページは lp/extra/ から消せば、次のデプロイで本番からも消える。
+
+    ⚠ HTML は noindex 必須。関係者向けのテスト画面が検索結果に出てお客様の目に触れるので、
+      入れ忘れていたら落とす。
+    ⚠ ビルドが生成するファイル（index.html・robots.txt など）と同名なら落とす。
+      黙って上書きするとLP本体が差し替わる。
+    """
+    extra = os.path.join(LP_DIR, "extra")
+    if not os.path.isdir(extra):
+        return
+    placed = []
+    for name in sorted(os.listdir(extra)):
+        src = os.path.join(extra, name)
+        if name.startswith(".") or not os.path.isfile(src):
+            continue
+        dst = os.path.join(DIST, name)
+        if os.path.exists(dst):
+            raise SystemExit(f"lp/extra/{name} がビルドの生成物と同名。LP本体を上書きするので中止")
+        if name.endswith(".html"):
+            with open(src, encoding="utf-8") as f:
+                head = f.read(4000)
+            if not re.search(r"<meta[^>]+name=.robots.[^>]*noindex", head):
+                raise SystemExit(f"lp/extra/{name} に noindex が無い。関係者向けページが検索に出るので中止")
+        shutil.copy2(src, dst)
+        placed.append(name)
+    if placed:
+        print(f"  補助ページ {len(placed)}件を配置: {', '.join(placed)}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gsc-token", help="Search Console の所有権確認トークン（site.json に保存する）")
@@ -937,6 +971,7 @@ def main():
     write_404(conf)
     write_privacy_page(conf)
     write_indexnow(conf)
+    copy_extra_pages()
 
     html_bytes = len(page.encode())
     img_bytes = sum(os.path.getsize(os.path.join(IMGDIR, f)) for f in os.listdir(IMGDIR))

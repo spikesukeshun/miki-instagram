@@ -427,3 +427,31 @@ robots.txt が読まれるのは `spikesukeshun.github.io` 直下＝別リポジ
 `dashboard/index.html`（Viteのソース）が正。
 
 ⚠ noindex は**検索結果に出さないだけ**で、URLを知る人は引き続き開ける。非公開にはならない。
+
+---
+
+## 10. DM導線の実機テスト（2026-09-13〜・一時的）
+
+Instagram のアプリ内ブラウザから DM（`ig.me/m/estmiki`）を開くとログイン画面になる問題
+（→ 8章の保留事項）について、**「一度 Safari / Chrome へ脱出してから ig.me を開く」方式が
+実機で成立するか**を確かめるページを置いている。
+
+| URL | 役割 |
+|---|---|
+| `/dm-test` | テスト本体。手法ごとのボタン（iPhone: I1〜I4 / Android: A1〜A3 / 対照: C1）と、押した後の自動記録 |
+| `/dm-open` | 脱出先の中継ページ。脱出できたかを表示し、R1（タップ）/ R2（JSで遷移）/ R3（アプリのプロフィール）を試す。`?auto=1` は読み込み直後に自動遷移（1回だけ） |
+
+- ソースは `lp/extra/`。`build_site.py` の `copy_extra_pages()` が dist にそのまま置く
+  （noindex の無いHTML・生成物と同名のファイルは止まる）
+- **本番LP（index.html）からはリンクしていない。noindex。** 追加時は LP本体・privacy・404・
+  robots・sitemap・ogp がバイト単位で本番と一致することを確かめてからデプロイした
+- 試し方：**@estmiki 以外のアカウント**の Instagram で、DM にこのURLを送ってリンクをタップする
+  （アプリ内ブラウザを再現するため。自分宛てのDMでは正しく試せない）
+
+⚠ 脱出先を直接 `ig.me` にしない。iOS は Safari のアドレスバーに直接入ったURLでは
+Universal Link でアプリを開かず Web 版を出す（Apple の仕様）。外から Safari に渡したURLも
+同じ扱いになる**見込み**なので、中継ページを挟んで**タップ**で開かせる。I3 はこの見立ての検証用。
+⚠ `x-safari-https://` は Apple 非公式の挙動。動いても将来の iOS / Instagram の変更で壊れうる。
+⚠ **役目を終えたら `lp/extra/` を消してデプロイする。** 消せば次のデプロイで本番からも消える。
+
+実機結果：未実施（結果が出たらここに記録し、本番LPに入れるか判断する）
