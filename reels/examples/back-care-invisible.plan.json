@@ -1,0 +1,568 @@
+{
+  "schema_version": 1,
+  "theme": "背中が自分では見えないからこそケアが大切",
+  "slug": "back-care-invisible",
+  "purpose": {
+    "goal": "自分では見えない背中こそ、人に見てもらって整える価値があると気づいてもらう",
+    "audience": "背中の開いた服やドレスを着る予定のある30〜40代女性・プレ花嫁様",
+    "viewer_takeaway": "背中は自分では見えないのに、写真には後ろ姿が長く残る",
+    "desired_action": "保存して、背中が気になったらプロフィールからDMで相談する"
+  },
+  "duration": {
+    "class": "short",
+    "target_seconds": 17,
+    "reason": "伝えることは1つ（見えないから任せる）。平均視聴が約3秒なので問いかけと実写を冒頭に置く。最後の案内は読み切れる長さを確保して17秒"
+  },
+  "hook": {
+    "text": "背中、最後に見たのいつ？",
+    "visual": "オイルで光る背中を施術者の手がなで上げる実写のアップ",
+    "why_it_stops": "自分では答えられない問いかけと、動きのある実写が1コマ目から同時に出る"
+  },
+  "script": [
+    {
+      "section": "hook",
+      "text": "背中、最後に見たのいつ？"
+    },
+    {
+      "section": "problem",
+      "text": "自分では見えないから、気づかないうちに後回しになる"
+    },
+    {
+      "section": "main",
+      "text": "背中は、年齢や疲れも表れやすい場所"
+    },
+    {
+      "section": "detail",
+      "text": "写真に長く残るのは、正面より後ろ姿"
+    },
+    {
+      "section": "cta",
+      "text": "見えない所こそ任せてください。ご相談はプロフィールから"
+    }
+  ],
+  "voice_script": {
+    "mode": "none",
+    "lines": []
+  },
+  "cuts": [
+    {
+      "id": "c01",
+      "start": 0.0,
+      "end": 2.2,
+      "role": "hook",
+      "purpose": "自分の背中を思い浮かべさせて、指を止める",
+      "visual": {
+        "shows": "オイルで光る背中の施術を手元のアップで",
+        "person_action": "施術者の手のひらが肩甲骨の外側をなで上げる",
+        "camera_move": "固定（真上に近い角度）",
+        "changes": [
+          {
+            "at": 0.2,
+            "what": "問いかけのテロップが出る"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "actions_any": [
+            "オイルトリートメント",
+            "施術"
+          ],
+          "framing_any": [
+            "寄り",
+            "俯瞰"
+          ],
+          "people_allowed": [
+            "お客様・施術者"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 2.2,
+          "motion_min": "low",
+          "consent_min": "書面",
+          "subjects_all": [
+            "背中"
+          ]
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "背中"
+              ],
+              "people_allowed": [
+                "お客様"
+              ],
+              "face_allowed": [
+                "なし"
+              ],
+              "consent_min": "書面"
+            },
+            "photo_treatment": {
+              "type": "push_in",
+              "note": "肩甲骨に向かってゆっくり寄る"
+            },
+            "note": "背中の写真に寄る"
+          },
+          {
+            "type": "text_card",
+            "note": "大きな問いかけの文字だけで始める"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "背中、最後に見たのいつ？"
+          ],
+          "start": 0.2,
+          "end": 2.1
+        }
+      ],
+      "narration": {
+        "has": false
+      }
+    },
+    {
+      "id": "c02",
+      "start": 2.2,
+      "end": 4.6,
+      "role": "problem",
+      "purpose": "見えないことが原因だと言い当てる",
+      "visual": {
+        "shows": "鏡の前で振り返って自分の背中を見ようとする女性（MIKIさん）",
+        "person_action": "肩越しに振り返り、見えずに首をかしげる",
+        "camera_move": "固定。振り返りに合わせて少し寄る",
+        "changes": [
+          {
+            "at": 2.4,
+            "what": "テロップが出る"
+          },
+          {
+            "at": 3.4,
+            "what": "振り返りきる"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "鏡",
+            "振り返る"
+          ],
+          "actions_any": [
+            "振り返る"
+          ],
+          "framing_any": [
+            "バストアップ"
+          ],
+          "people_allowed": [
+            "MIKI"
+          ],
+          "face_allowed": [
+            "なし",
+            "横顔"
+          ],
+          "min_seconds": 2.4,
+          "motion_min": "low",
+          "consent_min": "不要"
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "背中"
+              ],
+              "people_allowed": [
+                "お客様"
+              ],
+              "face_allowed": [
+                "なし"
+              ],
+              "consent_min": "書面"
+            },
+            "photo_treatment": {
+              "type": "pan",
+              "note": "首元から腰に向かって背中をなぞる"
+            },
+            "note": "背中の写真をなぞって見せる"
+          },
+          {
+            "type": "text_card",
+            "note": "「自分では見えない」を大きく"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "自分では見えないから"
+          ],
+          "start": 2.4,
+          "end": 4.5
+        }
+      ],
+      "narration": {
+        "has": false
+      }
+    },
+    {
+      "id": "c03",
+      "start": 4.6,
+      "end": 7.8,
+      "role": "main",
+      "purpose": "背中は年齢や疲れが表れやすい場所だと伝える",
+      "visual": {
+        "shows": "背中の施術を別の角度から（背骨に沿って流す手）",
+        "person_action": "両手で背骨に沿って腰から肩へ流す",
+        "camera_move": "手持ちで手の動きを追う",
+        "changes": [
+          {
+            "at": 4.8,
+            "what": "1つ目のテロップ"
+          },
+          {
+            "at": 6.3,
+            "what": "2つ目のテロップに切り替え"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "actions_any": [
+            "施術",
+            "オイルトリートメント"
+          ],
+          "framing_any": [
+            "寄り"
+          ],
+          "people_allowed": [
+            "お客様・施術者"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 3.2,
+          "motion_min": "medium",
+          "consent_min": "書面",
+          "subjects_all": [
+            "背中"
+          ]
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "背中"
+              ],
+              "people_allowed": [
+                "お客様"
+              ],
+              "face_allowed": [
+                "なし"
+              ],
+              "consent_min": "書面"
+            },
+            "photo_treatment": {
+              "type": "crop_detail",
+              "note": "肩まわりを切り抜いてから引く"
+            },
+            "note": "背中の写真の一部を見せる"
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "年齢や疲れも"
+          ],
+          "start": 4.8,
+          "end": 6.2
+        },
+        {
+          "lines": [
+            "表れやすい場所です"
+          ],
+          "start": 6.3,
+          "end": 7.7
+        }
+      ],
+      "narration": {
+        "has": false
+      },
+      "facts": [
+        {
+          "claim": "背中は自分ではほとんど見えないのに、年齢も疲れも表れてしまう場所",
+          "source_type": "posted_content",
+          "source": "content_26.json（2026-08-10 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c04",
+      "start": 7.8,
+      "end": 10.2,
+      "role": "detail",
+      "purpose": "写真に残るのは後ろ姿だと気づかせる",
+      "visual": {
+        "shows": "式場での花嫁様の後ろ姿（ドレスの背中からトレーンまで）",
+        "person_action": "なし（写真）",
+        "camera_move": "背中のアップから全身へゆっくり引く",
+        "changes": [
+          {
+            "at": 8.0,
+            "what": "テロップが出る"
+          },
+          {
+            "at": 9.2,
+            "what": "全身が見えるところまで引く"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "photo_motion",
+        "requirements": {
+          "subjects_any": [
+            "花嫁",
+            "後ろ姿",
+            "ドレス"
+          ],
+          "people_allowed": [
+            "お客様"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "consent_min": "口頭"
+        },
+        "photo_treatment": {
+          "type": "pull_out",
+          "note": "背中のアップから全身へ"
+        },
+        "fallbacks": [
+          {
+            "type": "text_card",
+            "note": "「写真に残るのは後ろ姿」を大きく"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "写真に残るのは後ろ姿"
+          ],
+          "start": 8.0,
+          "end": 10.1
+        }
+      ],
+      "narration": {
+        "has": false
+      },
+      "facts": [
+        {
+          "claim": "写真に長く残るのは、正面よりも後ろ姿",
+          "source_type": "posted_content",
+          "source": "content_2026-09-07-2200.json（2026-09-07 投稿のキャプション）"
+        }
+      ]
+    },
+    {
+      "id": "c05",
+      "start": 10.2,
+      "end": 12.6,
+      "role": "detail",
+      "purpose": "見てもらえる場所があることを見せる（施術室の空気）",
+      "visual": {
+        "shows": "施術室（ベッドと暖かい照明）",
+        "person_action": "なし",
+        "camera_move": "ゆっくり横にパン",
+        "changes": [
+          {
+            "at": 10.4,
+            "what": "テロップが出る"
+          },
+          {
+            "at": 11.4,
+            "what": "パンでベッドが中央に来る"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "施術室",
+            "店内"
+          ],
+          "framing_any": [
+            "引き"
+          ],
+          "people_allowed": [
+            "なし"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 2.4,
+          "motion_min": "static",
+          "consent_min": "不要"
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "施術室",
+                "店内"
+              ],
+              "people_allowed": [
+                "なし"
+              ],
+              "consent_min": "不要"
+            },
+            "photo_treatment": {
+              "type": "pan",
+              "note": "横長の写真を左から右へ"
+            },
+            "note": "施術室の写真をパン"
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "見えない所こそ、任せて"
+          ],
+          "start": 10.4,
+          "end": 12.5
+        }
+      ],
+      "narration": {
+        "has": false
+      }
+    },
+    {
+      "id": "c06",
+      "start": 12.6,
+      "end": 17.2,
+      "role": "cta",
+      "purpose": "相談の入口を伝える",
+      "visual": {
+        "shows": "MIKIさんが笑顔で会釈する",
+        "person_action": "カメラを見て軽く会釈",
+        "camera_move": "固定",
+        "changes": [
+          {
+            "at": 12.7,
+            "what": "DM案内"
+          },
+          {
+            "at": 14.7,
+            "what": "リンク案内に切り替え"
+          },
+          {
+            "at": 15.9,
+            "what": "会釈から笑顔に戻る"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "MIKI"
+          ],
+          "actions_any": [
+            "会釈",
+            "笑顔"
+          ],
+          "framing_any": [
+            "バストアップ"
+          ],
+          "people_allowed": [
+            "MIKI"
+          ],
+          "face_allowed": [
+            "正面",
+            "横顔"
+          ],
+          "min_seconds": 4.6,
+          "motion_min": "static",
+          "consent_min": "不要"
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "施術室",
+                "店内"
+              ],
+              "people_allowed": [
+                "なし"
+              ],
+              "consent_min": "不要"
+            },
+            "photo_treatment": {
+              "type": "push_in",
+              "note": "ベッドに寄る"
+            }
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "ご相談はプロフィールのDMから"
+          ],
+          "start": 12.7,
+          "end": 14.6
+        },
+        {
+          "lines": [
+            "コースと料金は",
+            "プロフィールのリンクから"
+          ],
+          "start": 14.7,
+          "end": 17.1
+        }
+      ],
+      "narration": {
+        "has": false
+      }
+    }
+  ],
+  "cta": {
+    "message": "背中が気になったら、プロフィールのDMから相談する",
+    "lp_guidance_text": "コースと料金はプロフィールのリンクから"
+  },
+  "cover": {
+    "title_lines": [
+      "背中、最後に",
+      "見たのいつ？"
+    ],
+    "background_cut": "c01",
+    "note": "オイルで光る背中の手元を暗めに。一覧（3:4）で文字が中央に来るように"
+  },
+  "open_questions": [
+    "背中の施術動画（台帳の該当素材）に写っているお客様から、投稿の同意（書面）をもらっているか",
+    "鏡の前で振り返るカットをMIKIさん本人で撮影できるか",
+    "MIKIさんが会釈するカットを撮影できるか"
+  ]
+}

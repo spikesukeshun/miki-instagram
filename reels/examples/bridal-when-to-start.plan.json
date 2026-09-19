@@ -1,0 +1,681 @@
+{
+  "schema_version": 1,
+  "theme": "ブライダルエステはいつから始める？",
+  "slug": "bridal-when-to-start",
+  "purpose": {
+    "goal": "始める時期の目安と「目的によって変わる」ことを伝え、迷っている段階で相談してよいと思ってもらう",
+    "audience": "挙式まで半年前後のプレ花嫁様",
+    "viewer_takeaway": "目安は挙式の3〜6ヶ月前。体を変えたいなら半年前、肌なら3ヶ月前からでも間に合う",
+    "desired_action": "保存して、式の時期を添えてプロフィールのDMから相談する"
+  },
+  "duration": {
+    "class": "standard",
+    "target_seconds": 25,
+    "reason": "時期の目安・目的による違い・相談してよいこと、の3つを順に伝えるため標準の尺。MIKIさんの声で語りかけて最後まで見てもらう"
+  },
+  "hook": {
+    "text": "ブライダルエステ いつから始める？",
+    "visual": "MIKIさんがカメラに向かって問いかける実写",
+    "why_it_stops": "プレ花嫁様が実際に検索している疑問を、本人の顔と声で冒頭に言い切る"
+  },
+  "script": [
+    {
+      "section": "hook",
+      "text": "いつから始める？ってよく聞かれます"
+    },
+    {
+      "section": "problem",
+      "text": "ドレスも式場も決まるのに、自分の体は後回しになりがち"
+    },
+    {
+      "section": "main",
+      "text": "目安は挙式の3〜6ヶ月前"
+    },
+    {
+      "section": "detail",
+      "text": "体を変えたいなら半年前、肌を整えるなら3ヶ月前から。ドレスが決まる前に体験に来る方も多い"
+    },
+    {
+      "section": "cta",
+      "text": "式の時期を添えて、DMで相談してください"
+    }
+  ],
+  "voice_script": {
+    "mode": "miki_voice_memo",
+    "lines": [
+      {
+        "cut_id": "c01",
+        "text": "いつから始める？ってよく聞かれます。"
+      },
+      {
+        "cut_id": "c02",
+        "text": "自分の体は後回しになりがちです。"
+      },
+      {
+        "cut_id": "c03",
+        "text": "目安は、挙式の3か月から6か月前。",
+        "reading": "めやすは、きょしきのさんかげつからろっかげつまえ"
+      },
+      {
+        "cut_id": "c04",
+        "text": "体を変えたいなら半年前、肌なら3か月前から。",
+        "reading": "からだをかえたいならはんとしまえ、はだならさんかげつまえから"
+      },
+      {
+        "cut_id": "c05",
+        "text": "ドレスが決まる前に、体験に来る方も多いです。"
+      },
+      {
+        "cut_id": "c06",
+        "text": "式の時期を添えて、DMでご相談ください。"
+      }
+    ]
+  },
+  "cuts": [
+    {
+      "id": "c01",
+      "start": 0.0,
+      "end": 2.6,
+      "role": "hook",
+      "purpose": "プレ花嫁様の疑問を本人の言葉で投げかける",
+      "visual": {
+        "shows": "施術室でMIKIさんがカメラに向かって話しかける（バストアップ）",
+        "person_action": "問いかけながら小さく首をかしげる",
+        "camera_move": "固定",
+        "changes": [
+          {
+            "at": 0.1,
+            "what": "話し始める"
+          },
+          {
+            "at": 0.2,
+            "what": "テロップが出る"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "MIKI"
+          ],
+          "actions_any": [
+            "話す",
+            "問いかける"
+          ],
+          "framing_any": [
+            "バストアップ",
+            "正面"
+          ],
+          "people_allowed": [
+            "MIKI"
+          ],
+          "face_allowed": [
+            "正面",
+            "横顔"
+          ],
+          "min_seconds": 2.6,
+          "motion_min": "low",
+          "consent_min": "不要"
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "花嫁",
+                "笑顔"
+              ],
+              "people_allowed": [
+                "お客様"
+              ],
+              "face_allowed": [
+                "正面",
+                "横顔"
+              ],
+              "consent_min": "口頭"
+            },
+            "photo_treatment": {
+              "type": "push_in",
+              "note": "笑顔の花嫁様にゆっくり寄る"
+            },
+            "note": "卒花嫁様の笑顔の写真で始める"
+          },
+          {
+            "type": "text_card",
+            "note": "疑問を大きな文字で"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "ブライダルエステ",
+            "いつから始める？"
+          ],
+          "start": 0.2,
+          "end": 2.5
+        }
+      ],
+      "narration": {
+        "has": true,
+        "line": "いつから始める？ってよく聞かれます。"
+      }
+    },
+    {
+      "id": "c02",
+      "start": 2.6,
+      "end": 5.6,
+      "role": "problem",
+      "purpose": "準備に追われて自分のケアが後回しになる現実に共感してもらう",
+      "visual": {
+        "shows": "ドレスの後ろ姿（式場）",
+        "person_action": "なし（写真）",
+        "camera_move": "ドレスの背中のアップからゆっくり引く",
+        "changes": [
+          {
+            "at": 2.8,
+            "what": "テロップが出る"
+          },
+          {
+            "at": 4.2,
+            "what": "全身が見えるところまで引く"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "photo_motion",
+        "requirements": {
+          "subjects_any": [
+            "花嫁",
+            "ドレス",
+            "後ろ姿"
+          ],
+          "people_allowed": [
+            "お客様"
+          ],
+          "face_allowed": [
+            "なし",
+            "横顔"
+          ],
+          "consent_min": "口頭"
+        },
+        "photo_treatment": {
+          "type": "pull_out",
+          "note": "背中のアップから全身へ"
+        },
+        "fallbacks": [
+          {
+            "type": "text_card",
+            "note": "「自分の体は後回し」を大きく"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "自分の体は",
+            "後回しになりがち"
+          ],
+          "start": 2.8,
+          "end": 5.5
+        }
+      ],
+      "narration": {
+        "has": true,
+        "line": "自分の体は後回しになりがちです。"
+      },
+      "facts": [
+        {
+          "claim": "ドレスも式場も決まっているのに、自分の身体のことだけが後回しになっていた（MIKIさんの花嫁時代の体験）",
+          "source_type": "posted_content",
+          "source": "content_2026-09-07-2200.json（2026-09-07 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c03",
+      "start": 5.6,
+      "end": 9.2,
+      "role": "main",
+      "purpose": "答え（時期の目安）をはっきり見せる",
+      "visual": {
+        "shows": "「3〜6ヶ月前」の数字を大きく出す文字の場面。背景に施術室の実写を暗めに流す",
+        "person_action": "なし",
+        "camera_move": "背景はゆっくり横に流れる。数字が拡大しながら出る",
+        "changes": [
+          {
+            "at": 5.8,
+            "what": "「目安は挙式の」が出る"
+          },
+          {
+            "at": 6.8,
+            "what": "「3〜6ヶ月前」が拡大しながら出る"
+          },
+          {
+            "at": 8.2,
+            "what": "数字の下に線が引かれる"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "text_card",
+        "fallbacks": []
+      },
+      "caption": [
+        {
+          "lines": [
+            "目安は挙式の",
+            "3〜6ヶ月前"
+          ],
+          "start": 5.8,
+          "end": 9.1
+        }
+      ],
+      "narration": {
+        "has": true,
+        "line": "目安は、挙式の3か月から6か月前。"
+      },
+      "facts": [
+        {
+          "claim": "目安は挙式の3〜6ヶ月前（3か月から6か月前）",
+          "source_type": "posted_content",
+          "source": "content_2026-09-03-2100.json（2026-09-03 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c04",
+      "start": 9.2,
+      "end": 13.4,
+      "role": "detail",
+      "purpose": "目的によって始める時期が変わることを、実際の施術と一緒に見せる",
+      "visual": {
+        "shows": "背中のオイル施術の手元（前半）→ デコルテや肌を整える手元（後半）",
+        "person_action": "手のひらで背中を流す → 肌を包むように押さえる",
+        "camera_move": "手持ちで手の動きを追う。テロップの切り替えに合わせて別アングルへ",
+        "changes": [
+          {
+            "at": 9.4,
+            "what": "「体を変えたいなら半年前」"
+          },
+          {
+            "at": 11.3,
+            "what": "別アングルに切り替え・「肌なら3ヶ月前から」"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "手元"
+          ],
+          "actions_any": [
+            "施術",
+            "オイルトリートメント"
+          ],
+          "framing_any": [
+            "寄り"
+          ],
+          "people_allowed": [
+            "お客様・施術者"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 4.2,
+          "motion_min": "low",
+          "consent_min": "書面",
+          "subjects_all": [
+            "背中"
+          ]
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "施術室",
+                "店内"
+              ],
+              "people_allowed": [
+                "なし"
+              ],
+              "consent_min": "不要"
+            },
+            "photo_treatment": {
+              "type": "pan",
+              "note": "施術室をゆっくりなぞる"
+            },
+            "note": "施術室の写真を背景に文字を出す"
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "体を変えたいなら半年前"
+          ],
+          "start": 9.4,
+          "end": 11.2
+        },
+        {
+          "lines": [
+            "肌なら3ヶ月前から"
+          ],
+          "start": 11.3,
+          "end": 13.3
+        }
+      ],
+      "narration": {
+        "has": true,
+        "line": "体を変えたいなら半年前、肌なら3か月前から。"
+      },
+      "facts": [
+        {
+          "claim": "体を大きく変えたい場合は半年前、肌のコンディションを整えたいだけなら3ヶ月前（3か月前）でも十分間に合います",
+          "source_type": "posted_content",
+          "source": "content_2026-09-03-2100.json（2026-09-03 投稿のキャプション）"
+        }
+      ]
+    },
+    {
+      "id": "c05",
+      "start": 13.4,
+      "end": 17.0,
+      "role": "detail",
+      "purpose": "まだ迷っている段階（ドレス前）でも来てよいと伝える",
+      "visual": {
+        "shows": "カウンセリングの手元（シートに書き込む・メニューを指さす）",
+        "person_action": "MIKIさんがペンでシートを指しながら説明する。お客様の手がうなずくように動く",
+        "camera_move": "テーブルを斜め上から固定",
+        "changes": [
+          {
+            "at": 13.6,
+            "what": "「ドレスが決まる前の」"
+          },
+          {
+            "at": 15.2,
+            "what": "「体験に来る方も多いです」に切り替え"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "手元"
+          ],
+          "actions_any": [
+            "説明",
+            "書く"
+          ],
+          "framing_any": [
+            "俯瞰",
+            "手元"
+          ],
+          "people_allowed": [
+            "MIKI",
+            "MIKI・お客様",
+            "施術者の手元"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 3.6,
+          "motion_min": "low",
+          "consent_min": "口頭",
+          "subjects_all": [
+            "カウンセリング"
+          ]
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "施術室",
+                "店内"
+              ],
+              "people_allowed": [
+                "なし"
+              ],
+              "consent_min": "不要"
+            },
+            "photo_treatment": {
+              "type": "push_in",
+              "note": "ベッドに寄る"
+            }
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "ドレスが決まる前の"
+          ],
+          "start": 13.6,
+          "end": 15.1
+        },
+        {
+          "lines": [
+            "体験も多いです"
+          ],
+          "start": 15.2,
+          "end": 16.9
+        }
+      ],
+      "narration": {
+        "has": true,
+        "line": "ドレスが決まる前に、体験に来る方も多いです。"
+      },
+      "facts": [
+        {
+          "claim": "ドレスが決まる前に体験にいらっしゃる方が多い印象",
+          "source_type": "posted_content",
+          "source": "content_2026-09-03-2100.json（2026-09-03 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c06",
+      "start": 17.0,
+      "end": 20.0,
+      "role": "cta",
+      "purpose": "式の時期を添えて相談してほしいと、本人から伝える",
+      "visual": {
+        "shows": "MIKIさんが笑顔で小さく手を振る（バストアップ）",
+        "person_action": "笑顔で小さく手を振る",
+        "camera_move": "固定",
+        "changes": [
+          {
+            "at": 17.2,
+            "what": "テロップが出る"
+          },
+          {
+            "at": 18.6,
+            "what": "手を振り終えて笑顔で止まる"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "MIKI"
+          ],
+          "actions_any": [
+            "手を振る",
+            "笑顔"
+          ],
+          "framing_any": [
+            "バストアップ"
+          ],
+          "people_allowed": [
+            "MIKI"
+          ],
+          "face_allowed": [
+            "正面",
+            "横顔"
+          ],
+          "min_seconds": 3.0,
+          "motion_min": "low",
+          "consent_min": "不要"
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "花嫁",
+                "笑顔"
+              ],
+              "people_allowed": [
+                "お客様"
+              ],
+              "face_allowed": [
+                "正面",
+                "横顔"
+              ],
+              "consent_min": "口頭"
+            },
+            "photo_treatment": {
+              "type": "push_in",
+              "note": "笑顔に寄る"
+            }
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "式の時期を添えて"
+          ],
+          "start": 17.2,
+          "end": 19.9
+        }
+      ],
+      "narration": {
+        "has": true,
+        "line": "式の時期を添えて、DMでご相談ください。"
+      }
+    },
+    {
+      "id": "c07",
+      "start": 20.0,
+      "end": 25.0,
+      "role": "cta",
+      "purpose": "相談とLPの入口を読み切れる長さで出す",
+      "visual": {
+        "shows": "施術室（ベッドと暖かい照明）の引き",
+        "person_action": "なし",
+        "camera_move": "ゆっくり引く",
+        "changes": [
+          {
+            "at": 20.1,
+            "what": "DM案内"
+          },
+          {
+            "at": 22.3,
+            "what": "リンク案内に切り替え"
+          },
+          {
+            "at": 23.6,
+            "what": "引き終わり"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "施術室",
+            "店内"
+          ],
+          "framing_any": [
+            "引き"
+          ],
+          "people_allowed": [
+            "なし"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 5.0,
+          "motion_min": "static",
+          "consent_min": "不要"
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "施術室",
+                "店内"
+              ],
+              "people_allowed": [
+                "なし"
+              ],
+              "consent_min": "不要"
+            },
+            "photo_treatment": {
+              "type": "pull_out",
+              "note": "施術室の全体へ引く"
+            }
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "ご相談はプロフィールのDMから"
+          ],
+          "start": 20.1,
+          "end": 22.2
+        },
+        {
+          "lines": [
+            "コースと料金は",
+            "プロフィールのリンクから"
+          ],
+          "start": 22.3,
+          "end": 24.9
+        }
+      ],
+      "narration": {
+        "has": false
+      }
+    }
+  ],
+  "cta": {
+    "message": "式の時期を添えて、プロフィールのDMから相談する",
+    "lp_guidance_text": "コースと料金はプロフィールのリンクから"
+  },
+  "cover": {
+    "title_lines": [
+      "ブライダルエステ",
+      "いつから？"
+    ],
+    "background_cut": "c01",
+    "note": "MIKIさんの問いかけのコマを暗めにして白文字。撮影前は c03 の数字の場面で代用"
+  },
+  "open_questions": [
+    "9/3（よくある質問）と9/7（60日前からの逆算）で同じ答えを投稿済み。リールで繰り返してよいか（上位の悩みなので繰り返しは可だが、同じ答えの焼き直しになる）",
+    "「3〜6ヶ月前」「半年前／3ヶ月前」の目安は、今もMIKIさんの案内と同じか",
+    "MIKIさんが正面で話すカット・手を振るカットを撮影できるか（声はボイスメモで別に録る）",
+    "カウンセリングの手元を撮る場合、お客様の手が写ってよいか（顔は写さない）"
+  ]
+}
