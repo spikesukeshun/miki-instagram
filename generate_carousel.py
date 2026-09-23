@@ -16,7 +16,7 @@ content.json の任意フィールド：
 - create_post.py:8           from generate_carousel import generate_with_slides
 """
 import unicodedata
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 
 
@@ -39,6 +39,9 @@ W, H = 1080, 1350  # 4:5 縦長サイズ
 CREAM = (250, 246, 241, 255)
 INK = (43, 37, 34, 255)
 GOLD = (184, 148, 90, 255)
+
+# list スライドを list_marker="bullet" にしたときの点の半径
+BULLET_R = 7
 
 
 # CLI 動作確認用のサンプル（実運用では create_post.py 経由で content.json から渡される）
@@ -104,7 +107,10 @@ def load_background(filename: str) -> Image.Image:
         raise FileNotFoundError(
             f"背景画像が見つかりません: {path}\n"
             f"backgrounds/フォルダに {filename} を置いてください")
-    return Image.open(path).convert("RGBA")
+    # 合成前の最後の入口。create_post.py を通さずここへ来る背景
+    # （generate_carousel.py 単体実行・手置きの背景・末尾固定の slide8/slide7）でも
+    # EXIF の回転を画素へ反映させる。orientation なしの画像では実質そのまま。
+    return ImageOps.exif_transpose(Image.open(path)).convert("RGBA")
 
 
 # ---------------------------------------------------------------------------
@@ -542,20 +548,35 @@ def generate_list_slide(img, slide):
     rule_y = end_title_y + 18
     _hairline(draw, rule_y)
 
-    # 番号は明朝・GOLD、本文は sans・INK、横並び 1 行。
-    # 番号・本文とも全項目で同じ x に揃える（行ごとに中央寄せすると番号の
+    # 行頭マーカーは明朝・GOLD、本文は sans・INK、横並び 1 行。
+    # マーカー・本文とも全項目で同じ x に揃える（行ごとに中央寄せすると
     # 左端がガタつくため）。ブロック全体を中央に置いて左揃えを実現する。
+    # list_marker="bullet" で 01/02… の連番ではなく点の箇条書きにする
+    # （順序のない並びに番号を振ると「順番がある」誤読を招くため）。
+    use_bullet = str(slide.get("list_marker", "number")).lower() == "bullet"
     num_font = get_serif(34)
     gap = 28
-    nums = [f"{i+1:02d}" for i in range(len(items))]
-    num_w = max((num_font.getbbox(n)[2] - num_font.getbbox(n)[0]) for n in nums) if nums else 0
+    if use_bullet:
+        nums = []
+        num_w = BULLET_R * 2
+    else:
+        nums = [f"{i+1:02d}" for i in range(len(items))]
+        num_w = max((num_font.getbbox(n)[2] - num_font.getbbox(n)[0]) for n in nums) if nums else 0
     item_w = max((item_font.getbbox(it)[2] - item_font.getbbox(it)[0]) for it in items) if items else 0
     x = max(24, (W - (num_w + gap + item_w)) // 2)
     item_x = x + num_w + gap
 
     y = rule_y + 50
-    for num, it in zip(nums, items):
-        draw.text((x, y + 8), num, font=num_font, fill=GOLD)
+    for idx, it in enumerate(items):
+        if use_bullet:
+            # 本文の実描画範囲（ink box）の中央に点を合わせる。数字を並べる
+            # ときと違い、点は1つしかないので行ごとに高さがズレると目立つ。
+            top, bottom = item_font.getbbox(it)[1], item_font.getbbox(it)[3]
+            cy = y + (top + bottom) / 2
+            draw.ellipse([x, cy - BULLET_R, x + BULLET_R * 2, cy + BULLET_R],
+                         fill=GOLD)
+        else:
+            draw.text((x, y + 8), nums[idx], font=num_font, fill=GOLD)
         draw.text((item_x, y), it, font=item_font, fill=INK)
         y += ITEM_H
 
