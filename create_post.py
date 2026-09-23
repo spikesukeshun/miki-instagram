@@ -309,8 +309,11 @@ def apply_edit_effect(img_path: str, slide_type: str) -> None:
       - 1080x1350 への強制 resize … アスペクト比が崩れて被写体が伸びる
     アスペクト比はそのまま保持し、クロップは generate_carousel.py の
     crop_center_with_focus()（cover-fit センタークロップ）に任せる。"""
-    from PIL import Image, ImageEnhance
-    img = Image.open(img_path).convert("RGB")
+    from PIL import Image, ImageEnhance, ImageOps
+    # iPhone の写真は「横向きで保存＋EXIFで回して見せる」ものがある
+    # （例: IMG_8124.JPG は orientation=6）。convert("RGB") → JPEG保存 では
+    # EXIF が落ちるため、先に回転を画素へ焼き込まないと横倒しのまま合成される。
+    img = ImageOps.exif_transpose(Image.open(img_path)).convert("RGB")
 
     if slide_type in ("text", "list"):
         img = ImageEnhance.Brightness(img).enhance(1.05)
@@ -459,7 +462,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
     """各スライドのbg_strategyに従って背景ファイルを決定しfilenameを更新
     Returns: 最後に使用したseed（generate時）
     """
-    from PIL import Image as _Img
+    from PIL import Image as _Img, ImageOps as _ImgOps
     os.makedirs("backgrounds", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     last_seed = global_seed
@@ -506,7 +509,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             else:
                 # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
                 # HEIC等を確実にJPEGへ正規化するため再保存のみ行う。
-                _bg = _Img.open(path).convert("RGB")
+                _bg = _ImgOps.exif_transpose(_Img.open(path)).convert("RGB")
                 _bg.save(path, "JPEG", quality=90)
             slide["filename"] = filename
             continue
@@ -546,7 +549,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                 apply_edit_effect(path, slide.get("type", "text"))
             else:
                 # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
-                _bg = _Img.open(path).convert("RGB")
+                _bg = _ImgOps.exif_transpose(_Img.open(path)).convert("RGB")
                 _bg.save(path, "JPEG", quality=90)
             slide["filename"] = filename
             continue
