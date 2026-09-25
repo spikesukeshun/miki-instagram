@@ -52,3 +52,14 @@ design_lab/sample_bg/
 design_lab/fonts/*.ttf
 design_lab/fonts/*.otf
 design_lab/fonts/*.ttc
+
+# リール制作（HyperFrames）— お客様の写真・書き出し動画はコミットしない（公開リポジトリのため）
+# 写真は assets_manifest.json の Drive ID から fetch_assets.py で取り直せる
+miki-sotsuhana-reel/assets/
+miki-sotsuhana-reel/renders/
+miki-sotsuhana-reel/.hyperframes/
+miki-sotsuhana-reel/.media/
+miki-sotsuhana-reel/fonts/
+
+# リール設計システムの作業場所（お客様の映像・解析結果・一覧画像）。公開リポジトリなので入れない
+reels/work/
