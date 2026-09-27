@@ -328,7 +328,41 @@ def edit_effect_type(slide: dict) -> str:
     return stype
 
 
-def apply_edit_effect(img_path: str, slide_type: str) -> None:
+IMAGE_ADJUSTMENTS_FILE = "image_adjustments.json"
+
+
+def apply_image_adjustments(img, theme: str, filename: str):
+    """image_adjustments.json に登録された「この写真は毎回こう補正する」を適用する。
+
+    キーは "テーマ/ファイル名"（Drive 上の実ファイル名）。値は gamma（1未満で明るく）/
+    brightness / contrast / color（いずれも 1.0 が無補正）。暗い写真を使うたびに
+    content.json で補正を指定し直すと、回によって仕上がりが変わるため台帳に固定する。"""
+    import unicodedata
+    from PIL import ImageEnhance
+    if not os.path.exists(IMAGE_ADJUSTMENTS_FILE):
+        return img
+    with open(IMAGE_ADJUSTMENTS_FILE, encoding="utf-8") as f:
+        table = json.load(f)
+    key = unicodedata.normalize("NFC", f"{theme}/{filename}")
+    adj = next((v for k, v in table.items() if unicodedata.normalize("NFC", k) == key), None)
+    if not adj:
+        return img
+    gamma = adj.get("gamma", 1.0)
+    if gamma <= 0:
+        raise ValueError(f"{IMAGE_ADJUSTMENTS_FILE} の {key}: gamma は0より大きい値にしてください（{gamma}）")
+    if gamma != 1.0:
+        lut = [round(255 * (p / 255) ** gamma) for p in range(256)]
+        img = img.point(lut * len(img.getbands()))
+    for name, enhancer in (("brightness", ImageEnhance.Brightness),
+                           ("contrast", ImageEnhance.Contrast),
+                           ("color", ImageEnhance.Color)):
+        if adj.get(name, 1.0) != 1.0:
+            img = enhancer(img).enhance(adj[name])
+    print(f"    → 登録済みの写真補正を適用（{key}）")
+    return img
+
+
+def apply_edit_effect(img_path: str, slide_type: str, slide: dict = None) -> None:
     """PILで画像を加工してスライド種別に合った背景に仕上げる。
 
     【厳守・再発防止】ユーザーから「画像がぼやける／アスペクト比が変わる」と
@@ -336,17 +370,30 @@ def apply_edit_effect(img_path: str, slide_type: str) -> None:
       - ぼかし（ImageFilter.GaussianBlur）… 写真は鮮明に見せる
       - 1080x1350 への強制 resize … アスペクト比が崩れて被写体が伸びる
     アスペクト比はそのまま保持し、クロップは generate_carousel.py の
-    crop_center_with_focus()（cover-fit センタークロップ）に任せる。"""
-    from PIL import Image, ImageEnhance
-    img = Image.open(img_path).convert("RGB")
+    crop_center_with_focus()（cover-fit センタークロップ）に任せる。
+
+    slide を渡すと、Drive 画像なら image_adjustments.json の写真別補正を先に当て、
+    `smoke_alpha`（白いスモークの濃さ 0〜255。cta の既定は80）をその回だけ上書きできる。"""
+    from PIL import Image, ImageEnhance, ImageOps
+    slide = slide or {}
+    # iPhone の写真は「横向きで保存＋EXIFで回して見せる」ものがある
+    # （例: IMG_8124.JPG は orientation=6）。convert("RGB") → JPEG保存 では
+    # EXIF が落ちるため、先に回転を画素へ焼き込まないと横倒しのまま合成される。
+    img = ImageOps.exif_transpose(Image.open(img_path)).convert("RGB")
+    if slide.get("reuse_source") == "drive":
+        img = apply_image_adjustments(img, slide.get("reuse_theme", ""), slide.get("reuse_filename", ""))
 
     if slide_type in ("text", "list"):
         img = ImageEnhance.Brightness(img).enhance(1.05)
     elif slide_type == "cover":
         img = ImageEnhance.Color(img).enhance(1.2)
         img = ImageEnhance.Contrast(img).enhance(1.1)
-    elif slide_type == "cta":
-        overlay = Image.new("RGBA", img.size, (255, 255, 255, 80))
+
+    smoke_alpha = slide.get("smoke_alpha", 80 if slide_type == "cta" else 0)
+    if not 0 <= smoke_alpha <= 255:
+        raise ValueError(f"smoke_alpha は0〜255で指定してください（{smoke_alpha}）")
+    if smoke_alpha:
+        overlay = Image.new("RGBA", img.size, (255, 255, 255, int(smoke_alpha)))
         img = img.convert("RGBA")
         img = Image.alpha_composite(img, overlay).convert("RGB")
 
@@ -647,7 +694,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
     """各スライドのbg_strategyに従って背景ファイルを決定しfilenameを更新
     Returns: 最後に使用したseed（generate時）
     """
-    from PIL import Image as _Img
+    from PIL import Image as _Img, ImageOps as _ImgOps
     os.makedirs("backgrounds", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     last_seed = global_seed
@@ -690,11 +737,13 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                     f"  AI生成へ自動フォールバックはしません。Drive側を確認してやり直してください。"
                 )
             if strategy == "edit":
-                apply_edit_effect(path, edit_effect_type(slide))
+                apply_edit_effect(path, edit_effect_type(slide), slide)
             else:
                 # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
                 # HEIC等を確実にJPEGへ正規化するため再保存のみ行う。
-                _bg = _Img.open(path).convert("RGB")
+                # 写真別の補正（image_adjustments.json）は reuse でも毎回当てる。
+                _bg = _ImgOps.exif_transpose(_Img.open(path)).convert("RGB")
+                _bg = apply_image_adjustments(_bg, theme, reuse_filename)
                 _bg.save(path, "JPEG", quality=90)
             slide["filename"] = filename
             continue
@@ -705,7 +754,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             local_path = slide.get("local_path", "")
             if local_path and os.path.exists(local_path):
                 shutil.copy(local_path, path)
-                apply_edit_effect(path, edit_effect_type(slide))
+                apply_edit_effect(path, edit_effect_type(slide), slide)
                 slide["filename"] = filename
                 print(f"  スライド{i+1}: ローカルファイルを使用（{local_path}）")
                 continue
@@ -738,10 +787,10 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                     f"  AI生成へ自動フォールバックはしません。"
                 )
             if strategy == "edit":
-                apply_edit_effect(path, edit_effect_type(slide))
+                apply_edit_effect(path, edit_effect_type(slide), slide)
             else:
                 # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
-                _bg = _Img.open(path).convert("RGB")
+                _bg = _ImgOps.exif_transpose(_Img.open(path)).convert("RGB")
                 _bg.save(path, "JPEG", quality=90)
             slide["filename"] = filename
             continue

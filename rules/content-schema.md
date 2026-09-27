@@ -59,6 +59,7 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 | `focus_y` | 任意 | 写真クロップの縦位置 0.0〜1.0（default 0.5）。被写体が下寄りなら 0.55〜0.65、上寄りなら 0.35〜0.45 |
 | `filename` | ⛔️ | `resolve_backgrounds()` が `bg_{timestamp}_{NN}.jpg` を自動割当（`create_post.py:339`）。既存 content.json には `bg01.jpg` 等が手書きで残っているが**上書きされるので意味はない** |
 | `bubble` | 任意 | `assets/` 内の透過PNG名。タイトル右脇に丸型バブルを合成（`generate_carousel.py:295`）|
+| `smoke_alpha` | 任意 | `edit` の背景に重ねる白いスモークの濃さ 0〜255（`create_post.py:apply_edit_effect()`）。`cta` の既定値はコード側、他の型は既定でなし。**その回だけ**顔や背景を薄くしたい時に使う |
 | `seed` | ⛔️ | `generate` 時にコードが記録する |
 
 ## 型ごとの固有フィールド
@@ -67,9 +68,9 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 |---|---|---|
 | `cover` | `kicker` 任意 / `tag` **実質必須** / `photo_h_ratio` 任意（default **0.55**）| `kicker` は自動で大文字化されるので英字推奨。`tag` は実績で全カバーが使用 |
 | `text` | `text` ✅ / `slide_photo_h_ratio` 任意（default **0.35**、`0` で写真なし純クリーム）| 最も多用される型（実績の過半数）|
-| `list` | `items` ✅ / `footer` **実質必須** / `slide_photo_h_ratio` 任意 | **`items` は全角20文字以内**（折り返しなし固定幅描画のため、超えると画像外へはみ出す）|
-| `price` | `title` / `top_note` / `columns`（最大2・`{label, lines}`）/ `notes` / `highlight` | 料金表。左右2カラム＋縦の区切り線（`generate_carousel.py:569`）|
-| `cta` | `body` ✅ / `subtitle` ✅ / `slide_photo_h_ratio` 任意 / `layout` 任意（`"photo"` で案B） | `title` は固定文言（下記）。`subtitle` は**最終行に 💌 が自動付与される**（`generate_carousel.py:728`）ので、絵文字を数える時は勘定に入れる |
+| `list` | `items` ✅ / `footer` **実質必須** / `slide_photo_h_ratio` 任意 / `list_marker` 任意 | **`items` は全角20文字以内**（折り返しなし固定幅描画のため、超えると画像外へはみ出す）。`list_marker` は `number`（既定・01/02…）か `bullet`（ゴールドの点）|
+| `price` | `title` / `top_note` / `columns`（最大2・`{label, lines}`）/ `notes` / `highlight` | 料金表。左右2カラム＋縦の区切り線（`generate_price_slide()`）|
+| `cta` | `body` ✅ / `subtitle` ✅ / `slide_photo_h_ratio` 任意 / `layout` 任意（`"photo"` で案B） | `title` は固定文言（下記）。`subtitle` は**最終行に 💌 が自動付与される**（`generate_cta_slide()`）ので、絵文字を数える時は勘定に入れる |
 | `raw` | — | 末尾2枚専用。コードが自動追加するので content.json に書かない |
 | `frame` | `note` 任意 / `focus_y` 任意 / 背景は `bg_strategy: "local"`（コマは `preview_drive_videos.py --save-frames` で書き出す。ファイル名に秒数が入るので、名前から抜き直せる） | **案B**。パラパラ漫画の1コマ。全面写真で原則文字なし。`note` を書いた時だけ下端に小さく重ねる（1枚目のスクロール指示用）|
 | `phrase` | `phrase` ✅ / `focus_y` 任意 | **案B**。全面写真＋日本語の文節ひとつ。**自動折り返しはしないので改行は `\n` を自分で入れる**（文字サイズだけはコードが収まるまで落とす）|
@@ -155,6 +156,15 @@ AI生成へ落とさず停止する。**`reuse` / `edit` から静かにAI生成
 
 `review_post.py:138` も同じ3点セットを見るが、これはフロー上 `create_post.py` の**後**に走る。
 **先に止まるのは `create_post.py` 側**なので、エラーが出たら content.json を直して作り直す。
+
+### 写真ごとの固定補正（`image_adjustments.json`）
+
+「この写真は使うたびに毎回同じ補正をかけてほしい」という依頼は、content.json ではなく
+`image_adjustments.json` に `"テーマ/ファイル名"` をキーにして登録する
+（例: `"menu/IMG_9115.jpg"`）。`gamma`（1未満で明るく）/ `brightness` / `contrast` / `color` を
+持てる（どれも 1.0 が無補正）。Drive の `edit` / `reuse` で自動的に適用され、
+スライド種別ごとの加工はその後にかかる。**その回だけ**の調整は `smoke_alpha` など
+スライドのフィールドで書き、台帳には入れない。
 
 ### スライドレベルの `bg_prompt` について
 
