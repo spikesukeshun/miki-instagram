@@ -1,0 +1,77 @@
+{
+  "post_style": "flipbook",
+  "menu": "痩身エステ",
+  "drive_theme": "menu",
+  "slides": [
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0044.00s.jpg",
+      "focus_y": 0.5,
+      "note": "下のドットを押さえたまま\n横になぞってみてください"
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0044.20s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0044.40s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0044.60s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0044.80s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0045.00s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0045.20s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0045.40s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "frame",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0045.60s.jpg",
+      "focus_y": 0.5
+    },
+    {
+      "type": "cta",
+      "layout": "photo",
+      "title": "MIKI指名 Instagram限定20%OFF\n（VIPコースのみ）",
+      "body": "9枚もめくっていただいて\n実はたった1.6秒でした（笑）\n本番はもっとゆっくりです。",
+      "subtitle": "コースの流れとご料金は\nプロフィールのリンクにまとめています\n気になる方はのぞいてみてください",
+      "bg_strategy": "local",
+      "local_path": "backgrounds/IMG_9981_MOV_0045.60s.jpg",
+      "focus_y": 0.5
+    }
+  ],
+  "caption": "インディバの痩身エステって、施術中は実際どんな感じなのか。\n今日は写真ではなく、施術の動画から切り出した9枚でお見せします。\n\nMIKIです。\n\n下のドットを押さえたまま、横になぞってみてください。\nパラパラ漫画のように動くはずです。\n\n写真だと、どうしても止まって見えてしまいます。\n実際の手の動きを見ていただきたくて、今回は動画から1枚ずつ切り出しました。\n\nマシンと聞くと、何をされるのか想像しにくいと思います。\nでも、ご覧いただいたとおり、やっていることはとてもシンプルです。\n\nヘッドをお身体の上で、ゆっくり動かしていく。\n1か所に止めず、それをくり返します。\n\nそしてもう1つ、見ていただきたいところがあります。\nヘッドを持っていない方の手も、ずっとお身体に添えています。\n機械だけに任せず、手で様子を確かめながら進めています。\n\nインディバはラジオ波で、身体の内側から温めるマシンです。\n施術中に感じていただくのは、痛さではなく、じんわりとした温かさです。\n冷えやむくみが気になる方に向いているので、\nこれから寒くなる季節には、ぴったりだと思っています。\n\n強くかければ効く、というものではありません。\nその日のお身体に合わせて、出力も当てる時間も変えています。\n\n3つのマシンの違いは、9月10日の投稿でまとめています。\nあわせて見ていただくと、選ぶときの参考になると思います。\n\nここで1つ、種明かしをさせてください。\n今めくっていただいた9枚。\n実際の動画では、たった1.6秒の出来事です😂\n\n9枚もめくっていただいたのに、1.6秒。\n本番はもちろん、もっとゆっくり、丁寧に温めていきます。\n\n回数券やコース契約、強引な勧誘は一切していません。\n当日はいきなりマシンから始めるのではなく、\nまずお話を伺って、その日のお身体を見てから、何をするかを一緒に決めます。\n\nコースは120分と150分。\nどちらもジャグジー15分を含んでいます🌸\n\nコースの流れやご料金は、\nプロフィールのリンクから見られるページにまとめています。\n先に読んでおくと、当日のイメージがつきやすいと思います。\n\nMIKI指名 Instagram限定20%OFF（VIPコースのみ）でご案内しています。\nマシンがちょっと不安、というご相談からで大丈夫です。\nご予約・ご相談はプロフィールのDMからお気軽にどうぞ💌",
+  "hashtags": "#痩身エステ #インディバ #インディバエステ #ラジオ波 #ラジオ波エステ #六本木エステ #痩身マシン #施術動画 #パラパラ漫画 #アラサー美容 #アラフォー美容 #自分磨き #東京エステ",
+  "memo": "案Bのflipbook第1弾（post_style=flipbook・10枚）。直近10件がすべて従来型カルーセルでいいね平均5.9件と横ばいのため形式を変える。直近はメニュー系が最良（平均いいね6.4件）。痩身マシンは9/10と7月に『3種の比較』で既出なので、比較はせず『施術中の実際』を動きで見せる切り口にした。素材はDrive動画IMG_9981（インディバ）の44.0〜45.6秒を0.2秒間隔で9コマ。オチは『9枚めくって実は1.6秒』の種明かし（動画の実測値）。CTAも案B（layout=photo）で質感を統一。",
+  "alt_text": "タオルを掛けてベッドに横になったお客様のお腹に、エステティシャンがインディバのヘッドを当て、もう片方の手を添えながらゆっくり動かしている様子",
+  "bg_prompt": "Calm esthetic treatment room with warm beige and cream tones, soft light, no people, high quality photo"
+}

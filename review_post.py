@@ -127,6 +127,31 @@ def check_caption_seo_opener(caption: str, recent_path: str = "recent_insights.j
 VALID_REUSE_THEMES = {"menu", "bridal", "lifestyle"}
 EMPTY_REUSE_THEMES = {"reward"}
 
+# 投稿スタイル。content.json のトップレベル post_style に書く。省略時は standard。
+# create_post.py もここを import する（同じ一覧を2か所に持たない）。
+VALID_POST_STYLES = {"standard", "flipbook", "phrase", "mosaic"}
+# post_style 別の、content.json に書けるスライド枚数の上限。
+# Instagram の Graph API はカルーセル10枚が上限（アプリは20枚だがAPIは10枚）。
+# standard は末尾固定2枚が自動で付くので 6+2=8 枚、flipbook / phrase は
+# 固定2枚を付けない代わりに本体でその枠を使う。
+POST_STYLE_MAX_SLIDES = {"standard": 6, "flipbook": 10, "phrase": 9, "mosaic": 10}
+# 末尾2枚（slide8 / slide7）を自動追加「しない」post_style。
+# 「standard のときだけ追加する」ではなく「この集合のときだけ抑止する」と書くことで、
+# 万一未知の値がすり抜けても既存挙動（固定2枚あり）に倒れる。
+NO_FOOTER_POST_STYLES = {"flipbook", "phrase", "mosaic"}
+# post_style 別に、末尾のCTA以外のスライドで使ってよい型。
+# post_style は "flipbook" なのに中身が phrase 型、のような食い違い
+# （宣言と実体の二重の真実）を防ぐ。standard は従来どおり制限しない。
+POST_STYLE_BODY_TYPES = {
+    "flipbook": {"frame"},
+    "phrase": {"phrase", "frame"},   # 導入に文字なしの1枚を置けるよう frame も許す
+    "mosaic": {"tile"},
+}
+# mosaic の区画数（3×3）。tile スライドはちょうどこの枚数にする。
+# 足りないと9枚目で一文も写真もそろわず、多いと区画からあふれる。
+# generate_carousel.py はここから格子の大きさを決める（同じ数を2か所に持たない）。
+MOSAIC_TILE_COUNT = 9
+
 
 def check_backgrounds(slides: list) -> list[tuple[bool, str]]:
     """背景画像の指定をチェックする。
@@ -182,8 +207,21 @@ def check_backgrounds(slides: list) -> list[tuple[bool, str]]:
             results.append((True, f"スライド{i}: {strategy} ← drive/{theme}/{slide['reuse_filename']} ✓"))
             continue
 
-        if strategy != "local":
-            results.append((False, f"スライド{i}: bg_strategy=\"{strategy}\" は未知の値です"))
+        if strategy == "local":
+            # 案B（flipbook）は全スライドが local になる。ここで何も出さないと
+            # 背景について1行も出ない校閲レポートが普通になってしまう。
+            local_path = slide.get("local_path", "")
+            if not local_path:
+                results.append((False, f"スライド{i}: bg_strategy=\"local\" なのに "
+                                       f"local_path がありません"))
+            elif not os.path.exists(local_path):
+                results.append((False, f"スライド{i}: local_path=\"{local_path}\" が"
+                                       f"見つかりません"))
+            else:
+                results.append((True, f"スライド{i}: local ← {local_path} ✓"))
+            continue
+
+        results.append((False, f"スライド{i}: bg_strategy=\"{strategy}\" は未知の値です"))
 
     return results
 
@@ -288,16 +326,40 @@ def check_image_positions(slides: list, content_path: str) -> list[tuple[bool, s
     return results
 
 
-def check_slides(slides: list) -> list[tuple[bool, str]]:
+# generate_carousel.py の generators 辞書に登録されている型。
+# ここに無い型を書くと generate_carousel.py が KeyError で落ちるまで気づけないので、
+# 校閲の時点で止める（型名の typo は実行時エラーのメッセージが原因を指さない）。
+VALID_SLIDE_TYPES = {"cover", "text", "list", "price", "cta", "raw",
+                     "frame", "phrase", "tile"}
+# 本文として一人称・MIKI表記を見るフィールド。
+# phrase 型には title が無く phrase が実質の本文なので、ここに入れないと
+# 「本文の一人称は私」「本文にMIKIを書かない」が新形式で効かない。
+BODY_TEXT_KEYS = ["text", "body", "phrase", "note"]
+
+
+def check_slides(slides: list, post_style: str = "standard") -> list[tuple[bool, str]]:
     results = []
 
     for i, slide in enumerate(slides, 1):
         stype = slide.get("type", "")
         title = slide.get("title", "")
-        body_keys = ["text", "body"]
+        body_keys = BODY_TEXT_KEYS
         body = " ".join(str(slide.get(k, "")) for k in body_keys)
         items = slide.get("items", [])
         bg_prompt = slide.get("bg_prompt", "")
+
+        layout = slide.get("layout")
+        if layout is not None:
+            if stype != "cta":
+                results.append((False, f"スライド{i}: layout は cta 型だけに書けます"))
+            elif layout != "photo":
+                results.append((False, f"スライド{i}: layout=\"{layout}\" は不正です"
+                                       f"（\"photo\" のみ・省略で案A）"))
+
+        if stype not in VALID_SLIDE_TYPES:
+            results.append((False,
+                            f"スライド{i}: type=\"{stype}\" は未知の型です"
+                            f"（{' / '.join(sorted(VALID_SLIDE_TYPES))}）"))
 
         # 1. bg_prompt に no people
         if bg_prompt and "no people" not in bg_prompt:
@@ -369,11 +431,47 @@ def check_slides(slides: list) -> list[tuple[bool, str]]:
         if any(p in title for p in naive_patterns):
             results.append((False, f"スライド{i}: タイトルのMIKI使用が幼稚な印象を与える可能性— 確認してください: 「{title}」"))
 
-    # スライド枚数チェック（6枚以内）
-    if len(slides) > 6:
-        results.append((False, f"スライドが{len(slides)}枚あります— 6枚以内（末尾固定2枚を除く）"))
+    # スライド枚数チェック（post_style 別）。
+    # 定義はこのファイルの POST_STYLE_MAX_SLIDES で、create_post.py がそれを
+    # import して画像を作る前に例外で止める。ここは校閲時にも同じ網をかけるための二重化。
+    limit = POST_STYLE_MAX_SLIDES.get(post_style, POST_STYLE_MAX_SLIDES["standard"])
+    footer_note = ("末尾固定2枚を除く" if post_style not in NO_FOOTER_POST_STYLES
+                   else "末尾固定2枚は付かない")
+    if len(slides) > limit:
+        results.append((False, f"スライドが{len(slides)}枚あります"
+                               f"— post_style=\"{post_style}\" は{limit}枚以内（{footer_note}）"))
     else:
-        results.append((True, f"スライド枚数: {len(slides)}枚 ✓"))
+        results.append((True, f"スライド枚数: {len(slides)}枚"
+                              f"（post_style={post_style} / 上限{limit}枚）✓"))
+
+    # flipbook / phrase は末尾固定2枚が付かないため、CTAスライドが唯一の予約導線。
+    # 無いと check_lp_guidance() も CTA固定文言チェックも見る対象を失う。
+    if post_style in NO_FOOTER_POST_STYLES:
+        last_type = slides[-1].get("type") if slides else None
+        if last_type != "cta":
+            results.append((False,
+                            f"post_style=\"{post_style}\" の最後のスライドが"
+                            f"type=\"{last_type}\" です— 末尾は cta 型が必須"))
+        else:
+            results.append((True, f"末尾がCTAスライド（post_style={post_style}）✓"))
+            # 案Bの投稿の最後だけクリーム帯になると質感が切り替わる
+            if slides[-1].get("layout") != "photo":
+                results.append((False, f"post_style=\"{post_style}\" の最後のCTAに "
+                                       f"\"layout\": \"photo\" がありません— 最後の1枚だけ質感が変わる"))
+
+    if post_style != "mosaic":
+        stray = [i for i, s in enumerate(slides, 1) if s.get("type") == "tile"]
+        if stray:
+            results.append((False, f"スライド{', '.join(map(str, stray))}: type=\"tile\" は "
+                                   f"post_style=\"mosaic\" 専用— 現在は \"{post_style}\""))
+
+    if post_style == "mosaic":
+        n_tiles = sum(1 for s in slides if s.get("type") == "tile")
+        if n_tiles != MOSAIC_TILE_COUNT:
+            results.append((False, f"mosaic の tile が{n_tiles}枚です— "
+                                   f"ちょうど{MOSAIC_TILE_COUNT}枚でないと区画がそろわない"))
+        else:
+            results.append((True, f"mosaic の tile {n_tiles}枚 ✓"))
 
     return results
 
@@ -422,8 +520,16 @@ def run_review(content_path: str, revision_instruction: str = ""):
     slides = content.get("slides", [])
     caption = content.get("caption", "")
     alt_text = content.get("alt_text", "")
+    post_style = content.get("post_style") or "standard"
 
     all_results = []
+
+    # post_style の値そのもの。typo だと枚数の網が standard の6枚で当たってしまい、
+    # 「なぜか9枚で怒られる」という原因の読めない ❌ になる。
+    if post_style not in VALID_POST_STYLES:
+        all_results.append((False, f"post_style=\"{post_style}\" は不正です"
+                                   f"（{' / '.join(sorted(VALID_POST_STYLES))} のみ・小文字）"))
+        post_style = "standard"
 
     # キャプションチェック
     all_results.append(check_caption_seo_intro(caption))
@@ -433,7 +539,7 @@ def run_review(content_path: str, revision_instruction: str = ""):
     all_results.append(check_caption_has_cta(caption))
 
     # スライドチェック
-    all_results.extend(check_slides(slides))
+    all_results.extend(check_slides(slides, post_style))
 
     # 背景画像の指定チェック（Drive優先・AI生成の暗黙採用を防ぐ）
     all_results.extend(check_backgrounds(slides))

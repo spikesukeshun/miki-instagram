@@ -15,9 +15,12 @@ content.json の任意フィールド：
 呼び出し元：
 - create_post.py:8           from generate_carousel import generate_with_slides
 """
+import math
 import unicodedata
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
+
+from review_post import MOSAIC_TILE_COUNT
 
 
 def normalize_text(text: str) -> str:
@@ -767,6 +770,493 @@ def generate_raw(img, _slide):
 
 
 # ---------------------------------------------------------------------------
+# 案B: 全面写真レイアウト（frame / phrase）
+# ---------------------------------------------------------------------------
+# 案A（上=写真ゾーン＋下=クリーム帯の2分割）とは別系統の、写真を全面に敷いて
+# その上に文字を置く型。案Aの「例外」ではなく、並立する第2の型として扱う。
+# rules/carousel-design.md が廃止と書いている旧 PINK / DARK テーマとは別物で、
+# あれは「クリーム帯の代わりに濃色パネルを敷く」案。こちらは写真そのものが面になる。
+#
+# 白文字の可読性はシャドウではなくスクリム（下端から立ち上がる暗い帯）で作る。
+# 「テキストのシャドウは全てなし」（rules/carousel-design.md）を案Bでも守るため。
+SCRIM_RGB = (18, 14, 12)     # 黒よりは温かい、INK より暗い
+SCRIM_MIN_ALPHA = 86         # 暗い写真でも最低これだけは沈める（文字の輪郭を出す）
+SCRIM_MAX_ALPHA = 228        # 濃さの上限（写真を殺しきらないための安全弁）
+SCRIM_TARGET_LUMA = 92       # 白文字が確実に読める、沈めた後の背景の明るさ
+# 面積の小さい非常に明るい点（キャンドルの炎・窓・泡・金具の反射）は
+# 90%点の測定をすり抜ける。実際 candle.jpg は 90%点が116しかないのに
+# 炎が残り、沈めた後も174あった（＝そこに重なった文字だけ消える）。
+# そこで上側のパーセンタイルも見て、必要ならさらに濃くする。
+SCRIM_HIGHLIGHT_PERCENTILE = 0.995
+SCRIM_HIGHLIGHT_TARGET = 150
+# ここまで濃い帯が必要になった写真は、読めはするが全体が沈んで写真が死ぬ。
+# 「沈めても読めない」は二段測定で起きなくなった（必要値の最大は173で
+# SCRIM_MAX_ALPHA に届かない）ので、警告するのは可読性ではなく見栄えの方。
+SCRIM_HEAVY_ALPHA = 150
+
+
+def _region_luma(img: Image.Image, box, percentile: float = 0.90) -> float:
+    """box 内の輝度の上位パーセンタイル（既定90%点）を返す。
+
+    平均を使ってはいけない。白文字が飛ぶのは「領域の平均が明るい時」ではなく
+    「文字が載るところに明るい部分がある時」で、平均だと左右の暗い部分に
+    引っ張られて明るい箇所を見落とす（浴槽の白い泡の上で実際に起きた）。
+    """
+    region = img.convert("L").crop(box)
+    hist = region.histogram()
+    total = sum(hist)
+    if total == 0:
+        return 0.0
+    threshold = total * percentile
+    running = 0
+    for value, count in enumerate(hist):
+        running += count
+        if running >= threshold:
+            return float(value)
+    return 255.0
+
+
+def scrim_alpha_for(img: Image.Image, box) -> int:
+    """box の明るさを実測して、白文字が読めるまで沈めるのに要る不透明度を返す。
+
+    写真の明るさは1枚ごとに違う。固定値にすると、暗い写真では帯が濃すぎて
+    写真が死に、明るい写真（泡・白いタオル・窓）では文字が飛ぶ。
+    実際に測ってから決める。
+    """
+    scrim_luma = (0.299 * SCRIM_RGB[0] + 0.587 * SCRIM_RGB[1] + 0.114 * SCRIM_RGB[2])
+
+    def _needed(luma: float, target: float) -> int:
+        if luma <= target:
+            return SCRIM_MIN_ALPHA
+        ratio = (luma - target) / max(1.0, luma - scrim_luma)
+        return round(ratio * 255)
+
+    # 面全体の明るさ（90%点）と、小さく明るい点（99.5%点）の両方を見て、
+    # 濃い方を採る。前者だけだと炎や反射がすり抜け、後者だけだと
+    # 暗い写真に強すぎる帯がかかる。
+    body = _needed(_region_luma(img, box), SCRIM_TARGET_LUMA)
+    spot = _needed(_region_luma(img, box, SCRIM_HIGHLIGHT_PERCENTILE),
+                   SCRIM_HIGHLIGHT_TARGET)
+    return int(max(SCRIM_MIN_ALPHA, min(SCRIM_MAX_ALPHA, max(body, spot))))
+
+
+def paste_bottom_scrim(img: Image.Image, height: int, fade: int,
+                       max_alpha: int) -> Image.Image:
+    """下端から height px の帯を重ねる。
+
+    帯の上端 fade px で 0 から max_alpha まで立ち上げ、その下は max_alpha を保つ。
+    こうすると文字が載る領域は一様に沈み、帯の上端は写真に溶けて境目が出ない。
+    """
+    if img.mode != "RGBA":
+        img = img.convert("RGBA")
+    w, h = img.size
+    height = max(0, min(h, int(height)))
+    if height == 0:
+        return img
+    fade = max(1, min(height, int(fade)))
+
+    # 1px 幅で作ってから横に伸ばす（行ごとのループを1回で済ませる）
+    mask = Image.new("L", (1, height))
+    for y in range(height):
+        if y < fade:
+            t = (y + 1) / fade
+            # smoothstep。両端で傾きが0になるので、帯の上端も
+            # 「立ち上がりが終わって一定になる点」も横線として見えない。
+            # 二乗カーブだと後者で傾きが急に0になり、そこに筋が出た。
+            mask.putpixel((0, y), int(max_alpha * t * t * (3.0 - 2.0 * t)))
+        else:
+            mask.putpixel((0, y), max_alpha)
+    mask = mask.resize((w, height), Image.BILINEAR)
+    scrim = Image.new("RGBA", (w, height), SCRIM_RGB + (0,))
+    scrim.putalpha(mask)
+    img.alpha_composite(scrim, (0, h - height))
+    return img
+
+
+def _block_width(font, lines) -> int:
+    """複数行の中で最も横に長い行の幅（px）"""
+    widths = []
+    for line in lines:
+        if not line:
+            continue
+        bbox = font.getbbox(line)
+        widths.append(bbox[2] - bbox[0])
+    return max(widths) if widths else 0
+
+
+# 案Bで写真の上に置く文字の、左右の最小余白
+PHOTO_TEXT_SIDE_MARGIN = 72
+# 案B版CTAの文字のかたまりが、画面の上端から最低これだけ離れていること
+PHOTO_CTA_TOP_MARGIN = 72
+NOTE_FONT_SIZE = 46
+NOTE_LINE_GAP = 16
+
+
+def _fit_phrase_font(phrase: str, w: int = W, h: int = H):
+    """phrase を指定の改行のまま収める、いちばん大きいフォントと行間を返す。
+
+    縮めきっても入らなければ ValueError。ここで描くと draw_centered の x が
+    負になって左右が切れた画像が、例外も警告もなく出来上がる。
+    描画（generate_phrase_slide）と事前検査（validate_photo_text）で同じ計算を使う。
+    """
+    lines = phrase.split("\n")
+    max_w = w - 96 * 2
+    max_h = int(h * 0.46)
+    size = 160
+    while size >= 58:
+        font = get_serif(size)
+        gap = int(size * 0.26)
+        if (_block_width(font, lines) <= max_w
+                and measure_lines(font, phrase, line_gap=gap) <= max_h):
+            return font, gap
+        size -= 6
+    raise ValueError(
+        f"phrase が長すぎて収まりません: {phrase!r}\n"
+        f"  案Bは1枚1文節です。短く割るか、\\n で改行を足してください"
+        f"（自動折り返しはしません）。"
+    )
+
+
+def _check_note_fits(note: str, w: int = W):
+    """frame の note が左右に収まるか。収まらなければ ValueError。"""
+    font = get_sans(NOTE_FONT_SIZE)
+    width = _block_width(font, note.split("\n"))
+    limit = w - PHOTO_TEXT_SIDE_MARGIN * 2
+    if width > limit:
+        raise ValueError(
+            f"note が長すぎて収まりません（幅 {width}px / 上限 {limit}px）: {note!r}\n"
+            f"  \\n で改行を足してください（自動折り返しはしません）。"
+        )
+    return font
+
+
+def _cta_photo_layout(slide: dict, w: int = W, h: int = H) -> dict:
+    """案B版CTAの文字の寸法と位置を決め、画面に収まるか確かめる。
+
+    描画（generate_cta_photo_slide）と事前検査（validate_photo_text）が
+    同じ値を使うので、「検査は通ったのに描くとはみ出す」が起きない。
+    """
+    title_font = get_serif(56)
+    body_font = get_sans(36)
+    sub_font = get_sans(30)
+
+    title = normalize_text(slide.get("title", ""))
+    body = normalize_text(slide.get("body", ""))
+    subtitle = normalize_text(slide.get("subtitle", ""))
+    body_lines = body.split("\n")
+    sub_lines = subtitle.split("\n")
+
+    # subtitle の最終行には 💌 が付くので、その分も幅に入れる
+    widest = max(_block_width(title_font, title.split("\n")),
+                 _block_width(body_font, body_lines),
+                 _block_width(sub_font, sub_lines) + sub_font.size + 12)
+    limit = w - PHOTO_TEXT_SIDE_MARGIN * 2
+    if widest > limit:
+        raise ValueError(
+            f"案B版CTAの文字が左右に収まりません（最大幅 {widest}px / 上限 {limit}px）。\n"
+            f"  タイトルは改行版（CTA_REQUIRED_TITLE_ALT）を使い、本文は短く改行してください。"
+        )
+
+    # 描画と同じ積み方で高さを出す（タイトル → 罫 → 本文 → 短い罫 → subtitle）
+    title_h = measure_lines(title_font, title, line_gap=14)
+    block_h = (title_h + 14 + 18 + 50 + 60 * len(body_lines)
+               + 20 + 30 + 48 * (len(sub_lines) - 1) + sub_font.size)
+    bottom_margin = 96
+    block_top = h - bottom_margin - block_h
+    if block_top < PHOTO_CTA_TOP_MARGIN:
+        raise ValueError(
+            f"案B版CTAの文字が縦に収まりません（上端 {block_top}px）。本文の行数を減らしてください。"
+        )
+    return {
+        "title_font": title_font, "body_font": body_font, "sub_font": sub_font,
+        "title": title, "body_lines": body_lines, "sub_lines": sub_lines,
+        "widest": widest, "block_top": block_top, "block_h": block_h,
+    }
+
+
+def validate_photo_text(slide: dict) -> None:
+    """案Bの文字が画像に収まるかを、画像を読む前に確かめる。
+
+    create_post.py が背景を1枚も落とす前に呼ぶ。描画の時点で気づくと、
+    Drive からのダウンロードや generated/ の削除が済んだ後に止まることになる。
+    """
+    stype = slide.get("type")
+    if stype == "phrase":
+        phrase = normalize_text(slide.get("phrase") or "")
+        if not phrase.strip():
+            raise ValueError("phrase 型のスライドに phrase がありません")
+        _fit_phrase_font(phrase)
+    elif stype == "frame":
+        note = normalize_text(slide.get("note") or "")
+        if note.strip():
+            _check_note_fits(note)
+    elif stype == "cta" and slide.get("layout") == "photo":
+        _cta_photo_layout(slide)
+    elif stype == "tile":
+        # 1枚ずつでも最小サイズで収まるか見ておく。全区画で共通のサイズは
+        # その最小値以上になるので、ここを通れば mosaic_font() も通る。
+        mosaic_font([_mosaic_word(slide)])
+
+
+def _lay_scrim(canvas: Image.Image, text_top: int, block_h: int, widest: int,
+               pad: int) -> Image.Image:
+    """文字のかたまりの下に、明るさを実測して決めた濃さのスクリムを敷く。"""
+    w, h = canvas.size
+    solid_top = max(0, text_top - pad)
+    # 明るさは「文字が実際に載る幅」だけで測る。画面の全幅で測ると、
+    # 文字の無い左右の暗い部分に薄められて、中央の明るさを見落とす。
+    x0 = max(0, (w - widest) // 2 - pad)
+    x1 = min(w, (w + widest) // 2 + pad)
+    alpha = scrim_alpha_for(canvas, (x0, solid_top, x1, h))
+    if alpha > SCRIM_HEAVY_ALPHA:
+        # 明るい写真では普通に起きる（読めなくなるわけではない）。
+        # ただ帯の存在感が増すので、仕上がりを目で見るべき1枚として知らせる。
+        print(f"    ⚠ 文字の下が明るいため、帯を濃く敷いています（不透明度 {alpha}/255）。"
+              f"帯の境目と写真の見え方を目視で確認してください。")
+
+    # 立ち上がり（fade）は文字の上端より「上」で終わらせる。
+    # 帯の高さに対する割合で決めると、fade が文字の位置まで食い込んで
+    # 上の行が半透明部分に載り、そこだけ白飛びする。
+    # 帯が濃いほど立ち上がりを長く取る。明るい写真で濃い帯を短く立ち上げると、
+    # 写真の上に灰色の箱が乗ったように見える（白いドレスや浜辺の写真で実際にそうなった）。
+    fade_len = max(150, int(block_h * 0.45), int(alpha * 1.8))
+    band_top = max(0, solid_top - fade_len)
+    return paste_bottom_scrim(canvas, h - band_top, fade=solid_top - band_top,
+                              max_alpha=alpha)
+
+
+def _draw_over_photo(canvas: Image.Image, text: str, font, gap: int,
+                     bottom_margin: int) -> Image.Image:
+    """全面写真の下部に、スクリムを敷いてから白文字を中央揃えで置く。"""
+    w, h = canvas.size
+    block_h = measure_lines(font, text, line_gap=gap)
+    text_top = h - bottom_margin - block_h
+    widest = _block_width(font, text.split("\n"))
+    canvas = _lay_scrim(canvas, text_top, block_h, widest, pad=max(24, gap))
+    draw = ImageDraw.Draw(canvas)
+    draw_multiline_centered(draw, text, font, text_top, w,
+                            (255, 255, 255, 255), line_gap=gap)
+    return canvas
+
+
+def generate_frame_slide(img: Image.Image, slide: dict) -> Image.Image:
+    """パラパラ漫画の1コマ。全面写真で、原則として文字を置かない。
+
+    note を書いた時だけ下端に小さく重ねる（参考にした投稿が1枚目にだけ
+    「ドットを押さえてスクロール」と入れていたのと同じ役割）。
+    """
+    canvas = crop_center_with_focus(img, float(slide.get("focus_y", 0.5))).convert("RGBA")
+
+    note = normalize_text(slide.get("note") or "")
+    if not note.strip():
+        return canvas.convert("RGB")
+
+    font = _check_note_fits(note, canvas.size[0])
+    canvas = _draw_over_photo(canvas, note, font, gap=NOTE_LINE_GAP, bottom_margin=88)
+    return canvas.convert("RGB")
+
+
+def generate_cta_photo_slide(img: Image.Image, slide: dict) -> Image.Image:
+    """案B版のCTA。全面写真＋スクリムの上に、案Aと同じ構成の文字を置く。
+
+    案Bの投稿（flipbook / phrase）は全面写真が続くので、最後の1枚だけ
+    クリーム帯になると質感が切り替わってしまう。構成（タイトル → 罫 →
+    本文 → 短い罫 → subtitle＋💌）は案Aを踏襲する。
+    文字は subtitle も含めて白。案Aの subtitle は金色だが、スクリムは白文字が
+    読める明るさに合わせて敷くので、金色では明るい写真でコントラストが足りない
+    （LP への唯一の導線がそこだけ読めなくなる）。金色は罫だけに残す。
+    """
+    canvas = crop_center_with_focus(img, float(slide.get("focus_y", 0.5))).convert("RGBA")
+    w, h = canvas.size
+    lay = _cta_photo_layout(slide, w, h)
+    block_top = lay["block_top"]
+
+    canvas = _lay_scrim(canvas, block_top, lay["block_h"], lay["widest"], pad=40)
+    draw = ImageDraw.Draw(canvas)
+    white = (255, 255, 255, 255)
+
+    end_title_y = draw_multiline_centered(draw, lay["title"], lay["title_font"],
+                                          block_top, w, white, line_gap=14)
+    rule_y = end_title_y + 18
+    _hairline(draw, rule_y)
+
+    y = rule_y + 50
+    for line in lay["body_lines"]:
+        if line:
+            draw_centered(draw, line, lay["body_font"], y, w, white)
+        y += 60
+
+    y += 20
+    _hairline(draw, y, x1=w // 2 - 50, x2=w // 2 + 50, width=2)
+    y += 30
+
+    # subtitle の最終行に 💌 を自動付与するのは案Aと同じ（SKILL.md が
+    # 「絵文字を数える時は勘定に入れる」と書いている挙動を変えない）
+    emoji_font = get_emoji_font(30)
+    sub_lines = lay["sub_lines"]
+    last_idx = len(sub_lines) - 1
+    for i, line in enumerate(sub_lines):
+        if line:
+            if i == last_idx and "💌" not in line:
+                draw_with_emoji_suffix(draw, line, "💌", lay["sub_font"], emoji_font,
+                                       y, w, white)
+            else:
+                draw_centered(draw, line, lay["sub_font"], y, w, white)
+        y += 48
+
+    return canvas.convert("RGB")
+
+
+# CTA の layout に書いてよい値。省略時は案A（クリーム帯）。
+VALID_CTA_LAYOUTS = {"photo"}
+
+
+def _cta_dispatch(img: Image.Image, slide: dict) -> Image.Image:
+    """CTAスライドの見た目を案A／案Bで切り替える。
+
+    型を `cta` のまま保つのが要点。review_post.py の CTA固定文言チェック・
+    check_lp_guidance()・末尾CTA検査はすべて type == "cta" を見ているので、
+    別の型にすると予約導線の機械チェックが一斉に効かなくなる。
+    """
+    layout = slide.get("layout")
+    if layout is not None and layout not in VALID_CTA_LAYOUTS:
+        # "Photo" などの打ち間違いを案A扱いにすると、案Bの投稿の最後だけ
+        # クリーム帯に白もやの質感で出てしまう。黙って進ませない。
+        raise ValueError(f"cta の layout=\"{layout}\" は不正です（\"photo\" のみ・省略で案A）")
+    if layout == "photo":
+        return generate_cta_photo_slide(img, slide)
+    return generate_cta_slide(img, slide)
+
+
+def generate_phrase_slide(img: Image.Image, slide: dict) -> Image.Image:
+    """全面写真＋日本語の文節ひとつ。スワイプすると文が組み上がる型。
+
+    自動折り返しはしない。改行は content.json 側で \n を入れる
+    （既存のタイトル・本文と同じ約束）。文字サイズだけは、指定された改行の
+    まま収まるところまでコードが自動で落とす。
+    """
+    canvas = crop_center_with_focus(img, float(slide.get("focus_y", 0.5))).convert("RGBA")
+
+    phrase = normalize_text(slide.get("phrase") or "")
+    if not phrase.strip():
+        raise ValueError("phrase 型のスライドに phrase がありません")
+
+    font, gap = _fit_phrase_font(phrase, *canvas.size)
+    canvas = _draw_over_photo(canvas, phrase, font, gap=gap, bottom_margin=132)
+    return canvas.convert("RGB")
+
+
+# ---------------------------------------------------------------------------
+# 案B: mosaic（9分割・積み上げ）
+#   画面を3×3に割り、1枚めくるごとに区画が1つ埋まる。区画ごとに別の写真と
+#   文節1つを置き、9枚目で写真9枚と一文がそろう（Red Bull の投稿形式）。
+# ---------------------------------------------------------------------------
+MOSAIC_GRID = math.isqrt(MOSAIC_TILE_COUNT)
+MOSAIC_TILE_W, MOSAIC_TILE_H = W // MOSAIC_GRID, H // MOSAIC_GRID
+MOSAIC_TILE_PAD = 16
+MOSAIC_FONT_MAX = 104
+MOSAIC_FONT_MIN = 64          # これ未満でないと収まらない文節は「大きい文字」にならないので止める
+MOSAIC_SHADOW_RGB = (24, 20, 18)
+MOSAIC_SHADOW_OFFSET_RATIO = 0.045
+MOSAIC_BOTTOM_GAP = 6         # 区画の下端余白（MOSAIC_TILE_PAD）に足す、文字の最下点までのすき間
+
+# 区画数が平方数でない・キャンバスが割り切れないと、区画が画面外に貼られても気づけない
+assert MOSAIC_GRID ** 2 == MOSAIC_TILE_COUNT, "MOSAIC_TILE_COUNT は平方数にする"
+assert W % MOSAIC_GRID == 0 and H % MOSAIC_GRID == 0, "キャンバスが区画数で割り切れない"
+
+
+def _mosaic_word_width(font, word: str) -> int:
+    bb = font.getbbox(word)
+    return bb[2] - bb[0]
+
+
+def _mosaic_word(slide: dict) -> str:
+    word = normalize_text(slide.get("phrase") or "").strip()
+    if not word:
+        raise ValueError("tile 型のスライドに phrase がありません")
+    if "\n" in word:
+        # 区画は小さいので2行にすると文字が区画の半分を覆う。1文節1行に限る。
+        raise ValueError(f"tile 型の phrase は1行にしてください（改行なし）: 「{word}」")
+    return word
+
+
+def _mosaic_fits(font, word: str) -> bool:
+    return _mosaic_word_width(font, word) <= MOSAIC_TILE_W - MOSAIC_TILE_PAD * 2
+
+
+def mosaic_font(words: list):
+    """全区画で同じ文字サイズにする。いちばん長い文節が収まる最大のサイズ。
+
+    区画ごとにサイズを変えると、文がそろった9枚目で字の大きさがばらつく。
+    """
+    # 最小サイズは必ず試す（validate_photo_text は最小サイズで収まるかだけを見ているので、
+    # 刻み幅の都合で最小サイズを飛ばすと、そこを通った文節がここで止まってしまう）
+    for size in list(range(MOSAIC_FONT_MAX, MOSAIC_FONT_MIN, -2)) + [MOSAIC_FONT_MIN]:
+        font = get_sans(size)
+        if all(_mosaic_fits(font, w) for w in words):
+            return font
+    raise ValueError(
+        f"tile の文節が区画に収まりません（{MOSAIC_FONT_MIN}px でもはみ出す）: "
+        f"{' / '.join(w for w in words if not _mosaic_fits(get_sans(MOSAIC_FONT_MIN), w))}\n"
+        f"  文節を短く割り直してください（1区画の目安は全角4文字まで）。"
+    )
+
+
+def mosaic_baseline(font, words: list) -> int:
+    """全区画で共通のベースライン（y）。
+
+    区画ごとに文字の最下点で下ぞろえすると、字形（「ー」や「ぐ」など）で
+    ベースラインが数px上下し、そろった時に横一列の文字がガタつく。
+    いちばん下に出る字が下端余白に収まる位置で、全区画のベースラインをそろえる。
+    """
+    lowest = max(font.getbbox(w, anchor="ls")[3] for w in words)
+    return MOSAIC_TILE_H - MOSAIC_TILE_PAD - MOSAIC_BOTTOM_GAP - lowest
+
+
+def _mosaic_tile(img: Image.Image, slide: dict, font, baseline: int) -> Image.Image:
+    """区画1つ分の写真に文節を載せる。
+
+    【例外】案Bのシャドウ禁止（rules/carousel-design.md）はこの型だけ外している
+    （2026-09-23 ユーザー指定）。区画は写真ごとに明るさがばらばらで、
+    スクリムを区画ごとに敷くと9枚目に帯の濃淡が並んで見えるため、白＋影で統一する。
+    """
+    tile = crop_center_with_focus(img, float(slide.get("focus_y", 0.5)),
+                                  size=(MOSAIC_TILE_W, MOSAIC_TILE_H)).convert("RGB")
+    word = _mosaic_word(slide)
+    bb = font.getbbox(word, anchor="ls")
+    x = (MOSAIC_TILE_W - (bb[2] - bb[0])) // 2 - bb[0]
+    off = max(2, int(font.size * MOSAIC_SHADOW_OFFSET_RATIO))
+    draw = ImageDraw.Draw(tile)
+    draw.text((x + off, baseline + off), word, font=font, fill=MOSAIC_SHADOW_RGB, anchor="ls")
+    draw.text((x, baseline), word, font=font, fill=(255, 255, 255), anchor="ls")
+    return tile
+
+
+class _MosaicBuilder:
+    """tile スライドを順に受け取り、それまでの区画を積み上げた1枚を返す。
+
+    generate_with_slides() の generators 辞書に bound method として入る
+    （他の型と同じ (bg, slide) の呼び出し形のまま、前の区画を覚えておくため）。
+    """
+
+    def __init__(self, slides: list):
+        words = [_mosaic_word(s) for s in slides if s.get("type") == "tile"]
+        self.font = mosaic_font(words) if words else None
+        self.baseline = mosaic_baseline(self.font, words) if words else None
+        self.tiles = []
+
+    def add(self, img: Image.Image, slide: dict) -> Image.Image:
+        if len(self.tiles) >= MOSAIC_TILE_COUNT:
+            raise ValueError(f"tile は{MOSAIC_TILE_COUNT}枚までです")
+        self.tiles.append(_mosaic_tile(img, slide, self.font, self.baseline))
+        canvas = Image.new("RGB", (W, H), CREAM[:3])
+        for n, tile in enumerate(self.tiles):
+            row, col = divmod(n, MOSAIC_GRID)
+            canvas.paste(tile, (col * MOSAIC_TILE_W, row * MOSAIC_TILE_H))
+        return canvas
+
+
+# ---------------------------------------------------------------------------
 # Entry points
 # ---------------------------------------------------------------------------
 def generate_all():
@@ -781,8 +1271,12 @@ def generate_with_slides(slides: list):
         "text": generate_text_slide,
         "list": generate_list_slide,
         "price": generate_price_slide,
-        "cta": generate_cta_slide,
+        "cta": _cta_dispatch,
         "raw": generate_raw,
+        # 案B（全面写真レイアウト）
+        "frame": generate_frame_slide,
+        "phrase": generate_phrase_slide,
+        "tile": _MosaicBuilder(slides).add,
     }
 
     for i, slide in enumerate(slides, 1):

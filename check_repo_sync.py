@@ -226,6 +226,291 @@ def check_cta_subtitle_rule() -> tuple[bool, str]:
     return True, "CTAスライドの subtitle は固定文言で照合 ✓"
 
 
+def _function_source(src: str, name: str) -> str:
+    """モジュール内の関数 name の本体ソースだけを返す（無ければ ""）。
+
+    "ファイルを def で split して以降全部" だと、別の関数に同じ字面があるだけで
+    素通りする。関数の範囲を構文木で確定させてから中を見る。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return ""
+    lines = src.splitlines()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            end = getattr(node, "end_lineno", None) or len(lines)
+            return "\n".join(lines[node.lineno - 1:end])
+    return ""
+
+
+def _dict_string_keys(src: str, var_name: str) -> set:
+    """モジュール内で var_name に代入されている辞書の、文字列キーを返す。
+
+    正規表現でインデントごと当てにいくと、辞書を別の場所へ移しただけで
+    「構造が変わっています」と誤検知して投稿フロー全体が止まる。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(t, ast.Name) and t.id == var_name for t in node.targets):
+            continue
+        if not isinstance(node.value, ast.Dict):
+            continue
+        return {k.value for k in node.value.keys
+                if isinstance(k, ast.Constant) and isinstance(k.value, str)}
+    return set()
+
+
+def _strip_comments(code: str) -> str:
+    return "\n".join(re.sub(r"#.*$", "", line) for line in code.splitlines())
+
+
+def _compares_last_slide_to_cta(src: str, func_name: str) -> bool:
+    """関数 func_name の中に「最後のスライドの型を "cta" と比べる比較式」が実在するか。
+
+    関数内に "cta" という字面があるだけでは足りない（check_slides には
+    CTA固定文言チェックなど別の "cta" がいくつもあり、比較を消しても素通りした）。
+    slides[-1] から取った値（またはそれを入れた変数）と "cta" を比べる
+    Compare ノードを構文木で探す。書き方（!= / not in ("cta",)）には左右されない。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return False
+    for fn in ast.walk(tree):
+        if not (isinstance(fn, ast.FunctionDef) and fn.name == func_name):
+            continue
+        names = set()
+        for node in ast.walk(fn):
+            if isinstance(node, ast.Assign) and "slides[-1]" in ast.unparse(node.value):
+                names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        for node in ast.walk(fn):
+            if not isinstance(node, ast.Compare):
+                continue
+            left = ast.unparse(node.left)
+            if left not in names and "slides[-1]" not in left:
+                continue
+            for comp in node.comparators:
+                if any(isinstance(c, ast.Constant) and c.value == "cta"
+                       for c in ast.walk(comp)):
+                    return True
+    return False
+
+
+def check_post_style_cta_last() -> tuple[bool, str]:
+    """flipbook / phrase の末尾が CTA スライドであること（恒久・2026-09-21）。
+
+    この2形式は末尾固定2枚（slide8 / slide7）を付けない。CTAスライドが
+    消えると review_post.py の CTA固定文言チェックも check_lp_guidance() も
+    見る対象を失い、予約導線が黙って無くなる。
+    画像を作る前に止まる create_post.py 側と、校閲する review_post.py 側の
+    両方に検査が生きているかを見る。
+    """
+    cp = _read("create_post.py")
+    rp = _read("review_post.py")
+
+    if "NO_FOOTER_POST_STYLES" not in rp:
+        return False, ("review_post.py に NO_FOOTER_POST_STYLES がありません— "
+                       "flipbook / phrase で末尾固定2枚を抑止する恒久ルール")
+
+    # create_post.py: 末尾が cta でなければ例外
+    if "resolve_post_style" not in cp:
+        return False, ("create_post.py に resolve_post_style() がありません— "
+                       "枚数と末尾CTAは画像を作る前に止める恒久ルール")
+    if not _compares_last_slide_to_cta(cp, "resolve_post_style"):
+        return False, ("create_post.py の resolve_post_style() で末尾CTAを"
+                       "照合していません— CTAが消えると予約導線が黙って無くなる")
+
+    # 固定2枚の追加が「抑止する側」で書かれているか
+    # （standard のときだけ追加、にすると未知の値で固定2枚が落ちる）
+    # コメントの中の字面で通ってしまわないよう、run() のコードだけを見る
+    if "post_style in NO_FOOTER_POST_STYLES" not in _strip_comments(_function_source(cp, "run")):
+        return False, ("create_post.py の末尾2枚の自動追加が "
+                       "NO_FOOTER_POST_STYLES での抑止になっていません— "
+                       "未知の post_style で固定2枚が黙って落ちる")
+
+    # review 側も「最後のスライドの型を cta と比べている」ことまで見る。
+    # 関数の範囲は構文木で確定させる（ファイル末尾まで見ると、
+    # 別の関数にある同じ字面で素通りしてしまう）。
+    if not _compares_last_slide_to_cta(rp, "check_slides"):
+        return False, ("review_post.py の check_slides() が末尾のCTAを照合していません— "
+                       "定義だけ残って比較が消えると、CTA無しの投稿が校閲を通る")
+
+    return True, "flipbook / phrase の末尾CTAは create_post と review_post の両方で照合 ✓"
+
+
+def check_slide_type_allowlist() -> tuple[bool, str]:
+    """review_post.py の型 allowlist が generate_carousel.py と一致すること（恒久・2026-09-21）。
+
+    generate_carousel.py は generators[slide["type"]] の直接添字なので、
+    未知の型は KeyError になるまで気づけない。review_post.py の
+    VALID_SLIDE_TYPES で校閲時に止める運用にしているが、片方だけ型を
+    足すと「描けるのに校閲で ❌」「校閲を通るのに KeyError」のどちらかになる。
+    """
+    rp = _read("review_post.py")
+    gc = _read("generate_carousel.py")
+
+    allowed = _literal_constant(rp, "VALID_SLIDE_TYPES")
+    if allowed is None:
+        return False, ("review_post.py に VALID_SLIDE_TYPES がありません— "
+                       "未知の型を校閲で止める恒久ルール")
+    allowed = set(allowed)
+
+    registered = _dict_string_keys(gc, "generators")
+    if not registered:
+        return False, ("generate_carousel.py の generators 辞書が見つかりません"
+                       "（構造が変わっています）")
+
+    if allowed != registered:
+        missing = registered - allowed
+        extra = allowed - registered
+        detail = []
+        if missing:
+            detail.append(f"描けるのに校閲が知らない型: {' / '.join(sorted(missing))}")
+        if extra:
+            detail.append(f"校閲は許すのに描けない型: {' / '.join(sorted(extra))}")
+        return False, ("VALID_SLIDE_TYPES と generate_carousel.py の generators が"
+                       "一致しません— " + " / ".join(detail))
+    return True, f"スライド型の allowlist は generators と一致（{len(allowed)}種）✓"
+
+
+def check_no_silent_local_fallback() -> tuple[bool, str]:
+    """bg_strategy: "local" でファイルが無い時、AI生成へ落ちずに止まること（恒久・2026-09-23）。
+
+    以前は local_path が見つからないと HF 生成へ黙って落ち、指定した写真の
+    代わりにAI画像で投稿が完成していた。案B（flipbook）は全スライドが local なので、
+    これが復活するとパラパラ漫画のコマが全部AI画像に置き換わる。
+    """
+    cp = _read("create_post.py")
+    m = re.search(r"# --- ローカルファイル(.*?)# --- Instagram", cp, re.S)
+    if not m:
+        return False, "create_post.py の local 分岐が見つかりません（構造が変わっています）"
+    code = _strip_comments(m.group(1))
+    if "raise ValueError" not in code:
+        return False, ("create_post.py の local 分岐が、ファイルが無い時に止まりません— "
+                       "指定した写真の代わりにAI画像で投稿が完成する")
+    if "HFで代替生成" in code:
+        return False, "create_post.py の local 分岐に HF 生成へのフォールバックが残っています"
+    return True, "local の背景が無い時にAI生成へ落ちない ✓"
+
+
+def check_graph_api_host() -> tuple[bool, str]:
+    """Meta Graph API のホストが全スクリプトで揃っていること（恒久・2026-09-23）。
+
+    INSTAGRAM_ACCESS_TOKEN は Facebook 発行のトークンで、graph.instagram.com
+    では解析できない（"Invalid OAuth access token - Cannot parse access token"）。
+    create_post.py だけが graph.instagram.com を向いていたため、過去投稿の取得と
+    カルーセル子画像の取得が常に失敗し、reuse_source: "instagram" の経路が
+    丸ごと死んでいた（現在の運用が Drive 写真なので長く気づかれなかった）。
+
+    ホストの定数は6ファイルに散っている。1か所にまとめるには稼働中のスクリプトを
+    広く触ることになるので、「値の重複は許し、ずれたらここで止める」方式にする。
+    """
+    hosts = {}
+    for name in sorted(os.listdir(REPO_DIR)):
+        if not name.endswith(".py"):
+            continue
+        try:
+            src = _read(name)
+        except OSError:
+            continue
+        for host in set(re.findall(r"https://graph\.(?:facebook|instagram)\.com", src)):
+            hosts.setdefault(host, []).append(name)
+    if not hosts:
+        return False, "Meta Graph API のホストがどこにも見つかりません（構造が変わっています）"
+    if len(hosts) > 1:
+        detail = " / ".join(f"{h} → {', '.join(f)}" for h, f in sorted(hosts.items()))
+        return False, ("Meta Graph API のホストが揃っていません— " + detail +
+                       "。INSTAGRAM_ACCESS_TOKEN は graph.facebook.com でしか解析できない")
+    host = next(iter(hosts))
+    if "instagram" in host:
+        return False, (f"Meta Graph API のホストが {host} になっています— "
+                       f"Facebook発行のトークンでは解析できません")
+    return True, f"Meta Graph API のホストは全スクリプトで統一（{host}）✓"
+
+
+SHADOW_ALLOWED_FUNCS = {"_mosaic_tile"}
+
+
+def _param_names(fn) -> list:
+    a = fn.args
+    return [x.arg for x in a.posonlyargs + a.args + a.kwonlyargs]
+
+
+def check_text_shadow_only_in_tile() -> tuple[bool, str]:
+    """文字のシャドウは mosaic の tile だけ（恒久・2026-09-27）。
+
+    「テキストのシャドウは全てなし」（rules/carousel-design.md）の唯一の例外が
+    mosaic の区画の文字（ユーザー指定・2026-09-23）。例外が他の型に広がると、
+    案A・案Bの他の型にも影が戻る。generate_carousel.py を AST で見て、次を止める:
+      - 影色の定数 MOSAIC_SHADOW_RGB を tile 以外（モジュール直下も含む）で参照する
+      - shadow 引数の既定値を None 以外にする（呼び出し側すべてに影が付く）
+      - shadow を渡す呼び出し（キーワードでも位置引数でも）。ただし None と、
+        その関数自身が受け取った shadow 引数をそのまま下へ渡す中継は除く
+    手書きの二度描き（ずらして暗い色で描いてから白で描く）は見分けられない。
+    """
+    tree = ast.parse(_read("generate_carousel.py"))
+    funcs = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    # shadow を引数に持つ関数と、その位置（位置引数で渡された時に気づくため）
+    shadow_pos = {}
+    offenders = []
+    for fn in funcs:
+        a = fn.args
+        positional = [x.arg for x in a.posonlyargs + a.args]
+        if "shadow" in positional:
+            shadow_pos[fn.name] = positional.index("shadow")
+            defaults = dict(zip(positional[len(positional) - len(a.defaults):], a.defaults))
+            d = defaults.get("shadow")
+        else:
+            kw = dict(zip([x.arg for x in a.kwonlyargs], a.kw_defaults))
+            d = kw.get("shadow", ast.Constant(None)) if "shadow" in kw else None
+        if d is not None and not (isinstance(d, ast.Constant) and d.value is None):
+            offenders.append(f"{fn.name}（shadow の既定値）")
+
+    for fn in funcs:
+        if fn.name in SHADOW_ALLOWED_FUNCS:
+            continue
+        own = set(_param_names(fn))
+        for node in ast.walk(fn):
+            if isinstance(node, ast.Name) and node.id == "MOSAIC_SHADOW_RGB":
+                offenders.append(fn.name)
+            elif isinstance(node, ast.Call):
+                callee = getattr(node.func, "id", None) or getattr(node.func, "attr", None)
+                if callee in shadow_pos and len(node.args) > shadow_pos[callee]:
+                    offenders.append(f"{fn.name}（{callee} に位置引数で shadow）")
+                for kw in node.keywords:
+                    if kw.arg != "shadow":
+                        continue
+                    v = kw.value
+                    if isinstance(v, ast.Constant) and v.value is None:
+                        continue
+                    # 受け取った shadow をそのまま下へ渡すだけの中継
+                    # （draw_multiline_centered → draw_centered）は影を足していない
+                    if isinstance(v, ast.Name) and v.id == "shadow" and "shadow" in own:
+                        continue
+                    offenders.append(fn.name)
+
+    # モジュール直下（別名への代入など）での参照。定義そのものは除く
+    for stmt in tree.body:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        targets = stmt.targets if isinstance(stmt, ast.Assign) else []
+        if any(isinstance(tg, ast.Name) and tg.id == "MOSAIC_SHADOW_RGB" for tg in targets):
+            continue
+        if any(isinstance(n, ast.Name) and n.id == "MOSAIC_SHADOW_RGB" for n in ast.walk(stmt)):
+            offenders.append(f"モジュール直下 {stmt.lineno}行目")
+
+    if offenders:
+        return False, (f"文字のシャドウが mosaic の tile 以外で使われています: "
+                       f"{', '.join(sorted(set(offenders)))}— シャドウ禁止の恒久ルール")
+    return True, "文字のシャドウは mosaic の tile だけ ✓"
+
+
 RULE_CHECKS = [
     check_list_left_align,
     check_sheet_columns,
@@ -233,6 +518,11 @@ RULE_CHECKS = [
     check_bg_prompt_no_default,
     check_generate_guard,
     check_cta_subtitle_rule,
+    check_post_style_cta_last,
+    check_slide_type_allowlist,
+    check_no_silent_local_fallback,
+    check_graph_api_host,
+    check_text_shadow_only_in_tile,
 ]
 
 

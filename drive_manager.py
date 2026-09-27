@@ -124,3 +124,8 @@ if __name__ == "__main__":
             print(f"  [{f['index']}] {f['name']}")
         if len(files) > 5:
             print(f"  ... 他{len(files) - 5}枚")
+
+
+# 動画にもそのまま使える（files().get_media は種類を問わない）。
+# 既存の呼び出し名は変えず、動画を落とす側が意図どおりに読めるよう別名だけ用意する。
+download_drive_file = download_drive_image

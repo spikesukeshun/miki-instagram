@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---|---|
 | 投稿の文章を書く前（**毎回**）| `SKILL.md` — MIKIの文体・ブランドトーン・§14 に内容ルールの正 |
 | content.json を書く前（**毎回**）| `rules/content-schema.md` — 全フィールド仕様・スライド型6種 |
-| デザインやレイアウトを触る時 | `rules/carousel-design.md` — 案A の仕様と戻してはいけない実装 |
+| デザインやレイアウトを触る時 | `rules/carousel-design.md` — 案A（2分割）と案B（全面写真）の仕様、戻してはいけない実装 |
 | リールを配信する時 | `rules/reels.md` — 手動投稿の理由と `deliver_reel.py` の手順 |
 | ルールを変える時・同じ症状が再発した時 | `rules/incidents.md` — 過去の事故記録とインサイト戦略 |
 
@@ -41,6 +41,8 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
 | `get_recent_insights.py` / `insight_report.py` | インサイト取得・全期間集計 |
 | `preview_drive_images.py` | Drive候補をコンタクトシート化して目視確認 |
 | `deliver_reel.py` | リールをLINE配信（手動投稿用）|
+| `preview_drive_videos.py` | Drive「動画」のコマをシート化して目視確認（案B・flipbook の題材選び）|
+| `video_frames.py` | 動画から等間隔のコマを切り出す（ffmpeg）|
 
 ## 絶対ルール（毎回・例外なし）
 
@@ -48,8 +50,13 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
 
 - **サロン名を書かない。** キャプション・スライド・ハッシュタグのいずれにも
   「AMRTA」「AMRTA六本木」を出さない（MIKI個人への予約導線を優先するため）
-- **スライドは6枚**（上限6）。末尾2枚（`slide8.jpg` / `slide7.jpg`）は
-  コードが自動追加するので content.json に書かない
+- **スライド枚数は `post_style` で決まる**（content.json のトップレベル・省略時 `standard`）。
+  上限の正は `review_post.py` の `POST_STYLE_MAX_SLIDES` で、`create_post.py` が
+  画像を作る前に例外で止める。**枚数をここに書き写さない**
+  （**Graph API のカルーセルは10枚が上限**。これは外部仕様なので記載する）
+- **末尾2枚（`slide8.jpg` / `slide7.jpg`）はコードが自動追加するので content.json に書かない。**
+  ただし自動追加されるのは `standard` のときだけ。`flipbook` / `phrase` / `mosaic` では付かないので、
+  **最後のスライドを `cta` 型にする**（CTAが唯一の予約導線になる）
 - **背景は Drive のサロン実写。既定は `bg_strategy: "edit"`。**
   `generate`（AI生成）は原則禁止。使う場合は `bg_generate_reason` に理由を書く
 - **`reuse` / `edit` は `reuse_source="drive"` / `reuse_theme` / `reuse_filename` の3点セット必須。**
