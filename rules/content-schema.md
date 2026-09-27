@@ -58,6 +58,7 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 | `focus_y` | 任意 | 写真クロップの縦位置 0.0〜1.0（default 0.5）。被写体が下寄りなら 0.55〜0.65、上寄りなら 0.35〜0.45 |
 | `filename` | ⛔️ | `resolve_backgrounds()` が `bg_{timestamp}_{NN}.jpg` を自動割当（`create_post.py:339`）。既存 content.json には `bg01.jpg` 等が手書きで残っているが**上書きされるので意味はない** |
 | `bubble` | 任意 | `assets/` 内の透過PNG名。タイトル右脇に丸型バブルを合成（`generate_carousel.py:295`）|
+| `smoke_alpha` | 任意 | `edit` の背景に重ねる白いスモークの濃さ 0〜255（`create_post.py:apply_edit_effect()`）。`cta` の既定値はコード側、他の型は既定でなし。**その回だけ**顔や背景を薄くしたい時に使う |
 | `seed` | ⛔️ | `generate` 時にコードが記録する |
 
 ## 型ごとの固有フィールド
@@ -136,6 +137,15 @@ AI生成へ落とさず停止する。**`reuse` / `edit` から静かにAI生成
 
 `review_post.py:138` も同じ3点セットを見るが、これはフロー上 `create_post.py` の**後**に走る。
 **先に止まるのは `create_post.py` 側**なので、エラーが出たら content.json を直して作り直す。
+
+### 写真ごとの固定補正（`image_adjustments.json`）
+
+「この写真は使うたびに毎回同じ補正をかけてほしい」という依頼は、content.json ではなく
+`image_adjustments.json` に `"テーマ/ファイル名"` をキーにして登録する
+（例: `"menu/IMG_9115.jpg"`）。`gamma`（1未満で明るく）/ `brightness` / `contrast` / `color` を
+持てる（どれも 1.0 が無補正）。Drive の `edit` / `reuse` で自動的に適用され、
+スライド種別ごとの加工はその後にかかる。**その回だけ**の調整は `smoke_alpha` など
+スライドのフィールドで書き、台帳には入れない。
 
 ### スライドレベルの `bg_prompt` について
 
