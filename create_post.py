@@ -14,14 +14,25 @@ try:
 except Exception:
     pass
 
-from generate_carousel import generate_with_slides
+from generate_carousel import (generate_with_slides, validate_photo_text,
+                               VALID_CTA_LAYOUTS, OUTPUT_DIR as GENERATED_DIR)
 from register_post import register
 # Driveのテーマ名は review_post.py を正とする（同じ一覧を2か所に持たない）
-from review_post import VALID_REUSE_THEMES, EMPTY_REUSE_THEMES
+from review_post import (VALID_REUSE_THEMES, EMPTY_REUSE_THEMES,
+                         VALID_POST_STYLES, POST_STYLE_MAX_SLIDES,
+                         NO_FOOTER_POST_STYLES, POST_STYLE_BODY_TYPES,
+                         MOSAIC_TILE_COUNT)
 from load_env import load_from_zshrc
 load_from_zshrc()
 
-INSTAGRAM_API_BASE = "https://graph.instagram.com/v19.0"
+# Meta Graph API のホスト。プロジェクト内の他スクリプト（instagram_api.py /
+# get_recent_insights.py / fetch_posts_data.py / insight_report.py /
+# fetch_and_upload_instagram.py / make_report_pptx.py）と同じ値にすること。
+# ここだけ graph.instagram.com になっていたため、INSTAGRAM_ACCESS_TOKEN
+# （Facebook発行のトークン）が解析できず、過去投稿の取得が常に失敗していた
+# （"Invalid OAuth access token - Cannot parse access token"、2026-09-23 修正）。
+# 値がずれていないかは check_repo_sync.py の check_graph_api_host() が見張る。
+INSTAGRAM_API_BASE = "https://graph.facebook.com/v19.0"
 
 SYSTEM_PROMPT = """あなたはエステティシャンMIKIのInstagram投稿コンテンツ担当です。
 テーマを受け取り、カルーセル投稿のスライド内容・キャプション・ハッシュタグを生成してください。
@@ -300,6 +311,23 @@ def download_image(url: str, filename: str) -> bool:
     return False
 
 
+def edit_effect_type(slide: dict) -> str:
+    """apply_edit_effect() に渡す「加工の種類」をスライドから決める。
+
+    cta 型の加工は、写真の全面に白いもやを重ねる。これは案A
+    （写真は上35%だけ・下はクリーム帯）で、写真をクリーム帯になじませるためのもの。
+    案B版の CTA（layout: "photo"）は写真を全面に敷くので、同じ加工をすると
+    直前まで続いた全面写真より白っぽくなり、最後の1枚だけ質感が変わる。
+    案Bの型（frame / phrase）と同じく無加工で通す。
+    """
+    stype = slide.get("type", "text")
+    if stype == "cta" and slide.get("layout") == "photo":
+        # apply_edit_effect() はどの分岐にも当たらない種類を「加工なし」で通す。
+        # frame を借りると、将来 frame 用の加工が足された時に CTA にも効いてしまう。
+        return "none"
+    return stype
+
+
 def apply_edit_effect(img_path: str, slide_type: str) -> None:
     """PILで画像を加工してスライド種別に合った背景に仕上げる。
 
@@ -391,11 +419,158 @@ def validate_bg_prompt(bg_prompt: str, where: str = "トップレベル") -> str
 def _may_fall_back_to_generate(slide: dict) -> bool:
     """このスライドが HF生成（generate）に行き着く可能性があるか。
 
-    Drive の reuse / edit は解決に失敗したら例外で止まる（生成へ落ちない）ので False。
-    それ以外（generate / local / instagram）は生成に到達しうる。
+    解決に失敗したら例外で止まる経路（＝生成へ落ちない）は False。
+      - Drive の reuse / edit: ファイル名が見つからなければ ValueError
+      - instagram の reuse / edit: 取得できなければ ValueError
+      - local: local_path が無ければ ValueError（2026-09-21 に塞いだ）
+    残るのは bg_strategy が "generate" の時と、省略された時だけ。
+
+    ここが実態より広いと、一度も使われない bg_prompt の記入と no people 検査を
+    強制することになり、原因の読めないエラーになる（案Bの flipbook は
+    全スライドが local なので、まさにそうなっていた）。
     """
-    return not (slide.get("bg_strategy") in ("reuse", "edit")
-                and slide.get("reuse_source") == "drive")
+    return slide.get("bg_strategy") in (None, "", "generate")
+
+
+def clear_stale_carousel_images() -> int:
+    """generated/ に残った前回の carousel_*.jpg を、画像を作る前に消す。
+
+    register_post.py の register() は generated/carousel_*.jpg を
+    glob で「あるものを全部」拾う。従来は毎回必ず8枚だったので残骸は常に
+    上書きされていたが、post_style で枚数が可変になると
+      10枚の flipbook を作る → cleanup_backgrounds.py を回し忘れる
+      → 次の8枚の standard に carousel_09 / carousel_10 が残る
+      → standard 投稿が10ファイルでシート登録される
+    という経路が開く。cleanup_backgrounds.py は人間が手で回す省略可能な
+    ステップなので、ここで機械的に消しておく。
+    """
+    import glob
+    stale = sorted(glob.glob(os.path.join(GENERATED_DIR, "carousel_*.jpg")))
+    for path in stale:
+        try:
+            os.remove(path)
+        except OSError as e:
+            # 残骸が消えないまま進むと、register() の glob がそれを拾って
+            # 別の投稿の画像が紛れ込む（この関数が防ぎたい事故そのもの）。
+            # 呼び出しは背景を落とす前なので、ここで止めても何も巻き込まない。
+            raise RuntimeError(
+                f"generated/ の前回分を削除できません: {path}（{e}）\n"
+                f"  手で消してから再実行してください。"
+            ) from None
+    if stale:
+        print(f"  generated/ の前回分 {len(stale)}枚を削除しました")
+    return len(stale)
+
+
+def resolve_post_style(content: dict) -> str:
+    """content.json の post_style を確定し、枚数と末尾の構成をここで検査する。
+
+    この検査を review_post.py だけに置いてはいけない。review_post.py は
+    create_post.py の「後」に人間が手で回す（CLAUDE.md の新規投稿フロー）ため、
+    回し忘れると枚数超過がどこにも引っかからず、register() がシートに登録し、
+    投稿予定時刻になって初めて Graph API が弾く（post_scheduler.py の
+    「エラー：」としてシートに残る）。
+    rules/incidents.md「警告文は読み飛ばされるが ValueError は読み飛ばせない」。
+    """
+    style = content.get("post_style") or "standard"
+    # 打ち間違い（"standerd" / "Standard" / "flipbok"）を素通りさせると、
+    # NO_FOOTER_POST_STYLES に入らないので固定2枚は付くが、
+    # 枚数上限が引けずに KeyError になる。値そのものをここで確定させる。
+    if style not in VALID_POST_STYLES:
+        raise ValueError(
+            f"post_style=\"{style}\" は不正です"
+            f"（{' / '.join(sorted(VALID_POST_STYLES))} のみ・小文字）。\n"
+            f"  省略した場合は \"standard\" として扱われます。"
+        )
+
+    slides = content.get("slides") or []
+    limit = POST_STYLE_MAX_SLIDES[style]
+    if len(slides) > limit:
+        footer_note = ("・末尾固定2枚を含まない" if style not in NO_FOOTER_POST_STYLES
+                       else "・末尾固定2枚は付きません")
+        raise ValueError(
+            f"post_style=\"{style}\" のスライドが{len(slides)}枚あります"
+            f"（上限{limit}枚{footer_note}）。\n"
+            f"  Instagram の Graph API はカルーセル10枚までで、超えると"
+            f"投稿予定時刻まで失敗が分かりません。"
+        )
+
+    # tile は mosaic 専用。他の post_style に混ざると、左上に区画1つだけの画面が
+    # 影付きの文字で描かれる（影を許しているのは mosaic だけ）。
+    if style != "mosaic":
+        stray = [i + 1 for i, s0 in enumerate(slides) if s0.get("type") == "tile"]
+        if stray:
+            raise ValueError(
+                f"type=\"tile\" は post_style=\"mosaic\" 専用です"
+                f"（スライド{', '.join(map(str, stray))} / 現在: \"{style}\"）。"
+            )
+
+    # flipbook / phrase は末尾固定2枚を付けない。CTAスライドが最後に無いと、
+    # review_post.py の CTA 固定文言チェックと check_lp_guidance() が
+    # 見る対象を失い、予約導線が黙って消える。
+    if style in NO_FOOTER_POST_STYLES:
+        if not slides:
+            raise ValueError(f"post_style=\"{style}\" なのに slides が空です。")
+        last_type = slides[-1].get("type")
+        if last_type != "cta":
+            raise ValueError(
+                f"post_style=\"{style}\" の最後のスライドは type=\"cta\" が必須です"
+                f"（現在: \"{last_type}\"）。\n"
+                f"  この形式は末尾固定2枚（slide8 / slide7）を付けないため、"
+                f"CTAスライドが唯一の予約導線になります。"
+            )
+
+        # 案Bの投稿は全面写真が続く。最後のCTAだけ案A（クリーム帯）になると
+        # 質感が切り替わるので、layout: "photo" を必須にする。
+        if slides[-1].get("layout") != "photo":
+            raise ValueError(
+                f"post_style=\"{style}\" の最後のCTAには \"layout\": \"photo\" が必要です。\n"
+                f"  付けないと最後の1枚だけクリーム帯になり、質感が切り替わります。"
+            )
+
+        # 宣言した post_style と中身が食い違っていないか。
+        allowed = POST_STYLE_BODY_TYPES.get(style)
+        if allowed:
+            wrong = [(i + 1, s0.get("type"))
+                     for i, s0 in enumerate(slides[:-1])
+                     if s0.get("type") not in allowed]
+            if wrong:
+                detail = " / ".join(f"スライド{n}=\"{t}\"" for n, t in wrong)
+                raise ValueError(
+                    f"post_style=\"{style}\" に使えない型が混ざっています: {detail}\n"
+                    f"  使えるのは {' / '.join(sorted(allowed))}（末尾のCTAを除く）。"
+                )
+
+        # mosaic は区画がちょうど埋まる枚数でないと、9枚目で写真も一文もそろわない。
+        if style == "mosaic":
+            n_tiles = sum(1 for s0 in slides if s0.get("type") == "tile")
+            if n_tiles != MOSAIC_TILE_COUNT:
+                raise ValueError(
+                    f"post_style=\"mosaic\" の tile が{n_tiles}枚です"
+                    f"（ちょうど{MOSAIC_TILE_COUNT}枚＋末尾のCTA）。"
+                )
+
+    for i, sl in enumerate(slides, 1):
+        layout = sl.get("layout")
+        if layout is None:
+            continue
+        # layout は cta だけが持つ。値の打ち間違い（"Photo" 等）は、黙って案Aに
+        # 落ちて最後の1枚だけ質感が変わるので、ここで止める。
+        if sl.get("type") != "cta":
+            raise ValueError(f"スライド{i}: layout は cta 型だけに書けます（type=\"{sl.get('type')}\"）")
+        if layout not in VALID_CTA_LAYOUTS:
+            raise ValueError(f"スライド{i}: layout=\"{layout}\" は不正です（\"photo\" のみ・省略で案A）")
+
+    # 案Bの文字（phrase / note / 案B版CTA）が画像に収まるかを、背景を1枚も
+    # 落とす前に確かめる。描画の時点で気づくと、Drive からのダウンロードや
+    # generated/ の削除が済んだ後に止まることになる。
+    for i, sl in enumerate(slides, 1):
+        try:
+            validate_photo_text(sl)
+        except ValueError as e:
+            raise ValueError(f"スライド{i}: {e}") from None
+
+    return style
 
 
 def _validate_reuse_fields(slides: list) -> None:
@@ -418,6 +593,19 @@ def _validate_reuse_fields(slides: list) -> None:
                 f"（{' / '.join(sorted(VALID_BG_STRATEGIES))} のみ・小文字）。\n"
                 f"  未知の値はどの分岐にも入らず、黙ってAI生成に落ちます。"
             )
+        # local は解決時にファイルが無いと止まるが、それだと他スライドの
+        # ダウンロードが済んだ後になる。reuse/edit と同じく事前に見る。
+        if strategy == "local":
+            local_path = slide.get("local_path", "")
+            if not local_path:
+                raise ValueError(
+                    f"スライド{i+1}: bg_strategy=\"local\" なのに local_path がありません。"
+                )
+            if not os.path.exists(local_path):
+                raise ValueError(
+                    f"スライド{i+1}: local_path=\"{local_path}\" が見つかりません。"
+                )
+            continue
         if strategy not in ("reuse", "edit"):
             continue
         source = slide.get("reuse_source")
@@ -502,7 +690,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                     f"  AI生成へ自動フォールバックはしません。Drive側を確認してやり直してください。"
                 )
             if strategy == "edit":
-                apply_edit_effect(path, slide.get("type", "text"))
+                apply_edit_effect(path, edit_effect_type(slide))
             else:
                 # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
                 # HEIC等を確実にJPEGへ正規化するため再保存のみ行う。
@@ -517,11 +705,18 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
             local_path = slide.get("local_path", "")
             if local_path and os.path.exists(local_path):
                 shutil.copy(local_path, path)
-                apply_edit_effect(path, slide.get("type", "text"))
+                apply_edit_effect(path, edit_effect_type(slide))
                 slide["filename"] = filename
                 print(f"  スライド{i+1}: ローカルファイルを使用（{local_path}）")
                 continue
-            print(f"    → ローカルファイルが見つからない ({local_path})、HFで代替生成")
+            # ここで黙ってHF生成に落ちると、指定したはずの写真とは別のAI画像で
+            # 投稿が完成してしまう（rules/content-schema.md に「未対応の穴」として
+            # 記録されていた挙動）。reuse/edit の解決失敗と同じく例外で止める。
+            raise ValueError(
+                f"スライド{i+1}: bg_strategy=\"local\" ですが "
+                f"local_path=\"{local_path}\" が見つかりません。\n"
+                f"  パスを確認してください。AI生成へのフォールバックはしません。"
+            )
 
         # --- Instagram 過去投稿を使用 ---
         # ここで解決できなかった時に黙ってHF生成へ落とすと、2026-08-13 の
@@ -543,7 +738,7 @@ def resolve_backgrounds(slides: list, available_images: list, bg_prompt: str,
                     f"  AI生成へ自動フォールバックはしません。"
                 )
             if strategy == "edit":
-                apply_edit_effect(path, slide.get("type", "text"))
+                apply_edit_effect(path, edit_effect_type(slide))
             else:
                 # reuse はそのまま転用（ぼかさない・鮮明に保つ）。
                 _bg = _Img.open(path).convert("RGB")
@@ -791,8 +986,13 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
         result = generate_content(theme, menu, notes, past_posts, available_images,
                                   reference_images=reference_images)
 
+    # post_style と枚数・末尾構成を、背景を1枚も落とす前に確定させる
+    post_style = resolve_post_style(result)
+    # 前回の carousel_*.jpg を先に消す（失敗したら、何も落とさないうちに止まる）
+    clear_stale_carousel_images()
+
     num_slides = len(result["slides"])
-    print(f"\n生成完了！スライド数: {num_slides}枚")
+    print(f"\n生成完了！スライド数: {num_slides}枚（post_style={post_style}）")
     print(f"メモ: {result['memo']}")
 
     # 各スライドの背景をbg_strategyに従って解決
@@ -813,11 +1013,16 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
     drive_theme = result.get("drive_theme") or _menu_to_theme(menu)
     _upload_backgrounds_to_drive(result["slides"], drive_theme)
 
-    # slide8.jpg → slide7.jpg（MIKIプロフィール）を末尾2枚として自動追加
-    result["slides"].append({"filename": "slide8.jpg", "type": "raw"})
-    result["slides"].append({"filename": "slide7.jpg", "type": "raw"})
-
-    print(f"\n最終スライド数: {len(result['slides'])}枚（末尾2枚はslide8・slide7固定）")
+    # slide8.jpg → slide7.jpg（MIKIプロフィール）を末尾2枚として自動追加。
+    # 「standard のときだけ追加」ではなく「flipbook/phrase のときだけ抑止」と書く。
+    # 未知の post_style が万一すり抜けても、既存挙動（固定2枚あり）に倒れる向き。
+    if post_style in NO_FOOTER_POST_STYLES:
+        print(f"\n最終スライド数: {len(result['slides'])}枚"
+              f"（post_style={post_style} のため末尾固定2枚は付けません）")
+    else:
+        result["slides"].append({"filename": "slide8.jpg", "type": "raw"})
+        result["slides"].append({"filename": "slide7.jpg", "type": "raw"})
+        print(f"\n最終スライド数: {len(result['slides'])}枚（末尾2枚はslide8・slide7固定）")
 
     # 画像生成
     print("\nカルーセル画像を生成中...")

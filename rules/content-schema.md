@@ -12,7 +12,7 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 
 | フィールド | 必須 | 内容 |
 |---|---|---|
-| `slides` | ✅ | スライド配列。**6枚まで**（末尾の `slide8.jpg` / `slide7.jpg` はコードが自動追加するので含めない）|
+| `slides` | ✅ | スライド配列。枚数の上限は `post_style` による（下記）。standard では末尾の `slide8.jpg` / `slide7.jpg` をコードが自動追加するので含めない |
 | `caption` | ✅ | 投稿本文 1000〜1500文字。→ シートD列 |
 | `hashtags` | ✅ | ハッシュタグ（スペース区切りの1文字列）。→ シートE列 |
 | `memo` | ✅ | なぜこのテーマ・切り口にしたかの記録。→ シートF列 |
@@ -20,6 +20,7 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 | `bg_prompt` | ✅ | **共通のフォールバックプロンプト**（下記）|
 | `menu` | ✅ | メニュー種別（シートB列）。省略時は `--menu` が必須で、どちらも無ければ `create_post.py` が停止する |
 | `post_datetime` | ✅ | 投稿日時 `YYYY/MM/DD HH:MM`。省略時は `--post-datetime` → ファイル名 `content_YYYY-MM-DD-HHMM.json` の順で解決。決まらなければ停止する |
+| `post_style` | 任意 | 投稿スタイル。省略時 `standard`。値と枚数上限の正は `review_post.py` の `VALID_POST_STYLES` / `POST_STYLE_MAX_SLIDES`（`create_post.py` はそこから import する）|
 | `drive_theme` | 任意 | 新規生成した背景のDriveアップロード先テーマ。省略時はメニュー種別から自動判定（`create_post.py:678`）|
 | `_generated_dir` | ⛔️ | **`create_post.py` が自動追記**（`create_post.py:707`）。手書きしない |
 
@@ -51,8 +52,8 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 
 | フィールド | 必須 | 内容 |
 |---|---|---|
-| `type` | ✅ | `cover` / `text` / `list` / `price` / `cta` / `raw` の6種 |
-| `title` | ✅ | 見出し。`\n` で改行可（高さは動的計算されるので固定値の心配は不要）|
+| `type` | ✅ | 案A: `cover` / `text` / `list` / `price` / `cta` / `raw` ／ 案B: `frame` / `phrase` / `tile`。正は `generate_carousel.py` の `generators` 辞書で、`review_post.py` の `VALID_SLIDE_TYPES` と一致していることを `check_repo_sync.py` が見張る |
+| `title` | ✅ | 見出し。`\n` で改行可（高さは動的計算されるので固定値の心配は不要）。**案Bの `frame` / `phrase` / `tile` は title を持たない**（写真の上に置く文字が `note` / `phrase`）|
 | `bg_strategy` | ✅ | 背景の取り方。下記参照 |
 | `reuse_source` `reuse_theme` `reuse_filename` | ✅ | `reuse` / `edit` のとき**3点セットで必須**。1つでも欠けると `create_post.py` が止まる（下記）|
 | `focus_y` | 任意 | 写真クロップの縦位置 0.0〜1.0（default 0.5）。被写体が下寄りなら 0.55〜0.65、上寄りなら 0.35〜0.45 |
@@ -68,8 +69,26 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 | `text` | `text` ✅ / `slide_photo_h_ratio` 任意（default **0.35**、`0` で写真なし純クリーム）| 最も多用される型（実績の過半数）|
 | `list` | `items` ✅ / `footer` **実質必須** / `slide_photo_h_ratio` 任意 | **`items` は全角20文字以内**（折り返しなし固定幅描画のため、超えると画像外へはみ出す）|
 | `price` | `title` / `top_note` / `columns`（最大2・`{label, lines}`）/ `notes` / `highlight` | 料金表。左右2カラム＋縦の区切り線（`generate_carousel.py:569`）|
-| `cta` | `body` ✅ / `subtitle` ✅ / `slide_photo_h_ratio` 任意 | `title` は固定文言（下記）。`subtitle` は**最終行に 💌 が自動付与される**（`generate_carousel.py:728`）ので、絵文字を数える時は勘定に入れる |
+| `cta` | `body` ✅ / `subtitle` ✅ / `slide_photo_h_ratio` 任意 / `layout` 任意（`"photo"` で案B） | `title` は固定文言（下記）。`subtitle` は**最終行に 💌 が自動付与される**（`generate_carousel.py:728`）ので、絵文字を数える時は勘定に入れる |
 | `raw` | — | 末尾2枚専用。コードが自動追加するので content.json に書かない |
+| `frame` | `note` 任意 / `focus_y` 任意 / 背景は `bg_strategy: "local"`（コマは `preview_drive_videos.py --save-frames` で書き出す。ファイル名に秒数が入るので、名前から抜き直せる） | **案B**。パラパラ漫画の1コマ。全面写真で原則文字なし。`note` を書いた時だけ下端に小さく重ねる（1枚目のスクロール指示用）|
+| `phrase` | `phrase` ✅ / `focus_y` 任意 | **案B**。全面写真＋日本語の文節ひとつ。**自動折り返しはしないので改行は `\n` を自分で入れる**（文字サイズだけはコードが収まるまで落とす）|
+| `tile` | `phrase` ✅（1行・改行不可）/ `focus_y` 任意 | **案B・`post_style: "mosaic"` 専用**。3×3の区画1つ分。写真は区画ごとに別の Drive 画像（reuse/edit の3点セット）。文字サイズは全区画で統一（→ `rules/carousel-design.md`）。tile の枚数は `MOSAIC_TILE_COUNT` ちょうど |
+
+### 案B（`frame` / `phrase`）の注意
+
+- 全面写真なので、**案Aでクリーム帯が覆い隠していた領域がそのまま出る。**
+  bridal フォルダの AMRTA 透かしなどは案Aでは画面外に落ちていた。写真は全面表示を前提に選び直すこと
+- 白文字の可読性は、写真の明るさを実測して自動で決まるスクリム（暗いグラデーション帯）で作る。
+  **帯が濃くなりすぎると写真が沈む**ので、その時は警告が出る。小さな明点は拾いきれないことがあるので、生成画像は目視する
+- `phrase` / `note` / 案B版CTA の文字が収まらない場合は、`create_post.py` が背景を落とす前に止める
+- `post_style` と型の対応（どの型をどのスタイルで使えるか）の正は `review_post.py` の `POST_STYLE_BODY_TYPES`
+- **案Bの投稿では CTA に `"layout": "photo"` が必須**（`create_post.py` と `review_post.py` が止める）。
+  付けないと最後の1枚だけクリーム帯になり、全面写真が続いた後で質感が切り替わる。
+  `layout` は cta 型にだけ書ける。値は `"photo"` のみ（打ち間違いも止まる）。
+  **型は `cta` のまま変えない** — CTA固定文言チェック・`check_lp_guidance()`・
+  末尾CTA検査がすべて `type == "cta"` を見ているので、型を分けると
+  予約導線の機械チェックが一斉に効かなくなる
 
 ### CTAスライドのタイトル（恒久・変更禁止）
 
@@ -131,8 +150,8 @@ Drive の `reuse_index` 番目（既定0番）の画像で投稿が完成して�
 ファイル名一覧を確認するコマンドをエラーメッセージに出す。
 `reuse_source: "instagram"`（過去投稿の転用）も、解決・ダウンロードに失敗したら
 AI生成へ落とさず停止する。**`reuse` / `edit` から静かにAI生成へ落ちる経路はもう無い。**
-ただし `local` はファイルが見つからないと今もHF生成へフォールバックする
-（`create_post.py` の local 分岐。実績で使われていないため未対応）。
+`local` も同じで、`local_path` が見つからなければ停止する
+（以前はHF生成へフォールバックしていたが 2026-09-21 に塞いだ）。
 
 `review_post.py:138` も同じ3点セットを見るが、これはフロー上 `create_post.py` の**後**に走る。
 **先に止まるのは `create_post.py` 側**なので、エラーが出たら content.json を直して作り直す。

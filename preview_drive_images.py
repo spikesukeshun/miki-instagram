@@ -46,6 +46,41 @@ def _label_font():
     return ImageFont.load_default()
 
 
+def tile_to_sheet(paths: list, labels: list, out_path: str) -> str:
+    """画像のパス列を1枚のコンタクトシートに並べて out_path に保存する。
+
+    Drive の写真（preview_drive_images.py）と Drive の動画から抜いたコマ
+    （preview_drive_videos.py）で同じ見た目のシートを出すために切り出してある。
+    ここを2か所に書くと、片方だけセル寸法が変わって見比べられなくなる。
+    """
+    tiles = []
+    for path, label in zip(paths, labels):
+        try:
+            im = Image.open(path).convert("RGB")
+        except Exception as e:
+            print(f"  開けないためスキップ: {label} ({e})")
+            continue
+        im.thumbnail((CELL - 10, CELL - 10), Image.LANCZOS)
+        tiles.append((im, label))
+
+    if not tiles:
+        print("表示できる画像がありませんでした")
+        return ""
+
+    rows = (len(tiles) + COLS - 1) // COLS
+    sheet = Image.new("RGB", (COLS * CELL, rows * (CELL + LABEL_H)), (255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+    font = _label_font()
+    for i, (im, name) in enumerate(tiles):
+        cx, cy = (i % COLS) * CELL, (i // COLS) * (CELL + LABEL_H)
+        sheet.paste(im, (cx + (CELL - im.size[0]) // 2, cy + (CELL - im.size[1]) // 2))
+        draw.text((cx + 6, cy + CELL + 6), name[:38], fill=(0, 0, 0), font=font)
+
+    sheet.save(out_path)
+    print(f"\n{len(tiles)}枚を {out_path} に出力しました（Read で開いて目視確認してください）")
+    return out_path
+
+
 def build_sheet(theme: str, limit: int, name_filter: str) -> str:
     files = list_drive_images(theme)
     if name_filter:
@@ -55,38 +90,19 @@ def build_sheet(theme: str, limit: int, name_filter: str) -> str:
         return ""
     files = files[:limit]
 
-    tiles = []
     with tempfile.TemporaryDirectory() as tmp:
+        paths, labels = [], []
         for f in files:
             dest = os.path.join(tmp, f["id"])
             if not download_drive_image(f["id"], dest):
                 continue
-            try:
-                im = Image.open(dest).convert("RGB")
-            except Exception as e:
-                print(f"  開けないためスキップ: {f['name']} ({e})")
-                continue
-            im.thumbnail((CELL - 10, CELL - 10), Image.LANCZOS)
-            tiles.append((im, f["name"]))
+            paths.append(dest)
+            labels.append(f["name"])
 
-        if not tiles:
-            print("表示できる画像がありませんでした")
-            return ""
+        out = tile_to_sheet(paths, labels, f"drive_preview_{theme}.png")
 
-        rows = (len(tiles) + COLS - 1) // COLS
-        sheet = Image.new("RGB", (COLS * CELL, rows * (CELL + LABEL_H)), (255, 255, 255))
-        draw = ImageDraw.Draw(sheet)
-        font = _label_font()
-        for i, (im, name) in enumerate(tiles):
-            cx, cy = (i % COLS) * CELL, (i // COLS) * (CELL + LABEL_H)
-            sheet.paste(im, (cx + (CELL - im.size[0]) // 2, cy + (CELL - im.size[1]) // 2))
-            draw.text((cx + 6, cy + CELL + 6), name[:38], fill=(0, 0, 0), font=font)
-
-        out = f"drive_preview_{theme}.png"
-        sheet.save(out)
-
-    print(f"\n{len(tiles)}枚を {out} に出力しました（Read で開いて目視確認してください）")
-    print("透かし・文字入りバナー・露出過多のものを外してから reuse_filename を決めること。")
+    if out:
+        print("透かし・文字入りバナー・露出過多のものを外してから reuse_filename を決めること。")
     return out
 
 
