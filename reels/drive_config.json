@@ -1,0 +1,18 @@
+{
+  "posting_materials_folder_id": "1dEh8vb3_jqwFMUyS51UQn1repH6wryiM",
+  "reel_root_folder_id": "1AV5DwB_RUqAb20hbnj-cHMzXVE6xWFJ4",
+  "intake_folder_id": "1YOF_Cql62fi410j-KCISDsylT56Y8hW0",
+  "voice_memo_folder_id": "10lT-viIcqBX2YZ1UydH6MG38I0-mNpEi",
+  "intake_sources": [
+    {
+      "name": "リール素材/01_動画・写真の受付",
+      "folder_id": "1YOF_Cql62fi410j-KCISDsylT56Y8hW0"
+    },
+    {
+      "name": "動画",
+      "folder_id": "1ONxJjMoTV5CIoHATJ6A4Zf6Fvdyiej3P"
+    }
+  ],
+  "catalog_tab": "リール素材台帳",
+  "ba_tab": "BA登録"
+}

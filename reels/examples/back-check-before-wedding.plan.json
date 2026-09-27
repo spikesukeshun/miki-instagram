@@ -1,0 +1,636 @@
+{
+  "schema_version": 1,
+  "theme": "結婚式前に背中で確認したい3つのこと",
+  "slug": "back-check-before-wedding",
+  "purpose": {
+    "goal": "背中が開くドレスを着る花嫁様に、式の前に確認することを3つの具体的な行動で渡し、保存してもらう",
+    "audience": "背中の開いたドレスを着る予定のプレ花嫁様",
+    "viewer_takeaway": "①ドレスの開きに合わせてケアする範囲を決める ②うなじと背中のシェービングは早めに予約 ③最後のエステは式の5日前まで",
+    "desired_action": "保存して見返し、試着の写真を持ってプロフィールのDMから相談する"
+  },
+  "duration": {
+    "class": "standard",
+    "target_seconds": 25,
+    "reason": "3つの項目をそれぞれ実写と文字で見せるため標準の尺。ナレーションは入れず、項目番号とテロップで区切る（保存して見返す前提）"
+  },
+  "hook": {
+    "text": "式の前に 背中で確認したい3つ",
+    "visual": "オイルで光る背中を手のひらで大きく流す施術の実写",
+    "why_it_stops": "「3つ」で見る長さが分かり、実写の動きが1コマ目から出る"
+  },
+  "script": [
+    {
+      "section": "hook",
+      "text": "式の前に、背中で確認したい3つ"
+    },
+    {
+      "section": "main",
+      "text": "1つ目、ドレスの背中の開き。開く所までケアする範囲を決める"
+    },
+    {
+      "section": "detail",
+      "text": "試着の写真があれば、ドレスに合わせてケアの計画を立てられる"
+    },
+    {
+      "section": "main",
+      "text": "2つ目、うなじと背中のうぶ毛。シェービングは14日前には予約"
+    },
+    {
+      "section": "main",
+      "text": "3つ目、肌の調子。最後のエステは式の5日前まで。直前は赤みやだるさが出ることも"
+    },
+    {
+      "section": "cta",
+      "text": "保存して式の前に見返して。試着の写真を持ってご相談ください"
+    }
+  ],
+  "voice_script": {
+    "mode": "none",
+    "lines": []
+  },
+  "cuts": [
+    {
+      "id": "c01",
+      "start": 0.0,
+      "end": 2.4,
+      "role": "hook",
+      "purpose": "3つあると宣言して、最後まで見る理由を作る",
+      "visual": {
+        "shows": "オイルで光る背中を手のひらで大きく流す施術",
+        "person_action": "両手で腰から肩へ大きく流す",
+        "camera_move": "真上に近い角度で固定",
+        "changes": [
+          {
+            "at": 0.2,
+            "what": "テロップが出る"
+          },
+          {
+            "at": 1.3,
+            "what": "「3つ」の数字が強調される"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "actions_any": [
+            "施術",
+            "オイルトリートメント"
+          ],
+          "framing_any": [
+            "俯瞰",
+            "寄り"
+          ],
+          "people_allowed": [
+            "お客様・施術者"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 2.4,
+          "motion_min": "medium",
+          "consent_min": "書面",
+          "subjects_all": [
+            "背中"
+          ]
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "背中"
+              ],
+              "people_allowed": [
+                "お客様"
+              ],
+              "face_allowed": [
+                "なし"
+              ],
+              "consent_min": "書面"
+            },
+            "photo_treatment": {
+              "type": "push_in",
+              "note": "肩甲骨に寄る"
+            }
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "式の前に",
+            "背中で確認したい3つ"
+          ],
+          "start": 0.2,
+          "end": 2.3
+        }
+      ],
+      "narration": {
+        "has": false
+      }
+    },
+    {
+      "id": "c02",
+      "start": 2.4,
+      "end": 5.6,
+      "role": "main",
+      "purpose": "1つ目：ドレスの背中の開きに合わせてケアする範囲を決める",
+      "visual": {
+        "shows": "ドレスの背中のライン（式場の後ろ姿）",
+        "person_action": "なし（写真）",
+        "camera_move": "肩から腰へ、ドレスの開きに沿って下へなぞる",
+        "changes": [
+          {
+            "at": 2.5,
+            "what": "「1 ドレスの背中の開き」"
+          },
+          {
+            "at": 4.1,
+            "what": "なぞりが腰に届く・「開く所までケアを」に切り替え"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "photo_motion",
+        "requirements": {
+          "subjects_any": [
+            "ドレス",
+            "花嫁",
+            "後ろ姿"
+          ],
+          "people_allowed": [
+            "お客様"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "consent_min": "口頭"
+        },
+        "photo_treatment": {
+          "type": "pan",
+          "note": "肩から腰へ下へなぞる"
+        },
+        "fallbacks": [
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "1 ドレスの背中の開き"
+          ],
+          "start": 2.5,
+          "end": 4.0
+        },
+        {
+          "lines": [
+            "開く所までケアを"
+          ],
+          "start": 4.1,
+          "end": 5.5
+        }
+      ],
+      "narration": {
+        "has": false
+      },
+      "facts": [
+        {
+          "claim": "ドレスによって見せ場は変わる。背中が開いたドレスなら背中を",
+          "source_type": "posted_content",
+          "source": "content_22.json（2026-07-31 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c03",
+      "start": 5.6,
+      "end": 8.6,
+      "role": "detail",
+      "purpose": "試着の写真があればケアの計画に使えると伝える（相談の具体的な持ち物）",
+      "visual": {
+        "shows": "スマホに映したドレス試着の写真を指さしながら話す手元（カウンセリング）",
+        "person_action": "MIKIさんがスマホの画面の背中の部分を指でなぞる",
+        "camera_move": "テーブルの斜め上から固定",
+        "changes": [
+          {
+            "at": 5.7,
+            "what": "「試着の写真があれば」"
+          },
+          {
+            "at": 7.0,
+            "what": "指が背中をなぞる・「ケアの計画が立てられます」"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "スマホ",
+            "手元"
+          ],
+          "actions_any": [
+            "説明",
+            "指さす"
+          ],
+          "framing_any": [
+            "手元",
+            "俯瞰"
+          ],
+          "people_allowed": [
+            "MIKI",
+            "施術者の手元",
+            "MIKI・お客様"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 3.0,
+          "motion_min": "low",
+          "consent_min": "口頭",
+          "subjects_all": [
+            "カウンセリング"
+          ]
+        },
+        "fallbacks": [
+          {
+            "type": "text_card",
+            "note": "「試着の写真を持ってきてください」を大きく"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "試着の写真があれば"
+          ],
+          "start": 5.7,
+          "end": 6.9
+        },
+        {
+          "lines": [
+            "ケアの計画が",
+            "立てられます"
+          ],
+          "start": 7.0,
+          "end": 8.5
+        }
+      ],
+      "narration": {
+        "has": false
+      },
+      "facts": [
+        {
+          "claim": "試着のお写真を見せていただけたら、ドレスに合わせたケアの計画を立てられる",
+          "source_type": "posted_content",
+          "source": "content_22.json（2026-07-31 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c04",
+      "start": 8.6,
+      "end": 12.0,
+      "role": "main",
+      "purpose": "2つ目：うなじと背中のうぶ毛。シェービングは早めに予約",
+      "visual": {
+        "shows": "うなじ〜背中のシェービングの手元（肌に沿ってゆっくり動くカミソリ）",
+        "person_action": "施術者の手が肌に沿ってゆっくり動く",
+        "camera_move": "うなじに寄った固定",
+        "changes": [
+          {
+            "at": 8.7,
+            "what": "「2 うなじと背中のうぶ毛」"
+          },
+          {
+            "at": 10.2,
+            "what": "「シェービングは14日前に予約」に切り替え"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "うなじ",
+            "背中"
+          ],
+          "actions_any": [
+            "シェービング"
+          ],
+          "framing_any": [
+            "寄り"
+          ],
+          "people_allowed": [
+            "お客様・施術者"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 3.4,
+          "motion_min": "low",
+          "consent_min": "書面"
+        },
+        "fallbacks": [
+          {
+            "type": "text_card",
+            "note": "項目番号と文字だけで見せる"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "2 うなじと背中のうぶ毛"
+          ],
+          "start": 8.7,
+          "end": 10.1
+        },
+        {
+          "lines": [
+            "シェービングは",
+            "14日前に予約"
+          ],
+          "start": 10.2,
+          "end": 11.9
+        }
+      ],
+      "narration": {
+        "has": false
+      },
+      "facts": [
+        {
+          "claim": "14日前は、シェービングの予約を押さえる時期",
+          "source_type": "posted_content",
+          "source": "content_2026-09-07-2200.json（2026-09-07 投稿の逆算チェックリスト）"
+        }
+      ]
+    },
+    {
+      "id": "c05",
+      "start": 12.0,
+      "end": 15.4,
+      "role": "main",
+      "purpose": "3つ目：最後のエステは式の5日前まで",
+      "visual": {
+        "shows": "背中の施術をゆっくり仕上げる手元（手のひらで包むように押さえる）",
+        "person_action": "手のひらで背中を包むように押さえて離す",
+        "camera_move": "横から寄った固定",
+        "changes": [
+          {
+            "at": 12.1,
+            "what": "「3 最後のエステは」"
+          },
+          {
+            "at": 13.7,
+            "what": "「式の5日前までに」に切り替え"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "手元"
+          ],
+          "actions_any": [
+            "施術",
+            "オイルトリートメント"
+          ],
+          "framing_any": [
+            "寄り"
+          ],
+          "people_allowed": [
+            "お客様・施術者"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 3.4,
+          "motion_min": "low",
+          "consent_min": "書面",
+          "subjects_all": [
+            "背中"
+          ]
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "施術室",
+                "店内"
+              ],
+              "people_allowed": [
+                "なし"
+              ],
+              "consent_min": "不要"
+            },
+            "photo_treatment": {
+              "type": "push_in",
+              "note": "ベッドに寄る"
+            }
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "3 最後のエステは"
+          ],
+          "start": 12.1,
+          "end": 13.6
+        },
+        {
+          "lines": [
+            "式の5日前までに"
+          ],
+          "start": 13.7,
+          "end": 15.3
+        }
+      ],
+      "narration": {
+        "has": false
+      },
+      "facts": [
+        {
+          "claim": "最後のエステは式の5日前までに",
+          "source_type": "posted_content",
+          "source": "content_2026-09-14-2200.json（2026-09-14 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c06",
+      "start": 15.4,
+      "end": 18.4,
+      "role": "detail",
+      "purpose": "直前がよくない理由を短く補う",
+      "visual": {
+        "shows": "文字主体の場面（施術室の写真を暗くぼかした背景）",
+        "person_action": "なし",
+        "camera_move": "背景がゆっくり寄る。文字が1行ずつ出る",
+        "changes": [
+          {
+            "at": 15.5,
+            "what": "1行目が出る"
+          },
+          {
+            "at": 16.6,
+            "what": "2行目が出る"
+          },
+          {
+            "at": 17.6,
+            "what": "背景の寄りが止まる"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "text_card",
+        "fallbacks": []
+      },
+      "caption": [
+        {
+          "lines": [
+            "直前は赤みや",
+            "だるさが出ることも"
+          ],
+          "start": 15.5,
+          "end": 18.3
+        }
+      ],
+      "narration": {
+        "has": false
+      },
+      "facts": [
+        {
+          "claim": "直前の施術は赤みやほてり、揉み返しやだるさが出ることがある",
+          "source_type": "posted_content",
+          "source": "content_2026-09-14-2200.json（2026-09-14 投稿）"
+        }
+      ]
+    },
+    {
+      "id": "c07",
+      "start": 18.4,
+      "end": 24.9,
+      "role": "cta",
+      "purpose": "保存と、試着写真を持っての相談につなげる",
+      "visual": {
+        "shows": "施術室をゆっくりパン",
+        "person_action": "なし",
+        "camera_move": "ゆっくり横にパン",
+        "changes": [
+          {
+            "at": 18.5,
+            "what": "「保存して式の前に見返して」"
+          },
+          {
+            "at": 20.2,
+            "what": "DM案内"
+          },
+          {
+            "at": 22.3,
+            "what": "リンク案内"
+          }
+        ]
+      },
+      "material": {
+        "preferred": "miki_video",
+        "requirements": {
+          "subjects_any": [
+            "施術室",
+            "店内"
+          ],
+          "framing_any": [
+            "引き"
+          ],
+          "people_allowed": [
+            "なし"
+          ],
+          "face_allowed": [
+            "なし"
+          ],
+          "min_seconds": 6.5,
+          "motion_min": "static",
+          "consent_min": "不要"
+        },
+        "fallbacks": [
+          {
+            "type": "photo_motion",
+            "requirements": {
+              "subjects_any": [
+                "施術室",
+                "店内"
+              ],
+              "people_allowed": [
+                "なし"
+              ],
+              "consent_min": "不要"
+            },
+            "photo_treatment": {
+              "type": "pan",
+              "note": "横長の写真を左から右へ"
+            }
+          },
+          {
+            "type": "text_card"
+          }
+        ]
+      },
+      "caption": [
+        {
+          "lines": [
+            "保存して式の前に見返して"
+          ],
+          "start": 18.5,
+          "end": 20.1
+        },
+        {
+          "lines": [
+            "ご相談はプロフィールのDMから"
+          ],
+          "start": 20.2,
+          "end": 22.2
+        },
+        {
+          "lines": [
+            "コースと料金は",
+            "プロフィールのリンクから"
+          ],
+          "start": 22.3,
+          "end": 24.8
+        }
+      ],
+      "narration": {
+        "has": false
+      }
+    }
+  ],
+  "cta": {
+    "message": "保存して見返し、試着の写真を持ってプロフィールのDMから相談する",
+    "lp_guidance_text": "コースと料金はプロフィールのリンクから"
+  },
+  "cover": {
+    "title_lines": [
+      "式の前に確認",
+      "背中の3つ"
+    ],
+    "background_cut": "c01",
+    "note": "背中の施術の手元を暗めにして白文字。「3つ」を大きく"
+  },
+  "open_questions": [
+    "「シェービングは14日前に予約」「最後のエステは式の5日前まで」は、今もMIKIさんの案内と同じか",
+    "シェービングの施術を撮影できるか（お客様の書面同意が必要）",
+    "試着の写真をスマホで見せる場面は、再現で撮ってよいか（実際のお客様の写真は画面に映さない）"
+  ]
+}

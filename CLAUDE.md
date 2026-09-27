@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 投稿の文章を書く前（**毎回**）| `SKILL.md` — MIKIの文体・ブランドトーン・§14 に内容ルールの正 |
 | content.json を書く前（**毎回**）| `rules/content-schema.md` — 全フィールド仕様・スライド型6種 |
 | デザインやレイアウトを触る時 | `rules/carousel-design.md` — 案A の仕様と戻してはいけない実装 |
+| リールを企画する時（**毎回**）| `rules/reel-planning.md` — テーマから動画の設計図を作る流れ・素材台帳・撮影依頼 |
 | リールを配信する時 | `rules/reels.md` — 手動投稿の理由と `deliver_reel.py` の手順 |
 | ルールを変える時・同じ症状が再発した時 | `rules/incidents.md` — 過去の事故記録とインサイト戦略 |
 
@@ -41,6 +42,7 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
 | `get_recent_insights.py` / `insight_report.py` | インサイト取得・全期間集計 |
 | `preview_drive_images.py` | Drive候補をコンタクトシート化して目視確認 |
 | `deliver_reel.py` | リールをLINE配信（手動投稿用）|
+| `reels/` | リールの素材台帳・動画解析・設計図の検査と素材探索（`rules/reel-planning.md`）|
 
 ## 絶対ルール（毎回・例外なし）
 
