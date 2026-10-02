@@ -68,6 +68,11 @@ class ReviewTest(unittest.TestCase):
         self.review(posts)
         self.assertEqual(posts[0]["flags"], ["地域", "悩み", "問いかけ"])
 
+    def test_cta_ignores_noun_soudan(self):
+        self.assertNotIn("CTA", plan.detect_flags("花嫁さまのご相談が多いです", []))
+        self.assertIn("CTA", plan.detect_flags("気になることはDMで聞いてください", []))
+        self.assertIn("CTA", plan.detect_flags("お気軽にご相談くださいね", []))
+
     def test_copy_of_caption_fails(self):
         errors, _ = self.review([entry(text=CAPTION[:300])])
         self.assertTrue(any("単純コピー" in e for e in errors), errors)
@@ -80,6 +85,10 @@ class ReviewTest(unittest.TestCase):
         errors, _ = self.review([entry(text="AMRTAで施術しています。Instagram限定20%OFFです")])
         self.assertTrue(any("AMRTA" in e for e in errors))
         self.assertTrue(any("Instagram限定" in e for e in errors))
+
+    def test_old_first_visit_discount_fails(self):
+        errors, _ = self.review([entry(text="MIKI指名 初回限定20%OFF（VIPコースのみ）首と肩のケア")])
+        self.assertTrue(any("20%OFF" in e for e in errors), errors)
 
     def test_unknown_price_fails_known_price_passes(self):
         errors, _ = self.review([entry(text="今月は¥9,800でご案内しています。首と肩のケアです")])
@@ -240,6 +249,7 @@ class PostFlowTest(unittest.TestCase):
     def test_failure_marks_error(self):
         with mock.patch.object(api, "post_thread", side_effect=api.ThreadsAPIError("bad")):
             self.assertEqual(sched.cmd_post(dry_run=False), 1)
+        sched._notify.assert_called_once()
         fields = self.tab.update.call_args_list[0][0][1]
         self.assertTrue(fields["ステータス"].startswith(store.ST_ERROR_PREFIX))
 
@@ -304,6 +314,104 @@ class ApiFlowTest(unittest.TestCase):
         self.assertEqual(api._metric_value({"name": "likes", "total_value": {"value": 5}}), 5)
         self.assertEqual(api._metric_value({"name": "clicks", "link_total_values":
                                             [{"value": 2, "link_url": "u"}]}), {"u": 2})
+
+
+class InsightsTest(unittest.TestCase):
+    def setUp(self):
+        os.environ["THREADS_ACCESS_TOKEN"] = "x"
+        os.environ["THREADS_USER_ID"] = "1"
+
+    def _rows(self, hours_ago, **kw):
+        from datetime import timedelta
+        posted = (datetime.now(JST) - timedelta(hours=hours_ago)).strftime("%Y/%m/%d %H:%M")
+        return row(ステータス=store.ST_POSTED, Threads投稿ID="T1", 投稿日時_実際=posted, **kw)
+
+    def run_insights(self, rows, user=None):
+        tab, daily = mock.MagicMock(), mock.MagicMock()
+        tab.rows.return_value = rows
+        daily.rows.return_value = []
+        with mock.patch.object(store, "open_posts", return_value=tab), \
+                mock.patch.object(store, "open_daily", return_value=daily), \
+                mock.patch.object(api, "get_media_insights", return_value={"likes": 3, "replies": 1}), \
+                mock.patch.object(api, "get_user_insights", return_value=user or {
+                    "views": [{"date": "2026-10-05", "value": 12}], "followers_count": 40,
+                    "likes": 5, "clicks": {"https://x": 2}}), \
+                mock.patch.object(sched, "_notify"):
+            code = sched.cmd_insights(dry_run=False)
+        return code, tab, daily
+
+    def test_24h_snapshot_is_saved_once(self):
+        _, tab, _ = self.run_insights([(2, self._rows(30))])
+        fields = tab.update.call_args[0][1]
+        self.assertIn("指標_24h", fields)
+        self.assertNotIn("指標_7d", fields)
+        _, tab, _ = self.run_insights([(2, self._rows(30, 指標_24h='{"likes":1}'))])
+        self.assertNotIn("指標_24h", tab.update.call_args[0][1])
+
+    def test_7d_snapshot(self):
+        _, tab, _ = self.run_insights([(2, self._rows(24 * 7 + 2, 指標_24h='{"likes":1}'))])
+        self.assertIn("指標_7d", tab.update.call_args[0][1])
+
+    def test_old_posts_are_not_tracked(self):
+        _, tab, _ = self.run_insights([(2, self._rows(24 * 20))])
+        tab.update.assert_not_called()
+
+    def test_daily_row_records_profile_views_and_followers(self):
+        _, _, daily = self.run_insights([])
+        rec = daily.append.call_args[0][0][0]
+        self.assertEqual((rec["profile_views"], rec["followers_count"]), (12, 40))
+        self.assertIn("https://x", rec["clicks"])
+
+    def test_user_insights_failure_notifies(self):
+        tab, daily = mock.MagicMock(), mock.MagicMock()
+        tab.rows.return_value = []
+        with mock.patch.object(store, "open_posts", return_value=tab), \
+                mock.patch.object(api, "get_user_insights", side_effect=api.ThreadsAPIError("expired")), \
+                mock.patch.object(sched, "_notify") as notify:
+            self.assertEqual(sched.cmd_insights(dry_run=False), 1)
+        notify.assert_called_once()
+
+    def test_unavailable_metric_falls_back_one_by_one(self):
+        def fake_get(path, params):
+            if "," in params["metric"] or params["metric"] == "views":
+                raise api.ThreadsAPIError("metric not supported")
+            return {"data": [{"name": params["metric"], "values": [{"value": 2}]}]}
+        with mock.patch.object(api, "_get", side_effect=fake_get):
+            m = api.get_media_insights("T1")
+        self.assertEqual(m["likes"], 2)
+        self.assertIn("views", m["_missing"])
+
+
+class RedactTest(unittest.TestCase):
+    """通信エラーのメッセージにトークン入りURLが含まれても、外に出る文字列には残さない。"""
+
+    def setUp(self):
+        os.environ["THREADS_ACCESS_TOKEN"] = "SECRET_TOKEN_123"
+        os.environ["THREADS_USER_ID"] = "1"
+
+    def test_connection_error_is_redacted(self):
+        import requests
+
+        def boom(url, params=None, **kw):
+            req = requests.Request("GET", url, params=params).prepare()
+            raise requests.exceptions.ConnectionError(f"Max retries exceeded with url: {req.path_url}")
+        with mock.patch("requests.get", side_effect=boom):
+            with self.assertRaises(api.ThreadsAPIError) as cm:
+                api.get_post("123")
+        self.assertNotIn("SECRET_TOKEN_123", str(cm.exception))
+        self.assertIn("access_token=***", str(cm.exception))
+
+    def test_post_failure_message_written_to_sheet_is_redacted(self):
+        tab = mock.MagicMock()
+        tab.rows.return_value = [(2, row(予定日時=datetime.now(JST).strftime("%Y/%m/%d %H:%M")))]
+        with mock.patch.object(store, "open_posts", return_value=tab), \
+                mock.patch.object(api, "list_my_threads", return_value=[]), \
+                mock.patch.object(sched, "_notify") as notify, \
+                mock.patch.object(api, "post_thread",
+                                  side_effect=RuntimeError("url?access_token=SECRET_TOKEN_123&x=1")):
+            sched.cmd_post(dry_run=False)
+        written = str(tab.update.call_args_list) + str(notify.call_args_list)
+        self.assertNotIn("SECRET_TOKEN_123", written)
 
 
 if __name__ == "__main__":

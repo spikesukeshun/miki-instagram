@@ -18,7 +18,7 @@ Threads API をつなぐこと自体は目的ではない。
 - 価格は `SKILL.md` に載っている金額だけ（review が照合する）。元キャプションの古い価格（`outdated_prices`）は使わない
 - 空き状況は **手入力された空き情報がある日だけ**（`availability` 欄）。無い日は「空いています」「今日行けます」系を一切書かない
 - 地域名は **六本木のみ**（MIKIの勤務地）。他の地名は書かない
-- 「Instagram限定20%OFF」は Instagram の特典なので Threads では出さない。サロン名（AMRTA）も書かない
+- 「Instagram限定20%OFF」（古い投稿の「初回限定20%OFF」も）は Instagram の特典なので Threads では出さない。サロン名（AMRTA）も書かない
 - 効果の断定（治る・完治・確実に・100%）は禁止。「絶対」「必ず」は原則使わない
 
 ### 型（毎回1つ選ぶ。分析の単位）
@@ -139,7 +139,7 @@ Threads API をつなぐこと自体は目的ではない。
 4. 認可 → 短期トークン（1時間）→ 長期トークン（60日）に交換。ユーザーIDを控える
 5. `~/.zshrc` と GitHub secrets に登録: `THREADS_ACCESS_TOKEN` / `THREADS_USER_ID`
 6. 接続確認（書き込みなし）: `/usr/bin/python3 threads_api.py --check`
-7. 期限前の更新: `/usr/bin/python3 threads_api.py --refresh` → 表示された新トークンで 5 を置き換える
+7. 期限前の更新: `/usr/bin/python3 threads_api.py --refresh` → `~/.config/miki-threads/new_token.txt` に保存された新トークンで 5 を置き換え、ファイルを削除する（トークンは画面・ログに出さない）
    （1か月の実験は1回の発行で足りるが、延長する場合は50日目ごろに更新する）
 
 Instagram の `INSTAGRAM_ACCESS_TOKEN` は Threads には使えない（別のアプリ・別のトークン）。

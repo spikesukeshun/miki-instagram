@@ -38,9 +38,9 @@ TRACK_DAYS = 14
 def _notify(message: str):
     try:
         from line_notify import send_line_message
-        send_line_message(message)
+        send_line_message(api.redact(message))
     except Exception as e:  # 通知の失敗で処理を止めない
-        print(f"LINE通知に失敗: {e}")
+        print(f"LINE通知に失敗: {api.redact(e)}")
 
 
 def _enabled() -> bool:
@@ -182,7 +182,7 @@ def cmd_post(dry_run: bool) -> int:
         media = resolve_media(r["元IG投稿ID"], r.get("メディア指定", "text"))
     except Exception as e:
         # 画像が取れなくても実験を止めない。テキストのみで出し、記録に残す
-        media, media_note = [], f"メディア取得失敗→テキストのみ: {e}"
+        media, media_note = [], f"メディア取得失敗→テキストのみ: {api.redact(e)}"
         print(f"  ⚠ {media_note}")
 
     if not dry_run:
@@ -192,7 +192,7 @@ def cmd_post(dry_run: bool) -> int:
             same = [t for t in api.list_my_threads(int(day_start.timestamp()))
                     if _norm(t.get("text")) == _norm(r["本文"])]
         except Exception as e:
-            print(f"  ⚠ 本日の投稿一覧を確認できません（投稿は続行）: {e}")
+            print(f"  ⚠ 本日の投稿一覧を確認できません（投稿は続行）: {api.redact(e)}")
             same = []
         if same:
             print(f"行{row}: 同じ本文がすでに Threads に出ています（{same[0].get('id')}）→ 記録だけ直します")
@@ -207,7 +207,7 @@ def cmd_post(dry_run: bool) -> int:
     try:
         thread_id = api.post_thread(r["本文"].strip(), media, r.get("topic_tag", "").strip())
     except Exception as e:
-        msg = str(e)
+        msg = api.redact(e)
         print(f"行{row}: 投稿失敗 → {msg}")
         try:
             tab.update(row, {"ステータス": store.ST_ERROR_PREFIX + msg[:80], "エラー内容": msg[:500]})
@@ -225,7 +225,7 @@ def cmd_post(dry_run: bool) -> int:
                          "投稿メディア_実際": media_label(media) + (f"（{media_note}）" if media_note else ""),
                          "エラー内容": ""})
     except Exception as e:
-        print(f"⚠ 投稿は成功しましたが記録に失敗: {e}")
+        print(f"⚠ 投稿は成功しましたが記録に失敗: {api.redact(e)}")
         _notify(f"⚠️ Threads 投稿は成功、シート記録に失敗（行{row}）。"
                 f"ステータスを手で「投稿済み」にしてください。ID={thread_id}")
         return 1
@@ -233,7 +233,7 @@ def cmd_post(dry_run: bool) -> int:
         info = api.get_post(thread_id)
         tab.update(row, {"Threads_URL": info.get("permalink", "")})
     except Exception as e:
-        print(f"  permalink の取得に失敗（投稿は成功）: {e}")
+        print(f"  permalink の取得に失敗（投稿は成功）: {api.redact(e)}")
     print(f"✅ Threads 投稿完了: {thread_id}")
     _notify(f"🧵 Threads に投稿しました（{posted_at}・{r.get('型')}）")
     return 0
@@ -266,7 +266,7 @@ def cmd_insights(dry_run: bool) -> int:
             m = api.get_media_insights(r["Threads投稿ID"])
         except Exception as e:
             failures += 1
-            print(f"行{row}: インサイト取得失敗 {e}")
+            print(f"行{row}: インサイト取得失敗 {api.redact(e)}")
             continue
         fields = {"指標_最新": store.dumps(m), "指標_取得日時": stamp}
         age = now - posted
@@ -285,8 +285,8 @@ def cmd_insights(dry_run: bool) -> int:
     try:
         u = api.get_user_insights(since, until)
     except Exception as e:
-        print(f"アカウントのインサイト取得失敗: {e}")
-        _notify(f"⚠️ Threads インサイト取得失敗（トークン期限切れの可能性）\n{str(e)[:200]}")
+        print(f"アカウントのインサイト取得失敗: {api.redact(e)}")
+        _notify(f"⚠️ Threads インサイト取得失敗（トークン期限切れの可能性）\n{api.redact(e)[:200]}")
         return 1
     views = u.get("views")
     profile_views = sum(v["value"] for v in views) if isinstance(views, list) else views

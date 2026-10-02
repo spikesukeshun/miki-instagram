@@ -17,13 +17,14 @@ INSTAGRAM_ACCESS_TOKEN は使えない（共用できる根拠が公式に無い
 
 単体実行:
   python3 threads_api.py --check     # トークン・ユーザー・投稿枠の確認（書き込みなし）
-  python3 threads_api.py --refresh   # 長期トークンを更新して新トークンを表示（期限を60日延長）
+  python3 threads_api.py --refresh   # 長期トークンを更新（期限を60日延長）。新トークンはファイルに保存し画面に出さない
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import time
 
 import requests
@@ -44,6 +45,23 @@ POLL_TIMEOUT_SEC = 300
 
 class ThreadsAPIError(Exception):
     pass
+
+
+_TOKEN_ENV = ("THREADS_ACCESS_TOKEN", "INSTAGRAM_ACCESS_TOKEN")
+
+
+def redact(text: str) -> str:
+    """エラーメッセージからトークンを消す。
+
+    requests の通信エラーは「access_token=...」入りのURLをそのまま含むため、
+    そのままシート・LINE・Actions ログに出すとトークンが漏れる。外に出す文字列は必ずここを通す。
+    """
+    text = re.sub(r"(access_token|input_token|client_secret)=[^&\s'\"]+", r"\1=***", str(text))
+    for key in _TOKEN_ENV:
+        val = (os.getenv(key) or "").strip()
+        if len(val) >= 8:
+            text = text.replace(val, "***")
+    return text
 
 
 def _token() -> str:
@@ -69,16 +87,19 @@ def _parse(res: requests.Response) -> dict:
         raise ThreadsAPIError(f"不正な応答（HTTP {res.status_code}）")
     if isinstance(data, dict) and "error" in data:
         err = data["error"]
-        raise ThreadsAPIError(
+        raise ThreadsAPIError(redact(
             f"{err.get('message', 'unknown error')} "
-            f"(code={err.get('code')}, subcode={err.get('error_subcode')})")
+            f"(code={err.get('code')}, subcode={err.get('error_subcode')})"))
     return data
 
 
 def _get(path: str, params: dict = None) -> dict:
     params = dict(params or {})
     params["access_token"] = _token()
-    res = requests.get(f"{API_BASE}/{path}", params=params, timeout=30)
+    try:
+        res = requests.get(f"{API_BASE}/{path}", params=params, timeout=30)
+    except requests.exceptions.RequestException as e:
+        raise ThreadsAPIError(redact(f"通信エラー: {e}")) from None
     return _parse(res)
 
 
@@ -95,7 +116,7 @@ def _post(path: str, data: dict, attempts: int = 3) -> dict:
         try:
             res = requests.post(f"{API_BASE}/{path}", data=data, timeout=60)
         except requests.exceptions.RequestException as e:
-            last_error = ThreadsAPIError(f"通信エラー: {e}")
+            last_error = ThreadsAPIError(redact(f"通信エラー: {e}"))
         else:
             if res.status_code < 500:
                 return _parse(res)
@@ -300,9 +321,12 @@ def publishing_limit() -> dict:
 
 def refresh_token() -> dict:
     """長期トークンを更新する（有効期限を60日に戻す）。新しいトークンを返すだけで保存はしない。"""
-    res = requests.get(f"{API_BASE}/refresh_access_token",
-                       params={"grant_type": "th_refresh_token", "access_token": _token()},
-                       timeout=30)
+    try:
+        res = requests.get(f"{API_BASE}/refresh_access_token",
+                           params={"grant_type": "th_refresh_token", "access_token": _token()},
+                           timeout=30)
+    except requests.exceptions.RequestException as e:
+        raise ThreadsAPIError(redact(f"通信エラー: {e}")) from None
     return _parse(res)
 
 
@@ -318,13 +342,19 @@ def check() -> dict:
 def main():
     parser = argparse.ArgumentParser(description="Threads API の接続確認・トークン更新")
     parser.add_argument("--check", action="store_true", help="トークン・ユーザー・投稿枠を確認（書き込みなし）")
-    parser.add_argument("--refresh", action="store_true", help="長期トークンを更新して表示する")
+    parser.add_argument("--refresh", action="store_true", help="長期トークンを更新してファイルに保存する（画面には出さない）")
     args = parser.parse_args()
     if args.refresh:
         data = refresh_token()
         days = int(data.get("expires_in", 0)) // 86400
-        print(f"新しいトークン（有効 約{days}日）。~/.zshrc と GitHub secrets の "
-              f"THREADS_ACCESS_TOKEN を置き換えてください:\n{data.get('access_token')}")
+        # トークンを画面やログに出さない。リポジトリ外の本人だけが読めるファイルに書く
+        path = os.path.expanduser("~/.config/miki-threads/new_token.txt")
+        os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(data.get("access_token", ""))
+        print(f"新しいトークン（有効 約{days}日）を {path} に保存しました（権限600）。\n"
+              f"~/.zshrc と GitHub secrets の THREADS_ACCESS_TOKEN を置き換えたら、このファイルは削除してください。")
         return
     info = check()
     print(f"✅ 接続OK: @{info['user'].get('username')} (id={info['user'].get('id')})")

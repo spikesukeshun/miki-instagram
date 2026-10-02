@@ -48,12 +48,15 @@ ALL_FLAGS = ["地域", "悩み", "問いかけ", "CTA", "空き", "価格"]
 REGION = "六本木"
 AVAILABILITY_RE = re.compile(r"空き|空いて|空席|今日.{0,6}(ご案内|行け|入れ)|本日.{0,6}(ご案内|空)|当日予約")
 PRICE_RE = re.compile(r"[¥￥]\s?[\d,]+|[\d,]{3,}\s?円")
-CTA_RE = re.compile(r"DM|ＤＭ|予約|ご相談|お問い合わせ|プロフィール")
+# 「花嫁さまのご相談が多い」のような名詞の「相談」は CTA ではないので、誘う言い方だけを拾う
+CTA_RE = re.compile(r"DM|ＤＭ|ご予約|予約は|予約して|お問い合わせ|ご相談(ください|くださいね|お待ち|はこちら)|プロフィール(から|の)")
 QUESTION_RE = re.compile(r"[？?]")
 BAIT_RE = re.compile(r"いいねして|リポストして|フォローして|保存して|拡散して|コメントして")
 FORBIDDEN = {
     "AMRTA": "サロン名は書かない（CLAUDE.md 絶対ルール）",
     "Instagram限定": "Instagram の特典なので Threads では出さない",
+    "20%OFF": "Instagram の指名割引（旧表記「初回限定20%OFF」含む）は Threads では出さない",
+    "20％OFF": "Instagram の指名割引（旧表記「初回限定20%OFF」含む）は Threads では出さない",
     "治る": "効果の断定",
     "完治": "効果の断定",
     "100%": "効果の断定",
