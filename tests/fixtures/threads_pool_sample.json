@@ -1,0 +1,18 @@
+{
+ "exported_at": "2026-10-03T09:00:00+09:00",
+ "allowed_prices": ["15800", "24800"],
+ "posts": [
+  {
+   "ig_id": "SAMPLE_1", "ig_date": "2026-05-01", "permalink": "https://www.instagram.com/p/SAMPLE_1/",
+   "media_type": "CAROUSEL_ALBUM", "children": 8, "media_suggest": "carousel:0,1,2,3", "theme": "menu",
+   "likes": 40, "comments": 2, "prices_in_caption": ["24800"], "outdated_prices": [],
+   "caption": "夕方になると顔がパンパン…それ、首と肩のこりが原因かもしれません\n\nMIKIです。デスクワークが続くと首の後ろが固まって、顔までむくんでしまう方がとても多いんです。私の施術ではデコルテから首、肩までしっかりほぐしてからお顔に入ります。VIPオーダーメイド150分（15分ジャグジーつき）¥24,800"
+  },
+  {
+   "ig_id": "SAMPLE_2", "ig_date": "2026-06-10", "permalink": "https://www.instagram.com/p/SAMPLE_2/",
+   "media_type": "IMAGE", "children": 0, "media_suggest": "image", "theme": "lifestyle",
+   "likes": 55, "comments": 4, "prices_in_caption": [], "outdated_prices": [],
+   "caption": "お休みの日の過ごし方\n\nMIKIです。私は休みの日こそ早起きして、近所を散歩してからカフェに行くのが好きです。自分を整える時間があると、お客様にも優しくなれる気がします。"
+  }
+ ]
+}

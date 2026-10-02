@@ -1,0 +1,69 @@
+name: Threads自動投稿（1か月実験）
+
+# Instagram の post.yml とは独立したワークフロー（2026-10 追加）。
+# threads_scheduler.py は「予定時刻を過ぎた承認済みの行を、JSTの1日に1件だけ」投稿するので、
+# 何度発火しても二重投稿にはならない。THREADS_ACCESS_TOKEN が未設定なら何もせず成功終了する。
+# 投稿時間テストの3枠（rules/threads.md）: 朝 8:00 / 昼 12:30 / 夜 21:00 JST
+# Actions の発火は約30分遅れることがある。実際の投稿時刻はシートに記録して分析に使う。
+
+on:
+  schedule:
+    - cron: "0 23 * * *"   # JST  8:00 — 朝枠
+    - cron: "30 3 * * *"   # JST 12:30 — 昼枠
+    - cron: "0 12 * * *"   # JST 21:00 — 夜枠
+    - cron: "0 20 * * *"   # JST  5:00 — インサイト記録（前日分）
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "post / insights"
+        required: true
+        default: "post"
+
+concurrency:
+  group: threads
+  cancel-in-progress: false
+
+jobs:
+  threads:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: ライブラリをインストール
+        run: pip install -r requirements.txt
+
+      - name: credentials.jsonを復元
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: echo "$GOOGLE_CREDENTIALS" > credentials.json
+
+      - name: 実行する処理を決める
+        id: task
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "task=${{ github.event.inputs.task }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 20 * * *" ]; then
+            echo "task=insights" >> "$GITHUB_OUTPUT"
+          else
+            echo "task=post" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Threads処理を実行
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
+          LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
+        run: python threads_scheduler.py "${{ steps.task.outputs.task }}"

@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | デザインやレイアウトを触る時 | `rules/carousel-design.md` — 案A（2分割）と案B（全面写真）の仕様、戻してはいけない実装 |
 | リールを配信する時 | `rules/reels.md` — 手動投稿の理由と `deliver_reel.py` の手順 |
 | ルールを変える時・同じ症状が再発した時 | `rules/incidents.md` — 過去の事故記録とインサイト戦略 |
+| Threads の投稿を作る・実験を触る時（**毎回**）| `rules/threads.md` — Threads 1か月実験の生成ルール・手順・API設定（Instagram の流れとは独立）|
 
 ## プロジェクト概要
 
