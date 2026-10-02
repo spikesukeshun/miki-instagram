@@ -217,6 +217,9 @@ class PostFlowTest(unittest.TestCase):
         p = mock.patch.object(store, "open_posts", return_value=self.tab)
         p.start()
         self.addCleanup(p.stop)
+        lt = mock.patch.object(api, "list_my_threads", return_value=[])
+        self.list_threads = lt.start()
+        self.addCleanup(lt.stop)
         n = mock.patch.object(sched, "_notify")
         n.start()
         self.addCleanup(n.stop)
@@ -253,6 +256,14 @@ class PostFlowTest(unittest.TestCase):
                 mock.patch.object(api, "get_post", return_value={"permalink": "u"}):
             sched.cmd_post(dry_run=False)
         self.assertEqual(self.tab.update.call_args_list[0][0][1]["修正あり"], "Y")
+
+    def test_already_on_threads_is_not_reposted(self):
+        self.list_threads.return_value = [{"id": "555", "text": "首と肩の話"}]
+        with mock.patch.object(api, "post_thread") as pt:
+            self.assertEqual(sched.cmd_post(dry_run=False), 0)
+        pt.assert_not_called()
+        fields = self.tab.update.call_args_list[0][0][1]
+        self.assertEqual((fields["ステータス"], fields["Threads投稿ID"]), (store.ST_POSTED, "555"))
 
     def test_disabled_without_token(self):
         os.environ.pop("THREADS_ACCESS_TOKEN")

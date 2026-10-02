@@ -220,6 +220,12 @@ def post_thread(text: str, media: list, topic_tag: str = "") -> str:
     return publish(cid)
 
 
+def list_my_threads(since: int) -> list:
+    """since（Unix秒）以降の自分の投稿（id, text, timestamp）。二重投稿の確認に使う。"""
+    data = _get("me/threads", {"fields": "id,text,timestamp", "since": since, "limit": 50})
+    return data.get("data", [])
+
+
 def get_post(media_id: str) -> dict:
     return _get(media_id, {"fields": "id,permalink,timestamp,media_type,topic_tag"})
 

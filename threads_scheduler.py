@@ -185,6 +185,21 @@ def cmd_post(dry_run: bool) -> int:
         media, media_note = [], f"メディア取得失敗→テキストのみ: {e}"
         print(f"  ⚠ {media_note}")
 
+    if not dry_run:
+        # シート記録だけ失敗した前回の投稿を、もう一度出さないための確認（Threads 側が正）
+        day_start = datetime(now.year, now.month, now.day, tzinfo=JST)
+        try:
+            same = [t for t in api.list_my_threads(int(day_start.timestamp()))
+                    if _norm(t.get("text")) == _norm(r["本文"])]
+        except Exception as e:
+            print(f"  ⚠ 本日の投稿一覧を確認できません（投稿は続行）: {e}")
+            same = []
+        if same:
+            print(f"行{row}: 同じ本文がすでに Threads に出ています（{same[0].get('id')}）→ 記録だけ直します")
+            tab.update(row, {"ステータス": store.ST_POSTED, "Threads投稿ID": same[0].get("id", ""),
+                             "投稿日時_実際": now.strftime("%Y/%m/%d %H:%M")})
+            return 0
+
     if dry_run:
         print(f"  [dry-run] 投稿内容（{api.text_length(r['本文'])}字・{media_label(media)}）:\n{r['本文']}")
         return 0
