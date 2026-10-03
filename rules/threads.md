@@ -126,7 +126,7 @@ Threads API をつなぐこと自体は目的ではない。
 |---|---|
 | 認知 | 投稿の views（公式に「開発中」表記。取れない場合はレポートに明記） |
 | エンゲージメント | likes / replies / reposts / quotes / shares |
-| プロフィールへの関心 | アカウント views（＝プロフィール閲覧数）、followers_count の日次推移、clicks（プロフィールのリンク） |
+| プロフィールへの関心 | アカウント views（＝プロフィール閲覧数。Meta の1日＝太平洋時間区切りで、毎日最新の1日分を記録）、followers_count の日次推移、clicks（プロフィールのリンク） |
 | 問い合わせ・予約 | シートの手入力 |
 
 ## 5. Threads API の設定（最初に1回・手動）
@@ -139,6 +139,9 @@ Threads API をつなぐこと自体は目的ではない。
 4. 認可 → 短期トークン（1時間）→ 長期トークン（60日）に交換。ユーザーIDを控える
 5. `~/.zshrc` と GitHub secrets に登録: `THREADS_ACCESS_TOKEN` / `THREADS_USER_ID`
 6. 接続確認（書き込みなし）: `/usr/bin/python3 threads_api.py --check`
+   公開しない確認（コンテナを作るだけ。24時間で失効し誰にも表示されない）:
+   `/usr/bin/python3 threads_scheduler.py container-test --index 0`
+   テキスト・画像・カルーセルとトピックを Threads が受け付けるかを確かめる。`threads_publish` は呼ばない
 7. 期限前の更新: `/usr/bin/python3 threads_api.py --refresh` → `~/.config/miki-threads/new_token.txt` に保存された新トークンで 5 を置き換え、ファイルを削除する（トークンは画面・ログに出さない）
    （1か月の実験は1回の発行で足りるが、延長する場合は50日目ごろに更新する）
 

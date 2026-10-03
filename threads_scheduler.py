@@ -289,7 +289,12 @@ def cmd_insights(dry_run: bool) -> int:
         _notify(f"⚠️ Threads インサイト取得失敗（トークン期限切れの可能性）\n{api.redact(e)[:200]}")
         return 1
     views = u.get("views")
-    profile_views = sum(v["value"] for v in views) if isinstance(views, list) else views
+    # views は Meta 側の「日」（太平洋時間区切り）で返り、JSTの1日を頼むと2日分が来る。
+    # 合計すると翌日の記録と重複するので、いちばん新しい1日分だけを記録する（毎日1件ずつ重ならない）
+    if isinstance(views, list):
+        profile_views = max(views, key=lambda v: v["date"])["value"] if views else None
+    else:
+        profile_views = views
     rec = {"日付": yesterday.isoformat(), "followers_count": u.get("followers_count", ""),
            "profile_views": profile_views if profile_views is not None else "",
            "likes": u.get("likes", ""), "replies": u.get("replies", ""),
@@ -303,11 +308,75 @@ def cmd_insights(dry_run: bool) -> int:
     return 1 if failures else 0
 
 
+# ── container-test（公開しない確認）──────────────────
+
+def cmd_container_test(sample_file: str, index: int) -> int:
+    """サンプル1件で、テキスト・画像（単体／カルーセル）のコンテナを作って状態を確認する。
+
+    **公開（threads_publish）は呼ばない。** 作ったコンテナは24時間で失効し、誰にも表示されない。
+    本番前に「本文・トピック・Instagram画像URL を Threads が受け付けるか」を確かめるためのもの。
+    """
+    import json
+    if not _enabled():
+        return 1
+    with open(sample_file, encoding="utf-8") as f:
+        p = json.load(f)["posts"][index]
+    text, tag = p["text"].strip(), p.get("topic_tag", "")
+
+    def publish_forbidden(*a, **kw):
+        raise RuntimeError("container-test では公開しません")
+    api.publish = publish_forbidden  # 万一の呼び出しも止める
+
+    results = []
+
+    def check(label, make):
+        try:
+            cid = make()
+            api.wait_until_ready(cid, initial_wait=10)
+            info = api._get(cid, {"fields": "status,error_message"})
+            results.append((label, "OK", info.get("status")))
+        except Exception as e:
+            results.append((label, "NG", api.redact(e)[:200]))
+
+    check("TEXT + topic_tag", lambda: api.create_container("TEXT", text=text, topic_tag=tag))
+    try:
+        media = resolve_media(p["ig_id"], p.get("media", "image"))
+    except Exception as e:
+        media = []
+        results.append(("Instagram 画像取得", "NG", api.redact(e)[:200]))
+    if media:
+        first = media[0]
+        check(f"{first['type']} 単体 + topic_tag",
+              lambda: api.create_container(first["type"], text=text, topic_tag=tag,
+                                           image_url=first["url"] if first["type"] == "IMAGE" else "",
+                                           video_url=first["url"] if first["type"] == "VIDEO" else ""))
+    if len(media) >= 2:
+        def carousel():
+            kids = [api.create_container(m["type"], is_carousel_item=True,
+                                         image_url=m["url"] if m["type"] == "IMAGE" else "",
+                                         video_url=m["url"] if m["type"] == "VIDEO" else "")
+                    for m in media]
+            for k in kids:
+                api.wait_until_ready(k, initial_wait=5)
+            return api.create_container("CAROUSEL", text=text, children=kids, topic_tag=tag)
+        check(f"CAROUSEL({len(media)}) + topic_tag", carousel)
+
+    print(f"サンプル[{index}] {p.get('type')} / topic={tag} / media={p.get('media')}（公開はしていません）")
+    for label, ok, detail in results:
+        print(f"  {'✅' if ok == 'OK' else '❌'} {label}: {detail}")
+    return 0 if all(r[1] == "OK" for r in results) else 1
+
+
 def main():
     parser = argparse.ArgumentParser(description="Threads の定時投稿とインサイト記録")
-    parser.add_argument("cmd", choices=["post", "insights"])
+    parser.add_argument("cmd", choices=["post", "insights", "container-test"])
     parser.add_argument("--dry-run", action="store_true", help="API投稿・シート書き込みをしない")
+    parser.add_argument("--sample", default="threads/sample_7types_20261003.json",
+                        help="container-test で使うサンプル")
+    parser.add_argument("--index", type=int, default=0, help="container-test で使うサンプルの番号")
     args = parser.parse_args()
+    if args.cmd == "container-test":
+        sys.exit(cmd_container_test(args.sample, args.index))
     sys.exit(cmd_post(args.dry_run) if args.cmd == "post" else cmd_insights(args.dry_run))
 
 

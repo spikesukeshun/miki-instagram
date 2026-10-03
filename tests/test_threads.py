@@ -362,6 +362,12 @@ class InsightsTest(unittest.TestCase):
         self.assertEqual((rec["profile_views"], rec["followers_count"]), (12, 40))
         self.assertIn("https://x", rec["clicks"])
 
+    def test_profile_views_take_latest_day_only(self):
+        _, _, daily = self.run_insights([], user={
+            "views": [{"date": "2026-10-02", "value": 13}, {"date": "2026-10-03", "value": 5}],
+            "followers_count": 169})
+        self.assertEqual(daily.append.call_args[0][0][0]["profile_views"], 5)
+
     def test_user_insights_failure_notifies(self):
         tab, daily = mock.MagicMock(), mock.MagicMock()
         tab.rows.return_value = []
@@ -380,6 +386,26 @@ class InsightsTest(unittest.TestCase):
             m = api.get_media_insights("T1")
         self.assertEqual(m["likes"], 2)
         self.assertIn("views", m["_missing"])
+
+
+class ContainerTestCommandTest(unittest.TestCase):
+    def test_never_publishes(self):
+        os.environ["THREADS_ACCESS_TOKEN"] = "x"
+        os.environ["THREADS_USER_ID"] = "1"
+        original = api.publish
+        try:
+            with mock.patch.object(api, "_post", return_value={"id": "c1"}) as post, \
+                    mock.patch.object(api, "_get", return_value={"status": "FINISHED"}), \
+                    mock.patch.object(api, "wait_until_ready"), \
+                    mock.patch.object(sched, "resolve_media", return_value=[
+                        {"type": "IMAGE", "url": "a"}, {"type": "IMAGE", "url": "b"}]):
+                code = sched.cmd_container_test("tests/fixtures/threads_week_sample.json", 0)
+            self.assertEqual(code, 0)
+            paths = [c.args[0] for c in post.call_args_list]
+            self.assertTrue(paths and all(p.endswith("/threads") for p in paths), paths)
+            self.assertFalse(any("threads_publish" in p for p in paths))
+        finally:
+            api.publish = original
 
 
 class RedactTest(unittest.TestCase):
