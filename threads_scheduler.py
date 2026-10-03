@@ -25,6 +25,7 @@ from load_env import load_from_zshrc
 load_from_zshrc()
 
 import threads_api as api  # noqa: E402
+import threads_notify as notifier  # noqa: E402
 import threads_store as store  # noqa: E402
 from threads_plan import AVAILABILITY_RE, parse_dt, parse_media_spec  # noqa: E402
 
@@ -35,12 +36,28 @@ MAX_DELAY = timedelta(hours=6)
 TRACK_DAYS = 14
 
 
-def _notify(message: str):
+def _notify(kind: str, target: str, message: str):
+    """人の対応が必要なときだけ呼ぶ。送り先1人・同じ種類×対象は1日1回・月上限あり（threads_notify.py）。"""
     try:
-        from line_notify import send_line_message
-        send_line_message(api.redact(message))
+        notifier.notify(kind, target, message)
     except Exception as e:  # 通知の失敗で処理を止めない
         print(f"LINE通知に失敗: {api.redact(e)}")
+
+
+def _open_or_stop(opener, **kw):
+    """Threads用タブを開く。1枚目に置かれていたら（Instagram と干渉するため）通知して止める。
+
+    返り値: (タブ or None, 終了コード or None)。None, None は「タブがまだ無い」。
+    """
+    try:
+        return opener(**kw), None
+    except store.UnsafeTabError as e:
+        print(f"⛔ {e}")
+        _notify(notifier.TAB_UNSAFE, e.title, str(e))
+        return None, 1
+    except store.TabNotFoundError as e:
+        print(e)
+        return None, 0
 
 
 def _enabled() -> bool:
@@ -155,11 +172,9 @@ def guard(r: dict, rows: list) -> str:
 def cmd_post(dry_run: bool) -> int:
     if not _enabled():
         return 0
-    try:
-        tab = store.open_posts(create=False)
-    except RuntimeError as e:
-        print(e)
-        return 0
+    tab, code = _open_or_stop(store.open_posts, create=False)
+    if tab is None:
+        return code
     rows = tab.rows()
     now = datetime.now(JST)
     row, r, reason = pick_row(rows, now)
@@ -174,7 +189,9 @@ def cmd_post(dry_run: bool) -> int:
         if not dry_run:
             # 「エラー：」にすると次の起動で再試行され同じ通知が続くので、人が直すまで止める
             tab.update(row, {"ステータス": store.ST_HOLD_PREFIX + problem[:80], "エラー内容": problem})
-            _notify(f"⚠️ Threads 投稿を止めました（行{row} {r['予定日時']}）\n{problem}")
+            _notify(notifier.HELD, r["予定日時"],
+                    f"⚠️ 投稿を止めました（{r['予定日時']}・要確認）\n{problem}\n"
+                    f"シートで直して「承認済み」に戻すと、次の枠で投稿されます。")
         return 1
 
     media_note = ""
@@ -213,7 +230,8 @@ def cmd_post(dry_run: bool) -> int:
             tab.update(row, {"ステータス": store.ST_ERROR_PREFIX + msg[:80], "エラー内容": msg[:500]})
         except Exception as e2:
             print(f"  ステータス記録にも失敗: {e2}")
-        _notify(f"❌ Threads 投稿失敗（{r['予定日時']}）\n{msg[:300]}")
+        _notify(notifier.POST_FAILED, r["予定日時"],
+                f"❌ 投稿に失敗しました（{r['予定日時']}）\n{msg[:300]}\n同じ日の次の枠で自動で再試行します。")
         return 1
 
     # ここから先は失敗しても「エラー：」を書かない（再投稿を防ぐ）
@@ -226,8 +244,9 @@ def cmd_post(dry_run: bool) -> int:
                          "エラー内容": ""})
     except Exception as e:
         print(f"⚠ 投稿は成功しましたが記録に失敗: {api.redact(e)}")
-        _notify(f"⚠️ Threads 投稿は成功、シート記録に失敗（行{row}）。"
-                f"ステータスを手で「投稿済み」にしてください。ID={thread_id}")
+        _notify(notifier.RECORD_FAILED, r["予定日時"],
+                f"⚠️ 投稿は成功しましたがシートに記録できません（{r['予定日時']}）。"
+                f"ステータスを手で「投稿済み」にしてください。")
         return 1
     try:
         info = api.get_post(thread_id)
@@ -235,7 +254,7 @@ def cmd_post(dry_run: bool) -> int:
     except Exception as e:
         print(f"  permalink の取得に失敗（投稿は成功）: {api.redact(e)}")
     print(f"✅ Threads 投稿完了: {thread_id}")
-    _notify(f"🧵 Threads に投稿しました（{posted_at}・{r.get('型')}）")
+    # 投稿成功は LINE に送らない（Instagram と共有している月200通の枠を使わないため）
     return 0
 
 
@@ -248,11 +267,9 @@ def _norm(s: str) -> str:
 def cmd_insights(dry_run: bool) -> int:
     if not _enabled():
         return 0
-    try:
-        tab = store.open_posts(create=False)
-    except RuntimeError as e:
-        print(e)
-        return 0
+    tab, code = _open_or_stop(store.open_posts, create=False)
+    if tab is None:
+        return code
     now = datetime.now(JST)
     stamp = now.strftime("%Y/%m/%d %H:%M")
     failures = 0
@@ -286,7 +303,8 @@ def cmd_insights(dry_run: bool) -> int:
         u = api.get_user_insights(since, until)
     except Exception as e:
         print(f"アカウントのインサイト取得失敗: {api.redact(e)}")
-        _notify(f"⚠️ Threads インサイト取得失敗（トークン期限切れの可能性）\n{api.redact(e)[:200]}")
+        _notify(notifier.INSIGHTS_FAILED, yesterday.isoformat(),
+                f"⚠️ インサイトを取得できません（トークン期限切れの可能性）\n{api.redact(e)[:200]}")
         return 1
     views = u.get("views")
     # views は Meta 側の「日」（太平洋時間区切り）で返り、JSTの1日を頼むと2日分が来る。
@@ -302,7 +320,9 @@ def cmd_insights(dry_run: bool) -> int:
            "clicks": store.dumps(u.get("clicks") or {}), "取得日時": stamp}
     print(f"アカウント {yesterday}: {rec}")
     if not dry_run:
-        daily = store.open_daily(create=True)
+        daily, code = _open_or_stop(store.open_daily, create=True)
+        if daily is None:
+            return code
         if yesterday.isoformat() not in {d.get("日付") for _, d in daily.rows()}:
             daily.append([rec])
     return 1 if failures else 0

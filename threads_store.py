@@ -134,17 +134,52 @@ def _open_spreadsheet(spreadsheet_id: str = None):
     return _with_retry("スプレッドシート取得", lambda: client.open_by_key(spreadsheet_id), 3, 5)
 
 
+class TabNotFoundError(RuntimeError):
+    """Threads用タブがまだ無い（初回登録前の正常な状態）。"""
+
+
+class UnsafeTabError(Exception):
+    """Threads用タブがスプレッドシートの1枚目にある。
+
+    Instagram 側（post_scheduler.py / register_post.py / check_week_slots.py）は
+    「1枚目のシート」を投稿管理として読み書きする。Threads用タブが1枚目にあると、
+    Instagram が Threads のデータを投稿予定として読む／Threads が Instagram の場所に書く、
+    という干渉が起こるので、Threads 側は何もせずに止まる。
+    RuntimeError を継承しないのは、「タブが無いだけ」の扱い（黙って終了）に紛れさせないため。
+    """
+
+    def __init__(self, title: str):
+        self.title = title
+        super().__init__(
+            f"Threads用タブ「{title}」がスプレッドシートの1枚目にあります。"
+            f"1枚目は Instagram の投稿管理が使う場所なので、Threads の処理を停止しました。"
+            f"Google スプレッドシートでタブ「{title}」を2枚目以降へ移動し、"
+            f"Instagram の「シート1」を1枚目に戻してください。")
+
+
+def _ensure_not_first(ws, title: str):
+    # タブの位置はスプレッドシートから取得した値（0始まり）。1枚目なら止める
+    if ws.index == 0:
+        raise UnsafeTabError(title)
+
+
 def _open_tab(title: str, headers: list, create: bool) -> Tab:
+    """Threads用タブをタブ名で開く。位置（1枚目など）では開かない。
+
+    作成するときは位置を指定しない（＝末尾に追加される）。開いた・作ったタブが
+    1枚目なら UnsafeTabError で止める。
+    """
     book = _open_spreadsheet()
     try:
         ws = book.worksheet(title)
     except gspread.exceptions.WorksheetNotFound:
         if not create:
-            raise RuntimeError(
+            raise TabNotFoundError(
                 f"タブ {title} がありません。先に threads_plan.py register で作成してください")
         ws = _with_retry("タブ作成",
                          lambda: book.add_worksheet(title=title, rows=200, cols=len(headers)),
                          3, 5)
+    _ensure_not_first(ws, title)
     return Tab(ws, headers)
 
 

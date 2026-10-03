@@ -56,6 +56,14 @@ jobs:
             echo "task=post" >> "$GITHUB_OUTPUT"
           fi
 
+      # LINE通知の送信記録（同じ通知は1日1回・月の上限）を前回の実行から引き継ぐ。threads_notify.py 参照
+      - name: 通知の送信記録を復元
+        uses: actions/cache/restore@v4
+        with:
+          path: threads/notify_log.json
+          key: threads-notify-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: threads-notify-
+
       - name: Threads処理を実行
         env:
           THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
@@ -64,6 +72,13 @@ jobs:
           INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          # Threads の LINE 通知は1人だけに送る（threads_notify.NOTIFY_USER_ENV）
           LINE_USER_ID_SHUNSUKE: ${{ secrets.LINE_USER_ID_SHUNSUKE }}
-          LINE_USER_ID_MIKI: ${{ secrets.LINE_USER_ID_MIKI }}
         run: python threads_scheduler.py "${{ steps.task.outputs.task }}"
+
+      - name: 通知の送信記録を保存
+        if: always() && hashFiles('threads/notify_log.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: threads/notify_log.json
+          key: threads-notify-${{ github.run_id }}-${{ github.run_attempt }}

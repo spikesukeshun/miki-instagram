@@ -16,6 +16,10 @@ import threads_api as api  # noqa: E402
 import threads_plan as plan  # noqa: E402
 import threads_scheduler as sched  # noqa: E402
 import threads_store as store  # noqa: E402
+import threads_notify as notifier  # noqa: E402
+import line_notify  # noqa: E402
+import tempfile  # noqa: E402
+import gspread  # noqa: E402
 
 CAPTION = (
     "肩こりと顔のむくみ、実はつながっているって知っていましたか？\n\n"
@@ -406,6 +410,193 @@ class ContainerTestCommandTest(unittest.TestCase):
             self.assertFalse(any("threads_publish" in p for p in paths))
         finally:
             api.publish = original
+
+
+class LineNotifyLimitTest(unittest.TestCase):
+    """Threads の LINE 通知は、人の対応が必要なときだけ・1人に・同じ通知は1日1回・月上限つき。"""
+
+    def setUp(self):
+        os.environ["THREADS_ACCESS_TOKEN"] = "x"
+        os.environ["THREADS_USER_ID"] = "1"
+        os.environ["LINE_USER_ID_SHUNSUKE"] = "U_SHUNSUKE"
+        os.environ["LINE_USER_ID_MIKI"] = "U_MIKI"
+        self.tmp = tempfile.mkdtemp()
+        p = mock.patch.object(notifier, "LEDGER_FILE", os.path.join(self.tmp, "log.json"))
+        p.start()
+        self.addCleanup(p.stop)
+        # LINE への送信だけを差し替える（Instagram と共用の line_notify の中身はそのまま）
+        s = mock.patch.object(line_notify, "send_line_message", return_value=True)
+        self.send = s.start()
+        self.addCleanup(s.stop)
+        self.tab = mock.MagicMock()
+        self.tab.rows.return_value = [(2, row(予定日時=datetime.now(JST).strftime("%Y/%m/%d %H:%M")))]
+        o = mock.patch.object(store, "open_posts", return_value=self.tab)
+        o.start()
+        self.addCleanup(o.stop)
+        lt = mock.patch.object(api, "list_my_threads", return_value=[])
+        lt.start()
+        self.addCleanup(lt.stop)
+
+    # 1. 正常投稿では通知しない
+    def test_success_sends_no_line(self):
+        with mock.patch.object(api, "post_thread", return_value="999"), \
+                mock.patch.object(api, "get_post", return_value={"permalink": "u"}):
+            self.assertEqual(sched.cmd_post(dry_run=False), 0)
+        self.send.assert_not_called()
+
+    # 2. 投稿失敗では通知する（1人だけ）
+    def test_failure_sends_one_line_to_one_person(self):
+        with mock.patch.object(api, "post_thread", side_effect=api.ThreadsAPIError("bad")):
+            sched.cmd_post(dry_run=False)
+        self.send.assert_called_once()
+        self.assertEqual(self.send.call_args.kwargs["user_ids"], ["U_SHUNSUKE"])
+        self.assertIn("投稿に失敗", self.send.call_args.args[0])
+
+    # 3. 要確認では通知する
+    def test_hold_sends_line(self):
+        self.tab.rows.return_value = [(2, row(予定日時=datetime.now(JST).strftime("%Y/%m/%d %H:%M"),
+                                              本文="今日の15時に空きが出ました"))]
+        with mock.patch.object(api, "post_thread") as pt:
+            self.assertEqual(sched.cmd_post(dry_run=False), 1)
+        pt.assert_not_called()
+        self.send.assert_called_once()
+        self.assertIn("要確認", self.send.call_args.args[0])
+
+    # 4. 同じ通知は同じ日に1回だけ（失敗が同じ日に3回起きても1通）
+    def test_same_failure_three_times_same_day_sends_once(self):
+        with mock.patch.object(api, "post_thread", side_effect=api.ThreadsAPIError("bad")):
+            for _ in range(3):
+                sched.cmd_post(dry_run=False)
+        self.assertEqual(self.send.call_count, 1)
+
+    def test_dedupe_is_per_day_and_per_target(self):
+        from datetime import timedelta
+        d1 = datetime(2026, 10, 6, 8, 30, tzinfo=JST)
+        f = lambda t, now: notifier.notify(notifier.POST_FAILED, t, "x", now=now)  # noqa: E731
+        self.assertTrue(f("2026/10/06 08:00", d1))
+        self.assertFalse(f("2026/10/06 08:00", d1 + timedelta(hours=4)))   # 同じ日・同じ対象
+        self.assertTrue(f("2026/10/06 12:30", d1))                         # 対象が違う
+        self.assertTrue(f("2026/10/06 08:00", d1 + timedelta(days=1)))     # 翌日
+        self.assertEqual(self.send.call_count, 3)
+
+    def test_monthly_cap(self):
+        base = datetime(2026, 11, 1, 9, 0, tzinfo=JST)
+        sent = sum(notifier.notify(notifier.HELD, f"t{i}", "x", now=base) for i in range(notifier.MONTHLY_CAP + 5))
+        self.assertEqual(sent, notifier.MONTHLY_CAP)
+        self.assertIn("上限", self.send.call_args_list[-1].args[0])
+        # 翌月はまた送れる
+        self.assertTrue(notifier.notify(notifier.HELD, "t0", "x", now=datetime(2026, 12, 1, 9, 0, tzinfo=JST)))
+
+    def test_unreadable_ledger_still_notifies(self):
+        with open(notifier.LEDGER_FILE, "w") as f:
+            f.write("{broken")
+        self.assertTrue(notifier.notify(notifier.POST_FAILED, "a", "x"))
+
+    def test_failed_send_is_not_recorded(self):
+        self.send.return_value = False
+        self.assertFalse(notifier.notify(notifier.POST_FAILED, "a", "x"))
+        self.send.return_value = True
+        self.assertTrue(notifier.notify(notifier.POST_FAILED, "a", "x"))
+
+    # Instagram 側の LINE 通知処理を変えていない
+    def test_instagram_line_functions_untouched(self):
+        import importlib
+        fresh = importlib.reload(line_notify)  # Threads の処理を通った後でも、中身は元のまま
+        self.assertEqual(sorted(fresh._get_user_ids()), ["U_MIKI", "U_SHUNSUKE"])
+        import inspect
+        src = inspect.getsource(notifier)
+        self.assertNotIn("line_notify._", src)            # 内部関数に触れない
+        self.assertNotRegex(src, r"line_notify\.\w+\s*=")   # 差し替えない
+
+    def test_message_is_prefixed_and_redacted(self):
+        notifier.notify(notifier.POST_FAILED, "a", "url?access_token=x123456789&")
+        msg = self.send.call_args.args[0]
+        self.assertTrue(msg.startswith("【Threads】"))
+        self.assertNotIn("x123456789", msg)
+
+
+def _fake_book(index, exists=True):
+    ws = mock.MagicMock()
+    ws.index = index
+    ws.title = store.POSTS_TAB
+    ws.row_values.return_value = store.POSTS_HEADERS
+    book = mock.MagicMock()
+    if exists:
+        book.worksheet.return_value = ws
+    else:
+        book.worksheet.side_effect = gspread.exceptions.WorksheetNotFound("x")
+        book.add_worksheet.return_value = ws
+    return book, ws
+
+
+class FirstTabGuardTest(unittest.TestCase):
+    # 5. Threads用タブが1枚目なら止まる
+    def test_first_tab_stops(self):
+        for opener in (store.open_posts, store.open_daily):
+            book, ws = _fake_book(0)
+            ws.row_values.return_value = store.DAILY_HEADERS if opener is store.open_daily else store.POSTS_HEADERS
+            with mock.patch.object(store, "_open_spreadsheet", return_value=book):
+                with self.assertRaises(store.UnsafeTabError) as cm:
+                    opener()
+            self.assertIn("1枚目", str(cm.exception))
+            ws.update.assert_not_called()          # 見出しも書かない
+            ws.update_cells.assert_not_called()
+
+    # 6. 通常の位置なら動く
+    def test_normal_position_works(self):
+        book, ws = _fake_book(3)
+        with mock.patch.object(store, "_open_spreadsheet", return_value=book):
+            tab = store.open_posts()
+        self.assertIs(tab.ws, ws)
+        book.worksheet.assert_called_once_with(store.POSTS_TAB)   # タブ名で開く
+
+    def test_create_appends_at_end_without_index(self):
+        book, ws = _fake_book(3, exists=False)
+        ws.row_values.return_value = []
+        with mock.patch.object(store, "_open_spreadsheet", return_value=book):
+            store.open_posts(create=True)
+        kwargs = book.add_worksheet.call_args.kwargs
+        self.assertNotIn("index", kwargs)    # 位置を指定しない＝末尾に追加
+        self.assertEqual(kwargs["title"], store.POSTS_TAB)
+
+    def test_created_tab_at_first_position_stops_before_writing(self):
+        book, ws = _fake_book(0, exists=False)
+        ws.row_values.return_value = []
+        with mock.patch.object(store, "_open_spreadsheet", return_value=book):
+            with self.assertRaises(store.UnsafeTabError):
+                store.open_posts(create=True)
+        ws.update.assert_not_called()
+
+    def test_store_never_opens_by_position(self):
+        import ast
+        src = open("threads_store.py", encoding="utf-8").read()
+        names = {n.attr for n in ast.walk(ast.parse(src)) if isinstance(n, ast.Attribute)}
+        self.assertFalse(names & {"sheet1", "get_worksheet", "worksheets"}, names & {"sheet1", "get_worksheet", "worksheets"})
+
+    def test_unsafe_tab_is_not_swallowed_as_missing_tab(self):
+        self.assertFalse(issubclass(store.UnsafeTabError, RuntimeError))
+        self.assertTrue(issubclass(store.TabNotFoundError, RuntimeError))
+
+    def test_scheduler_stops_and_notifies_on_first_tab(self):
+        os.environ["THREADS_ACCESS_TOKEN"] = "x"
+        os.environ["THREADS_USER_ID"] = "1"
+        for cmd in (sched.cmd_post, sched.cmd_insights):
+            with mock.patch.object(store, "open_posts", side_effect=store.UnsafeTabError(store.POSTS_TAB)), \
+                    mock.patch.object(sched, "_notify") as notify, \
+                    mock.patch.object(api, "post_thread") as pt, \
+                    mock.patch.object(api, "get_user_insights") as gu:
+                self.assertEqual(cmd(dry_run=False), 1)
+            pt.assert_not_called()
+            gu.assert_not_called()
+            self.assertEqual(notify.call_args.args[0], notifier.TAB_UNSAFE)
+
+    def test_missing_tab_exits_quietly(self):
+        os.environ["THREADS_ACCESS_TOKEN"] = "x"
+        os.environ["THREADS_USER_ID"] = "1"
+        with mock.patch.object(store, "open_posts", side_effect=store.TabNotFoundError("none")), \
+                mock.patch.object(sched, "_notify") as notify:
+            self.assertEqual(sched.cmd_post(dry_run=False), 0)
+        notify.assert_not_called()
 
 
 class RedactTest(unittest.TestCase):

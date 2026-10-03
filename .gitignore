@@ -55,3 +55,5 @@ design_lab/fonts/*.ttc
 
 # Threads 実験の候補プール（threads_plan.py export で再生成できる）
 threads/pool.json
+# Threads の LINE 通知の送信記録（Actions ではキャッシュで引き継ぐ）
+threads/notify_log.json
