@@ -696,7 +696,9 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .dock-lead span{font-size:.7rem;color:var(--ink-mute);letter-spacing:.08em;
     display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dock .btn{padding:.78em 1.35em;font-size:.88rem;flex:none;white-space:nowrap}
+  .dock-lead .dock-note{color:#8C6D33;letter-spacing:.04em;margin-top:1px}
+.hero-note{margin-top:14px;font-size:.78rem;line-height:1.8;opacity:.88}
+.dock .btn{padding:.78em 1.35em;font-size:.88rem;flex:none;white-space:nowrap}
   .dock .hp{flex:none;padding:.7em 1.1em;font-size:.8rem;white-space:nowrap}
   /* shrink on scroll-down */
   .dock.shrink .dock-inner{padding:6px 8px 6px 16px;transform:scale(.92);box-shadow:0 -2px 18px rgba(44,39,35,.10)}
@@ -961,6 +963,7 @@
         </a>
         <a class="btn-ghost btn-sm" href="#menu">メニューを見る</a>
       </div>
+      <p class="hero-note rise d5">※ 直近2週間ほどは満席のことが多くなっています。<span class="nb">お急ぎの方・キャンセル待ちはDMへどうぞ。</span></p>
     </div>
     <div class="scroll-ind" aria-hidden="true"><span>SCROLL</span><i></i></div>
   </section>
@@ -1570,6 +1573,7 @@
     <div class="dock-lead" aria-live="polite">
       <b id="dockName"></b>
       <span id="dockMeta"></span>
+      <span class="dock-note">直近は満席のことも・キャンセル待ちはDMへ</span>
     </div>
     <a class="btn" href="https://ig.me/m/estmiki" target="_blank" rel="noopener">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.1 7.5L3.5 20.5l1.6-5.2A8.4 8.4 0 1 1 21 11.5Z"/></svg>
