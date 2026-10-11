@@ -890,6 +890,10 @@ PHOTO_TEXT_SIDE_MARGIN = 72
 PHOTO_CTA_TOP_MARGIN = 72
 NOTE_FONT_SIZE = 46
 NOTE_LINE_GAP = 16
+# frame の title（表紙のコマの上部に置く見出し）。大きい順に試して収まるサイズを使う
+FRAME_TITLE_SIZE_MAX = 104
+FRAME_TITLE_SIZE_MIN = 72
+FRAME_TITLE_TOP_MARGIN = 120
 
 
 def _fit_phrase_font(phrase: str, w: int = W, h: int = H):
@@ -928,6 +932,41 @@ def _check_note_fits(note: str, w: int = W):
             f"  \\n で改行を足してください（自動折り返しはしません）。"
         )
     return font
+
+
+def _fit_frame_title_font(title: str, w: int = W):
+    """frame の title を指定の改行のまま収めるフォントと行間。収まらなければ ValueError。"""
+    lines = title.split("\n")
+    if len(lines) > 2:
+        raise ValueError(f"frame の title は2行までにしてください（写真を隠さないため）: {title!r}")
+    limit = w - PHOTO_TEXT_SIDE_MARGIN * 2
+    for size in range(FRAME_TITLE_SIZE_MAX, FRAME_TITLE_SIZE_MIN - 1, -4):
+        font = get_serif(size)
+        if _block_width(font, lines) <= limit:
+            return font, int(size * 0.24)
+    raise ValueError(
+        f"frame の title が長すぎて収まりません: {title!r}\n"
+        f"  短くするか、\\n で改行を足してください（自動折り返しはしません）。"
+    )
+
+
+def _draw_title_over_photo_top(canvas: Image.Image, text: str, font, gap: int,
+                               top_margin: int) -> Image.Image:
+    """全面写真の上部に、スクリムを敷いてから白文字を中央揃えで置く。
+
+    スクリムは下端用の _lay_scrim() を上下反転した画像に当てて作る
+    （明るさの実測・立ち上がりの長さの決め方を下端と同じにするため）。
+    """
+    w, h = canvas.size
+    block_h = measure_lines(font, text, line_gap=gap)
+    widest = _block_width(font, text.split("\n"))
+    flipped = canvas.transpose(Image.FLIP_TOP_BOTTOM)
+    flipped = _lay_scrim(flipped, h - top_margin - block_h, block_h, widest, pad=max(24, gap))
+    canvas = flipped.transpose(Image.FLIP_TOP_BOTTOM)
+    draw = ImageDraw.Draw(canvas)
+    draw_multiline_centered(draw, text, font, top_margin, w,
+                            (255, 255, 255, 255), line_gap=gap)
+    return canvas
 
 
 def _cta_photo_layout(slide: dict, w: int = W, h: int = H) -> dict:
@@ -990,6 +1029,9 @@ def validate_photo_text(slide: dict) -> None:
         note = normalize_text(slide.get("note") or "")
         if note.strip():
             _check_note_fits(note)
+        title = normalize_text(slide.get("title") or "")
+        if title.strip():
+            _fit_frame_title_font(title)
     elif stype == "cta" and slide.get("layout") == "photo":
         _cta_photo_layout(slide)
     elif stype == "tile":
@@ -1044,15 +1086,21 @@ def generate_frame_slide(img: Image.Image, slide: dict) -> Image.Image:
 
     note を書いた時だけ下端に小さく重ねる（参考にした投稿が1枚目にだけ
     「ドットを押さえてスクロール」と入れていたのと同じ役割）。
+    title を書いた時だけ上部に見出しを置く（表紙のコマで目を止めてもらう用。
+    2026-10-04 ユーザー依頼）。
     """
     canvas = crop_center_with_focus(img, float(slide.get("focus_y", 0.5))).convert("RGBA")
 
-    note = normalize_text(slide.get("note") or "")
-    if not note.strip():
-        return canvas.convert("RGB")
+    title = normalize_text(slide.get("title") or "")
+    if title.strip():
+        font, gap = _fit_frame_title_font(title, canvas.size[0])
+        canvas = _draw_title_over_photo_top(canvas, title, font, gap,
+                                            top_margin=FRAME_TITLE_TOP_MARGIN)
 
-    font = _check_note_fits(note, canvas.size[0])
-    canvas = _draw_over_photo(canvas, note, font, gap=NOTE_LINE_GAP, bottom_margin=88)
+    note = normalize_text(slide.get("note") or "")
+    if note.strip():
+        font = _check_note_fits(note, canvas.size[0])
+        canvas = _draw_over_photo(canvas, note, font, gap=NOTE_LINE_GAP, bottom_margin=88)
     return canvas.convert("RGB")
 
 

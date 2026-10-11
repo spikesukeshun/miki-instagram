@@ -11,6 +11,7 @@ import sys
 import json
 import re
 import argparse
+import difflib
 import unicodedata
 
 EMOJI_PATTERN = re.compile(
@@ -513,6 +514,114 @@ def check_revision_applied(caption: str, body_texts: list[str], revision_instruc
     return results
 
 
+# スライドとキャプションの食い違い検査で比べるフィールド（CTAの固定文言は対象外でも害はない）
+SLIDE_TEXT_FIELDS = ("title", "text", "body", "items", "footer", "subtitle", "tag", "phrase", "note")
+# 比較前に落とす文字。改行・句読点だけの修正は「言い回しが消えた」と数えない
+_SYNC_STRIP_RE = re.compile(r"[\s、。，．,.！!？?・「」『』（）()〜~ー—\-]")
+# 消えた範囲がこれより短い・ひらがなだけなら、そのままでは照合しない（「ください」等の誤検知を避ける）
+MIN_REMOVED_PHRASE = 4
+# 短い差し替え（「週3回」→「週5回」「解消」→「改善」）は前後をこの文字数ずつ足して照合する
+SHORT_PHRASE_CONTEXT = 2
+# 変更箇所どうしの間がこの文字数以下なら1つの言い回しとしても照合する
+#（「いつもより控えめに」→「控えましょう」は「いつもより」「めに」に割れるため）
+MERGE_GAP = 3
+# 前回版とスライド本文の一致度がこれ未満なら、同じ枠に入れ直した「別の投稿」とみなして比較しない
+SAME_POST_MIN_RATIO = 0.3
+
+
+def _sync_norm(value) -> str:
+    return _SYNC_STRIP_RE.sub("", str(value or ""))
+
+
+def _slide_plain_text(slide: dict) -> str:
+    parts = []
+    for key in SLIDE_TEXT_FIELDS:
+        v = slide.get(key)
+        items = v if isinstance(v, list) else [v]
+        for x in items:
+            if isinstance(x, dict):
+                parts.extend(str(y) for y in x.values() if y)
+            elif x:
+                parts.append(str(x))
+    # 区切りを入れて、フィールドのつなぎ目をまたいだ偶然の一致を防ぐ
+    return "\x00".join(_sync_norm(p) for p in parts)
+
+
+def _is_checkable(phrase: str) -> bool:
+    return len(phrase) >= MIN_REMOVED_PHRASE and not re.fullmatch(r"[ぁ-ゖ]+", phrase)
+
+
+def _removed_phrases(old: str, new: str) -> list[str]:
+    """old から new で消えた（置き換わった）言い回しの候補を返す。
+
+    個々の変更範囲と、近接する変更をまとめた範囲の両方を返す（まとめた範囲だけだと
+    キャプション側が1文字違うだけで素通りするため）。短すぎる範囲は前後の文字を足す。
+    """
+    ops = [(i1, i2) for tag, i1, i2, _j1, _j2
+           in difflib.SequenceMatcher(None, old, new, autojunk=False).get_opcodes()
+           if tag in ("replace", "delete")]
+    spans = list(ops)
+    merged = []
+    for i1, i2 in ops:
+        if merged and i1 - merged[-1][1] <= MERGE_GAP:
+            merged[-1][1] = i2
+        else:
+            merged.append([i1, i2])
+    spans += [tuple(m) for m in merged]
+
+    phrases = []
+    for i1, i2 in spans:
+        p = old[i1:i2]
+        if not _is_checkable(p) and re.search(r"[一-龯々ァ-ヴ0-9０-９A-Za-z]", p):
+            p = old[max(0, i1 - SHORT_PHRASE_CONTEXT):i2 + SHORT_PHRASE_CONTEXT]
+        if _is_checkable(p) and p not in phrases:
+            phrases.append(p)
+    return phrases
+
+
+def check_caption_follows_slides(content: dict, content_path: str = "") -> list[tuple[bool, str]]:
+    """スライドを直した時、キャプションの同じ内容も直したかを検査する。
+
+    前回校閲を通った版（content_baseline）と比べ、スライドから消えた言い回しが
+    キャプションに残っていたら止める。キャプションはコードで書き換えない
+    （機械的な置換は文章が崩れる）。直すのは content.json を書く側。
+    並べ替え・移動で新しいスライドのどこかに残っている言い回しは対象外。
+    """
+    from content_baseline import load_baseline, slot_slug
+    slug = slot_slug(content, content_path)
+    prev = load_baseline(slug)
+    if prev is None:
+        return [(True, f"スライドとキャプションの整合: 前回版が無いため比較スキップ（{slug or '日時不明'}）")]
+
+    caption_now = _sync_norm(content.get("caption"))
+    caption_changed = caption_now != _sync_norm(prev.get("caption"))
+    old_texts = [_slide_plain_text(s) for s in (prev.get("slides") or []) if isinstance(s, dict)]
+    new_texts = [_slide_plain_text(s) for s in (content.get("slides") or []) if isinstance(s, dict)]
+    all_new = "\x00".join(new_texts)
+    ratio = difflib.SequenceMatcher(None, "\x00".join(old_texts), all_new, autojunk=False).ratio()
+    if old_texts and ratio < SAME_POST_MIN_RATIO:
+        return [(True, f"スライドとキャプションの整合: 前回版と別の投稿のため比較スキップ（一致度 {ratio:.2f}）")]
+
+    results, changed = [], []
+    for i, old_t in enumerate(old_texts):
+        new_t = new_texts[i] if i < len(new_texts) else ""
+        if old_t == new_t:
+            continue
+        changed.append(i + 1)
+        for phrase in _removed_phrases(old_t, new_t):
+            if phrase in caption_now and phrase not in all_new:
+                results.append((False, f"スライド{i+1}から消した「{phrase}」がキャプションに残っています"
+                                       f"— キャプションの同じ箇所も直してください"))
+    if len(new_texts) > len(old_texts):
+        changed.extend(range(len(old_texts) + 1, len(new_texts) + 1))
+    if not changed:
+        return [(True, "スライドとキャプションの整合: スライド本文の変更なし ✓")]
+    if not results:
+        note = "" if caption_changed else "（キャプションは前回のまま。スライドの変更が内容に関わるなら直すこと）"
+        results.append((True, f"スライド{'・'.join(map(str, changed))}の変更とキャプションの整合 ✓{note}"))
+    return results
+
+
 def run_review(content_path: str, revision_instruction: str = ""):
     with open(content_path, encoding="utf-8") as f:
         content = json.load(f)
@@ -558,6 +667,10 @@ def run_review(content_path: str, revision_instruction: str = ""):
         body_texts = [s.get("text", "") + s.get("body", "") for s in slides]
         all_results.extend(check_revision_applied(caption, body_texts, revision_instruction))
 
+    # スライドを直したのにキャプションが前回のままになっていないか。
+    # --revision の有無に関わらず走らせる（付け忘れた回に古いキャプションが前回版として保存されないように）
+    all_results.extend(check_caption_follows_slides(content, content_path))
+
     # 結果出力
     print("\n" + "=" * 50)
     print("📋 投稿校閲レポート")
@@ -579,6 +692,10 @@ def run_review(content_path: str, revision_instruction: str = ""):
             print(f"  ✓ {msg}")
 
     print("=" * 50 + "\n")
+    if not errors:
+        # 次の修正依頼で「スライドだけ直してキャプションが前回のまま」を検出する比較元
+        from content_baseline import save_baseline
+        save_baseline(content, content_path)
     return len(errors) == 0
 
 
