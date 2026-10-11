@@ -53,7 +53,7 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 | フィールド | 必須 | 内容 |
 |---|---|---|
 | `type` | ✅ | 案A: `cover` / `text` / `list` / `price` / `cta` / `raw` ／ 案B: `frame` / `phrase` / `tile`。正は `generate_carousel.py` の `generators` 辞書で、`review_post.py` の `VALID_SLIDE_TYPES` と一致していることを `check_repo_sync.py` が見張る |
-| `title` | ✅ | 見出し。`\n` で改行可（高さは動的計算されるので固定値の心配は不要）。**案Bの `frame` / `phrase` / `tile` は title を持たない**（写真の上に置く文字が `note` / `phrase`）|
+| `title` | ✅ | 見出し。`\n` で改行可（高さは動的計算されるので固定値の心配は不要）。**案Bの `phrase` / `tile` は title を持たない**（写真の上に置く文字が `phrase`）。`frame` は表紙のコマにだけ任意で書ける（下記）|
 | `bg_strategy` | ✅ | 背景の取り方。下記参照 |
 | `reuse_source` `reuse_theme` `reuse_filename` | ✅ | `reuse` / `edit` のとき**3点セットで必須**。1つでも欠けると `create_post.py` が止まる（下記）|
 | `focus_y` | 任意 | 写真クロップの縦位置 0.0〜1.0（default 0.5）。被写体が下寄りなら 0.55〜0.65、上寄りなら 0.35〜0.45 |
@@ -72,7 +72,7 @@ Claude Code が新規投稿のたびに手書きするファイルの仕様。
 | `price` | `title` / `top_note` / `columns`（最大2・`{label, lines}`）/ `notes` / `highlight` | 料金表。左右2カラム＋縦の区切り線（`generate_price_slide()`）|
 | `cta` | `body` ✅ / `subtitle` ✅ / `slide_photo_h_ratio` 任意 / `layout` 任意（`"photo"` で案B） | `title` は固定文言（下記）。`subtitle` は**最終行に 💌 が自動付与される**（`generate_cta_slide()`）ので、絵文字を数える時は勘定に入れる |
 | `raw` | — | 末尾2枚専用。コードが自動追加するので content.json に書かない |
-| `frame` | `note` 任意 / `focus_y` 任意 / 背景は `bg_strategy: "local"`（コマは `preview_drive_videos.py --save-frames` で書き出す。ファイル名に秒数が入るので、名前から抜き直せる） | **案B**。パラパラ漫画の1コマ。全面写真で原則文字なし。`note` を書いた時だけ下端に小さく重ねる（1枚目のスクロール指示用）|
+| `frame` | `title` 任意（2行まで・上部に白文字）/ `note` 任意 / `focus_y` 任意 / 背景は `bg_strategy: "local"`（コマは `preview_drive_videos.py --save-frames` で書き出す。ファイル名に秒数が入るので、名前から抜き直せる） | **案B**。パラパラ漫画の1コマ。全面写真で原則文字なし。`note` を書いた時だけ下端に小さく重ねる（1枚目のスクロール指示用）。`title` は1枚目で目を止めてもらう見出し用（専門用語より体感の言葉で）|
 | `phrase` | `phrase` ✅ / `focus_y` 任意 | **案B**。全面写真＋日本語の文節ひとつ。**自動折り返しはしないので改行は `\n` を自分で入れる**（文字サイズだけはコードが収まるまで落とす）|
 | `tile` | `phrase` ✅（1行・改行不可）/ `focus_y` 任意 | **案B・`post_style: "mosaic"` 専用**。3×3の区画1つ分。写真は区画ごとに別の Drive 画像（reuse/edit の3点セット）。文字サイズは全区画で統一（→ `rules/carousel-design.md`）。tile の枚数は `MOSAIC_TILE_COUNT` ちょうど |
 

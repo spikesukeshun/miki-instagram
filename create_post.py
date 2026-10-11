@@ -1102,11 +1102,8 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
 
 
 # content_2026-08-10-2200.json のような日付入りファイル名から投稿日時を読む。
-# fullmatch で使う。backup_content_2026-04-12-2100.json のような別物を
-# 拾わないよう、前方に何も許さないこと。
-CONTENT_FILENAME_DT_RE = re.compile(
-    r"content_(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})\.json"
-)
+# 正規表現の正は content_baseline.py（review_post.py の前回版照合と共有）。
+from content_baseline import CONTENT_FILENAME_DT_RE  # noqa: E402
 POST_DATETIME_FMT = "%Y/%m/%d %H:%M"
 
 
