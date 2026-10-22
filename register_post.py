@@ -1,6 +1,7 @@
 import os
 import glob
 import base64
+import time
 import requests
 from datetime import datetime
 
@@ -13,7 +14,8 @@ GITHUB_OWNER = "spikesukeshun"
 GITHUB_REPO = "miki-instagram"
 GENERATED_DIR = "generated"
 GITHUB_PAGES_URL = f"https://{GITHUB_OWNER}.github.io/{GITHUB_REPO}"
-RAW_BASE = f"https://raw.githubusercontent.com/{GITHUB_OWNER}/{GITHUB_REPO}/main"
+RAW_ROOT = f"https://raw.githubusercontent.com/{GITHUB_OWNER}/{GITHUB_REPO}"
+RAW_BASE = f"{RAW_ROOT}/main"
 
 
 def get_sheet():
@@ -146,6 +148,44 @@ def delete_post_folder_from_github(slug: str) -> int:
     return deleted
 
 
+def _get_main_head_sha() -> str:
+    """main の最新コミットSHAを返す。取れなければ空文字。
+
+    プレビューの画像URLをコミットSHAで固定するために使う。raw.githubusercontent.com は
+    クエリ文字列を無視して最大5分キャッシュするため、/main/ のURLに ?t= を付けても
+    直した直後は古い画像が返る（2026-10-23 実測）。SHA入りのURLは毎回新しいURLになる。
+    """
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/commits/main"
+    try:
+        res = requests.get(api_url, headers=_github_headers(), timeout=10)
+        if res.status_code == 200:
+            return res.json().get("sha", "")
+        print(f"  mainのSHA取得失敗: {res.status_code}")
+    except Exception as e:
+        print(f"  mainのSHA取得でエラー: {e}")
+    return ""
+
+
+def _wait_for_pages_update(page_url: str, version: str, timeout: int = 240) -> bool:
+    """GitHub Pages が新しいプレビューを配信し始めるまで待つ。
+
+    デプロイ完了前に開くと古いページがブラウザに10分キャッシュされる
+    （GitHub Pages は Cache-Control: max-age=600 固定で変えられない）。
+    URLを知らせる前に、新しい版が配信されていることを確かめる。
+    """
+    marker = f'<meta name="preview-version" content="{version}">'
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            res = requests.get(page_url, headers={"Cache-Control": "no-cache"}, timeout=10)
+            if res.status_code == 200 and marker in res.text:
+                return True
+        except Exception:
+            pass
+        time.sleep(10)
+    return False
+
+
 def setup_github_pages():
     """GitHub Pagesを有効化する（初回のみ、以降はスキップ）"""
     api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/pages"
@@ -165,8 +205,13 @@ def setup_github_pages():
         print(f"  GitHub Pages設定スキップ: {res.status_code}")
 
 
-def generate_preview_html(filenames: list, caption: str, hashtags: str, post_datetime: str, subfolder: str = "") -> str:
-    """スマホで見やすいプレビューHTMLを生成して文字列で返す"""
+def generate_preview_html(filenames: list, caption: str, hashtags: str, post_datetime: str, subfolder: str = "",
+                          ref: str = "", version: str = "") -> str:
+    """スマホで見やすいプレビューHTMLを生成して文字列で返す
+
+    ref: 画像URLに使うコミットSHA。指定すると修正のたびに画像URLが変わり、キャッシュが残らない
+    version: ページに埋め込む版。_wait_for_pages_update() が配信を確かめるのに使う
+    """
     generated_at = datetime.now().strftime("%Y/%m/%d %H:%M")
 
     images_html = ""
@@ -179,7 +224,10 @@ def generate_preview_html(filenames: list, caption: str, hashtags: str, post_dat
             path = f"{GENERATED_DIR}/{subfolder}/{filename}"
         else:
             path = f"{GENERATED_DIR}/{filename}"
-        img_url = f"{RAW_BASE}/{path}?t={datetime.now().strftime('%Y%m%d%H%M')}"
+        if ref:
+            img_url = f"{RAW_ROOT}/{ref}/{path}"
+        else:
+            img_url = f"{RAW_BASE}/{path}?t={datetime.now().strftime('%Y%m%d%H%M%S')}"
         images_html += f"""
         <div class="image-card">
             <div class="image-num">{i} / {len(filenames)}</div>
@@ -196,6 +244,7 @@ def generate_preview_html(filenames: list, caption: str, hashtags: str, post_dat
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache">
+    <meta name="preview-version" content="{version}">
     <!-- 投稿前のプレビュー。GitHub Pages 上で誰でも開けるので検索結果には出さない。
          ⚠ robots.txt では防げない（プロジェクトページはサブパス配信のため）。 -->
     <meta name="robots" content="noindex, nofollow">
@@ -318,8 +367,12 @@ def generate_preview_html(filenames: list, caption: str, hashtags: str, post_dat
 </html>"""
 
 
-def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
-    """HTMLをdocs/{slug}/index.htmlとしてGitHubにアップロードして一意のURLを返す"""
+def upload_html_to_github(html_content: str, post_datetime: str = "", version: str = "") -> str:
+    """HTMLをdocs/{slug}/index.htmlとしてGitHubにアップロードして一意のURLを返す
+
+    version を渡すと URL に ?v= を付ける。修正のたびにURLが変わるので、
+    スマホのブラウザに残った古いページ（最大10分）が表示されない。
+    """
     # 投稿日時からスラッグ生成（例: 2026/04/08 21:00 → 2026-04-08-2100）
     if post_datetime:
         slug = _slug_from_datetime(post_datetime)
@@ -344,6 +397,8 @@ def upload_html_to_github(html_content: str, post_datetime: str = "") -> str:
         raise Exception(f"HTMLアップロード失敗: {res.json()}")
 
     preview_url = f"{GITHUB_PAGES_URL}/{slug}/"
+    if version:
+        preview_url += f"?v={version}"
     print(f"  プレビューページをアップロード完了")
     return preview_url
 
@@ -453,8 +508,13 @@ def register(
 
     # プレビューHTMLを生成してアップロード
     print("  プレビューページを生成中...")
-    html = generate_preview_html(filenames, caption, hashtags, post_datetime, subfolder=slug)
-    preview_url = upload_html_to_github(html, post_datetime)
+    version = datetime.now().strftime("%Y%m%d%H%M%S")
+    html = generate_preview_html(filenames, caption, hashtags, post_datetime, subfolder=slug,
+                                 ref=_get_main_head_sha(), version=version)
+    preview_url = upload_html_to_github(html, post_datetime, version=version)
+    print("  GitHub Pages の反映を待っています（通常1〜2分）...")
+    if not _wait_for_pages_update(preview_url.split("?")[0], version):
+        print("  ⚠ 4分待っても新しいプレビューが配信されていません。少し時間をおいてから開いてください")
 
     # スプレッドシートに登録（同じ日時の行があれば上書き、なければ追加）
     # 列: A=投稿日時 B=メニュー C=ファイル D=キャプション E=ハッシュタグ F=メモ G=ステータス H=プレビューURL
