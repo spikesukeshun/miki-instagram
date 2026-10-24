@@ -446,6 +446,54 @@ def _clear_extra_columns(sheet, row_num: int):
         print(f"  I列以降のクリアをスキップ: {e}")
 
 
+# 行の高さの既定値。手本にする行の高さが取れなかったときだけ使う
+DEFAULT_ROW_HEIGHT = 21
+
+
+def _match_neighbor_row_format(sheet, row_num: int):
+    """書き込んだ行の書式と高さを、隣の行（基本は1つ上）に揃える。
+
+    キャプションのような長い文章を書き込むと、Google スプレッドシートが行の高さを
+    自動で広げることがあり、最新の行だけ太くなっていた（2026-10-24 指摘・実測で
+    他の行21px／新しい行26px）。書き込みのたびに隣の行の書式（折り返し・揃え）と
+    高さをコピーして固定する。失敗しても書き込み自体は止めない。
+    """
+    try:
+        ref = row_num - 1 if row_num > 2 else row_num + 1  # 1行目は見出しなので手本にしない
+        res = sheet.client.request(
+            "get",
+            f"https://sheets.googleapis.com/v4/spreadsheets/{sheet.spreadsheet_id}",
+            params={
+                "ranges": f"'{sheet.title}'!A{ref}:A{ref}",
+                "includeGridData": "true",
+                "fields": "sheets(data(rowMetadata(pixelSize)))",
+            },
+        ).json()
+        try:
+            height = res["sheets"][0]["data"][0]["rowMetadata"][0]["pixelSize"]
+        except (KeyError, IndexError):
+            height = DEFAULT_ROW_HEIGHT
+
+        sheet_id = sheet.id
+        sheet.client.batch_update(sheet.spreadsheet_id, {"requests": [
+            {"copyPaste": {
+                "source": {"sheetId": sheet_id, "startRowIndex": ref - 1, "endRowIndex": ref,
+                           "startColumnIndex": 0, "endColumnIndex": SHEET_NUM_COLS},
+                "destination": {"sheetId": sheet_id, "startRowIndex": row_num - 1, "endRowIndex": row_num,
+                                "startColumnIndex": 0, "endColumnIndex": SHEET_NUM_COLS},
+                "pasteType": "PASTE_FORMAT",
+            }},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": sheet_id, "dimension": "ROWS",
+                          "startIndex": row_num - 1, "endIndex": row_num},
+                "properties": {"pixelSize": height},
+                "fields": "pixelSize",
+            }},
+        ]})
+    except Exception as e:
+        print(f"  行の高さ・書式の調整をスキップ: {e}")
+
+
 def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
     """指定した投稿日時の行を部分的にバッチ更新する。
     update_cell() の連続呼び出しはAPIレート制限で失敗するため、
@@ -472,6 +520,7 @@ def update_spreadsheet_row(post_datetime: str, **fields) -> bool:
                     row_data[col_idx - 1] = val
             sheet.update(f"A{i}:{SHEET_LAST_COL}{i}", [row_data[:SHEET_NUM_COLS]])
             _clear_extra_columns(sheet, i)
+            _match_neighbor_row_format(sheet, i)
             print(f"スプレッドシート更新完了（行{i}）: {', '.join(f'{k}={repr(v)[:30]}' for k, v in fields.items())}")
             return True
     print(f"警告: {post_datetime} の行が見つかりません")
@@ -534,6 +583,7 @@ def register(
     if target_row_num:
         sheet.update(f"A{target_row_num}:{SHEET_LAST_COL}{target_row_num}", [row])
         _clear_extra_columns(sheet, target_row_num)
+        _match_neighbor_row_format(sheet, target_row_num)
         print(f"\nスプレッドシートを上書き更新しました（行{target_row_num}）！")
     else:
         # append_row をそのまま使うと、Sheets API がデータ範囲の右端を誤検出して
@@ -549,6 +599,7 @@ def register(
         new_row_num = last_used + 1
         sheet.update(f"A{new_row_num}:{SHEET_LAST_COL}{new_row_num}", [row])
         _clear_extra_columns(sheet, new_row_num)
+        _match_neighbor_row_format(sheet, new_row_num)
         print(f"\nスプレッドシートに新規登録しました（行{new_row_num}）！")
 
     print(f"\nスプレッドシートに登録完了！")
