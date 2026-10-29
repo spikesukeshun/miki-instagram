@@ -103,6 +103,19 @@ MIKI指名 Instagram限定20%OFF\n（VIPコースのみ）
 **「MIKI指名」と「Instagram限定」の間のスペースは半角1つ。** `review_post.py:200` は完全一致で
 判定するため、スペースが2つあるだけで ❌ になる（実績に1件その取りこぼしがある）。
 
+### 20%OFF の対象外の注記（恒久・2026-10-30）
+
+**ギフトチケットとペアコースには MIKI指名の20%OFF を使えない。** 文言の正は
+`review_post.py` の `CTA_DISCOUNT_EXCLUSION`（`※ギフトチケット・ペアコースは対象外です`）。
+
+| 置き場所 | 書き方 |
+|---|---|
+| CTAスライド | **書かない。** `generate_carousel.py` がタイトルの直下に自動で描く（案A・案Bの両方） |
+| キャプション | CTA 行 `MIKI指名 Instagram限定20%OFF（VIPコースのみ）` の**次の行**に書く。離れた段落だと ❌ |
+| CTA以外のスライド | 料金・コース紹介などで 20%OFF に触れたら、**同じスライド**の `notes` / `footer` / `text` に書く。無いと ❌ |
+
+注記が消えていないかは `check_repo_sync.py` の `check_discount_exclusion_rule()` が検出する。
+
 ### CTAスライドの subtitle（恒久・変更禁止・2026-09-06）
 
 ```

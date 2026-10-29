@@ -511,6 +511,71 @@ def check_text_shadow_only_in_tile() -> tuple[bool, str]:
     return True, "文字のシャドウは mosaic の tile だけ ✓"
 
 
+def _function_node(src: str, name: str):
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return None
+    return next((n for n in ast.walk(tree)
+                 if isinstance(n, ast.FunctionDef) and n.name == name), None)
+
+
+def _compares_with_constant(src: str, func_name: str, const: str) -> bool:
+    """関数 func_name の中で、定数 const（またはそれから作った変数）を比較に使っているか。
+
+    名前が関数内に書かれているだけでは足りない（無意味な代入を残して照合を消しても通る）。
+    """
+    fn = _function_node(src, func_name)
+    if fn is None:
+        return False
+    names = {const}
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Assign) and any(
+                isinstance(n, ast.Name) and n.id == const for n in ast.walk(node.value)):
+            names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+    return any(isinstance(node, ast.Compare)
+               and any(isinstance(n, ast.Name) and n.id in names for n in ast.walk(node))
+               for node in ast.walk(fn))
+
+
+def _passes_constant_to_call(src: str, func_name: str, callee: str, const: str) -> bool:
+    """関数 func_name の中に、callee(...) へ定数 const を引数で渡す呼び出しがあるか。"""
+    fn = _function_node(src, func_name)
+    if fn is None:
+        return False
+    return any(isinstance(node, ast.Call) and ast.unparse(node.func) == callee
+               and any(isinstance(a, ast.Name) and a.id == const for a in node.args)
+               for node in ast.walk(fn))
+
+
+def check_discount_exclusion_rule() -> tuple[bool, str]:
+    """20%OFF の対象外（ギフトチケット・ペアコース）が投稿に必ず載ること（恒久・2026-10-30）。
+
+    CTAスライドは描画側（案A・案Bの両方）がタイトル直下に自動で描き、
+    キャプションは校閲が CTA 行の直後にあるかを見る。どちらかが巻き戻ると、
+    ギフトチケットやペアコースでも割引になると読める投稿が黙って出る。
+    """
+    src = _read("review_post.py")
+    value = _literal_constant(src, "CTA_DISCOUNT_EXCLUSION")
+    if value is None:
+        return False, "review_post.py に CTA_DISCOUNT_EXCLUSION（20%OFFの対象外の注記）がありません"
+    if "ギフトチケット" not in value or "ペアコース" not in value:
+        return False, f"CTA_DISCOUNT_EXCLUSION にギフトチケット／ペアコースがありません（現在: {value!r}）"
+    if not _compares_with_constant(src, "check_caption_has_cta", "CTA_DISCOUNT_EXCLUSION"):
+        return False, "check_caption_has_cta() がキャプションの対象外の注記を照合していません"
+    if not _compares_with_constant(src, "check_discount_exclusion_on_slides", "CTA_DISCOUNT_EXCLUSION"):
+        return False, "check_discount_exclusion_on_slides() がスライドの対象外の注記を照合していません"
+    if "check_discount_exclusion_on_slides(" not in _strip_comments(_function_source(src, "run_review")):
+        return False, "料金・コース紹介スライドの対象外チェックが校閲の流れから外れています"
+
+    gsrc = _read("generate_carousel.py")
+    missing = [fn for fn in ("generate_cta_slide", "generate_cta_photo_slide")
+               if not _passes_constant_to_call(gsrc, fn, "draw_centered", "CTA_DISCOUNT_EXCLUSION")]
+    if missing:
+        return False, f"CTAスライドに対象外の注記を描いていません: {', '.join(missing)}"
+    return True, "20%OFFの対象外（ギフトチケット・ペアコース）をCTAとキャプションに必ず表示 ✓"
+
+
 RULE_CHECKS = [
     check_list_left_align,
     check_sheet_columns,
@@ -518,6 +583,7 @@ RULE_CHECKS = [
     check_bg_prompt_no_default,
     check_generate_guard,
     check_cta_subtitle_rule,
+    check_discount_exclusion_rule,
     check_post_style_cta_last,
     check_slide_type_allowlist,
     check_no_silent_local_fallback,
