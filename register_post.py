@@ -668,7 +668,8 @@ if __name__ == "__main__":
 
 ---
 
-✨ MIKI指名　Instagram限定20%OFF（VIPコースのみ）✨
+MIKI指名 Instagram限定20%OFF（VIPコースのみ）
+※ギフトチケット・ペアコースは対象外です
 
 ご予約・ご相談はプロフィールのDMから
 お気軽にどうぞ💌""",

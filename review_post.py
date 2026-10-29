@@ -26,6 +26,13 @@ EMOJI_PATTERN = re.compile(
 CTA_REQUIRED_TITLE = "MIKI指名 Instagram限定20%OFF（VIPコースのみ）"
 CTA_REQUIRED_TITLE_ALT = "MIKI指名 Instagram限定20%OFF\n（VIPコースのみ）"
 
+# 20%OFF の対象外（恒久ルール・2026-10-30）。ギフトチケットとペアコースには
+# MIKI指名の20%OFF を適用できない（ギフトチケットの問い合わせが初めて DM に来た日に
+# ユーザーから指示）。CTAスライドには generate_carousel.py がタイトルの直下へ
+# 自動で描くので content.json には書かない。キャプションは CTA 行の次の行に置く。
+CTA_DISCOUNT_EXCLUSION = "※ギフトチケット・ペアコースは対象外です"
+CAPTION_CTA_LINE = "MIKI指名 Instagram限定20%OFF（VIPコースのみ）"
+
 # CTAスライドの subtitle も固定文言（恒久ルール・2026-09-06）。
 # コースの流れと料金が LP にまとまっていることを、毎回同じ言葉で伝える。
 # 💌 は generate_carousel.py が描画時に最終行へ足すので、ここには書かない。
@@ -85,9 +92,63 @@ def check_caption_forbidden_chars(caption: str) -> tuple[bool, str]:
 
 
 def check_caption_has_cta(caption: str) -> tuple[bool, str]:
-    if "MIKI指名 Instagram限定20%OFF（VIPコースのみ）" not in caption:
-        return False, "キャプション末尾にCTA「MIKI指名 Instagram限定20%OFF（VIPコースのみ）」がありません"
-    return True, "キャプションCTA ✓"
+    if CAPTION_CTA_LINE not in caption:
+        return False, f"キャプション末尾にCTA「{CAPTION_CTA_LINE}」がありません"
+    # 注記が離れた段落にあると、どの割引の話か分からなくなるので CTA 行の直後に限る。
+    # 文字列の部分一致だと、注記の行に別の文が続いていても通ってしまうので行単位で見る
+    lines = [line.strip() for line in caption.splitlines()]
+    if not any(CAPTION_CTA_LINE in line and nxt == CTA_DISCOUNT_EXCLUSION
+               for line, nxt in zip(lines, lines[1:])):
+        return False, (f"キャプションのCTA行の次の行に、20%OFFの対象外の注記がありません\n"
+                       f"  CTA行の直後に「{CTA_DISCOUNT_EXCLUSION}」を入れてください")
+    return True, "キャプションCTA（対象外の注記つき）✓"
+
+
+# 20%OFF への言及を探す時の書き方の揺れ（NFKC で ％・全角数字・全角英字は半角になる。
+# 「20% OFF」のように間に空白が入る書き方も拾う）
+DISCOUNT_MENTION_RE = re.compile(r"20\s*%\s*(OFF|オフ)", re.IGNORECASE)
+# 文字として描かれないフィールド。ここの値に 20%OFF が入っていても読者には見えない
+NON_DISPLAY_SLIDE_KEYS = {"filename", "bg_strategy", "bg_prompt", "bg_generate_reason",
+                          "reuse_source", "reuse_theme", "reuse_filename", "local_path",
+                          "focus_y_reason", "seed", "bubble"}
+
+
+def _displayed_strings(value) -> list[str]:
+    """スライドの値から文字列を再帰的に集める（price の columns / highlight も含む）。"""
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return [s for k, v in value.items() if k not in NON_DISPLAY_SLIDE_KEYS
+                for s in _displayed_strings(v)]
+    if isinstance(value, list):
+        return [s for v in value for s in _displayed_strings(v)]
+    return []
+
+
+def check_discount_exclusion_on_slides(slides: list) -> list[tuple[bool, str]]:
+    """CTA以外のスライドで 20%OFF に触れたら、同じスライドに対象外の注記を書かせる。
+
+    料金スライドやコース紹介で割引後の価格を見せると、ギフトチケット・ペアコースでも
+    その価格になると読めてしまう。CTAスライドは描画側で自動で添えるので対象外。
+    """
+    results = []
+    exclusion = unicodedata.normalize("NFKC", CTA_DISCOUNT_EXCLUSION)
+    for i, slide in enumerate(slides, 1):
+        # cta は描画側が注記を添える。raw は末尾固定2枚の画像をそのまま貼る型で、
+        # フィールドの文字を一切描かない（generate_raw）ので、見えない値で止めない
+        if slide.get("type") in ("cta", "raw"):
+            continue
+        shown = unicodedata.normalize("NFKC", "\n".join(_displayed_strings(slide)))
+        if not DISCOUNT_MENTION_RE.search(shown):
+            continue
+        if exclusion in shown:
+            results.append((True, f"スライド{i}: 20%OFFの対象外の注記あり ✓"))
+        else:
+            results.append(
+                (False, f"スライド{i}: 20%OFF に触れているのに、対象外の注記がありません\n"
+                        f"  同じスライドの notes / footer / text に「{CTA_DISCOUNT_EXCLUSION}」を入れてください")
+            )
+    return results
 
 
 # 年代括りの定型導入（例: 「30代・40代の女性へ」）
@@ -649,6 +710,9 @@ def run_review(content_path: str, revision_instruction: str = ""):
 
     # スライドチェック
     all_results.extend(check_slides(slides, post_style))
+
+    # 料金・コース紹介で 20%OFF に触れたら対象外（ギフトチケット・ペアコース）も書く
+    all_results.extend(check_discount_exclusion_on_slides(slides))
 
     # 背景画像の指定チェック（Drive優先・AI生成の暗黙採用を防ぐ）
     all_results.extend(check_backgrounds(slides))

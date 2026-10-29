@@ -20,7 +20,7 @@ import unicodedata
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 
-from review_post import MOSAIC_TILE_COUNT
+from review_post import MOSAIC_TILE_COUNT, CTA_DISCOUNT_EXCLUSION
 
 
 def normalize_text(text: str) -> str:
@@ -42,6 +42,8 @@ W, H = 1080, 1350  # 4:5 縦長サイズ
 CREAM = (250, 246, 241, 255)
 INK = (43, 37, 34, 255)
 GOLD = (184, 148, 90, 255)
+# CTAタイトル直下の対象外の注記。タイトルより一段引いた色にする
+INK_SOFT = (112, 102, 96, 255)
 
 # list スライドを list_marker="bullet" にしたときの点の半径
 BULLET_R = 7
@@ -713,17 +715,19 @@ def generate_cta_slide(img, slide):
     title_font = get_serif(50)
     body_font = get_sans(34)
     sub_font = get_sans(28)
+    note_font = get_sans(26)
 
     title = normalize_text(slide.get("title", ""))
     body = normalize_text(slide.get("body", ""))
     subtitle = normalize_text(slide.get("subtitle", ""))
 
     title_h = measure_lines(title_font, title, line_gap=12)
+    note_h = measure_lines(note_font, CTA_DISCOUNT_EXCLUSION)
     body_lines = body.split("\n")
     body_h = len(body_lines) * 56
     sub_lines = subtitle.split("\n")
     sub_h = len(sub_lines) * 44
-    block_h = title_h + 28 + 1 + 60 + body_h + 50 + 1 + 40 + sub_h
+    block_h = title_h + note_h + 28 + 1 + 60 + body_h + 50 + 1 + 40 + sub_h
 
     # content_h を渡して photo zone を必要なら自動縮小（本文オーバーフロー防止）
     img, band_y, band_h = _slide_frame(img, slide, content_h=block_h)
@@ -734,7 +738,10 @@ def generate_cta_slide(img, slide):
 
     end_title_y = draw_multiline_centered(draw, title, title_font, start_y,
                                           W, INK, line_gap=12)
-    rule_y = end_title_y + 18
+    # 20%OFF の対象外はタイトルの直下に必ず添える（恒久・2026-10-30）。
+    # content.json に書かせると、書き忘れた回だけ注記が消える
+    draw_centered(draw, CTA_DISCOUNT_EXCLUSION, note_font, end_title_y, W, INK_SOFT)
+    rule_y = end_title_y + note_h + 18
     _hairline(draw, rule_y)
 
     y = rule_y + 50
@@ -978,6 +985,7 @@ def _cta_photo_layout(slide: dict, w: int = W, h: int = H) -> dict:
     title_font = get_serif(56)
     body_font = get_sans(36)
     sub_font = get_sans(30)
+    note_font = get_sans(28)
 
     title = normalize_text(slide.get("title", ""))
     body = normalize_text(slide.get("body", ""))
@@ -987,6 +995,7 @@ def _cta_photo_layout(slide: dict, w: int = W, h: int = H) -> dict:
 
     # subtitle の最終行には 💌 が付くので、その分も幅に入れる
     widest = max(_block_width(title_font, title.split("\n")),
+                 _block_width(note_font, [CTA_DISCOUNT_EXCLUSION]),
                  _block_width(body_font, body_lines),
                  _block_width(sub_font, sub_lines) + sub_font.size + 12)
     limit = w - PHOTO_TEXT_SIDE_MARGIN * 2
@@ -996,9 +1005,10 @@ def _cta_photo_layout(slide: dict, w: int = W, h: int = H) -> dict:
             f"  タイトルは改行版（CTA_REQUIRED_TITLE_ALT）を使い、本文は短く改行してください。"
         )
 
-    # 描画と同じ積み方で高さを出す（タイトル → 罫 → 本文 → 短い罫 → subtitle）
+    # 描画と同じ積み方で高さを出す（タイトル → 対象外の注記 → 罫 → 本文 → 短い罫 → subtitle）
     title_h = measure_lines(title_font, title, line_gap=14)
-    block_h = (title_h + 14 + 18 + 50 + 60 * len(body_lines)
+    note_h = measure_lines(note_font, CTA_DISCOUNT_EXCLUSION)
+    block_h = (title_h + 14 + note_h + 18 + 50 + 60 * len(body_lines)
                + 20 + 30 + 48 * (len(sub_lines) - 1) + sub_font.size)
     bottom_margin = 96
     block_top = h - bottom_margin - block_h
@@ -1008,6 +1018,7 @@ def _cta_photo_layout(slide: dict, w: int = W, h: int = H) -> dict:
         )
     return {
         "title_font": title_font, "body_font": body_font, "sub_font": sub_font,
+        "note_font": note_font, "note_h": note_h,
         "title": title, "body_lines": body_lines, "sub_lines": sub_lines,
         "widest": widest, "block_top": block_top, "block_h": block_h,
     }
@@ -1125,7 +1136,9 @@ def generate_cta_photo_slide(img: Image.Image, slide: dict) -> Image.Image:
 
     end_title_y = draw_multiline_centered(draw, lay["title"], lay["title_font"],
                                           block_top, w, white, line_gap=14)
-    rule_y = end_title_y + 18
+    # 20%OFF の対象外は案Aと同じくタイトルの直下に必ず添える
+    draw_centered(draw, CTA_DISCOUNT_EXCLUSION, lay["note_font"], end_title_y, w, white)
+    rule_y = end_title_y + lay["note_h"] + 18
     _hairline(draw, rule_y)
 
     y = rule_y + 50
