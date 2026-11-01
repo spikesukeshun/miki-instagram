@@ -276,25 +276,35 @@ try{{
 
 gtag('config','{mid}', internal ? {{traffic_type:'internal'}} : {{}});
 
-// 予約導線のクリック計測。選択中のコースも一緒に送る。
+// 予約導線のクリック計測。押したボタンのコースも一緒に送る。
+// ⚠ このリスナーはキャプチャ段階で動くので、カード自身のクリック処理（カードを選ぶ）より先に走る。
+//    「選択中のカード」だけを見ると、カードの中のボタンを押した回が「未選択」や、直前に
+//    選んでいた別のコースで記録される（2026-11-01、直近の記録が全件「未選択」で発覚）。
+//    → ①ボタンを含むカード ②選択中のカード ③リンクの couponId を data-hp に持つカード の順で決める。
 document.addEventListener('click',function(e){{
   var a=e.target.closest&&e.target.closest('a[href]');
   if(!a) return;
   var href=a.getAttribute('href')||'';
-  var sel=document.querySelector('[data-hp][aria-pressed="true"]');
+  var coupon=href.match(/couponId=(CP\\d+)/);
+  var card=a.closest('[data-hp]')||document.querySelector('[data-hp][aria-pressed="true"]');
+  if(!card&&coupon){{
+    var cards=document.querySelectorAll('[data-hp]');
+    for(var i=0;i<cards.length;i++){{
+      if((cards[i].getAttribute('data-hp')||'').indexOf(coupon[1])>-1){{ card=cards[i]; break; }}
+    }}
+  }}
   // ⚠ カードの textContent を切って使わないこと。「おすすめ VIPコース 150 min
   //    平日 23,800円 から 20%OFF」のような値になり、**料金改定やバッジ変更のたびに
   //    GA4上で別のコースに分裂して過去と比較できなくなる**。
   //    data-menu は LP 自身がドック表示に使っている正式名で、価格とは独立している。
-  var course=sel?(sel.getAttribute('data-menu')
-                  ||(sel.textContent||'').replace(/\\s+/g,' ').trim().slice(0,40)):'未選択';
+  var course=card?(card.getAttribute('data-menu')
+                   ||(card.textContent||'').replace(/\\s+/g,' ').trim().slice(0,40)):'未選択';
   var lead=null;
   if(href.indexOf('ig.me')>-1||href.indexOf('instagram.com/m/')>-1){{
     gtag('event','cta_dm',{{course:course,link_url:href}});
     lead='instagram_dm';
   }} else if(href.indexOf('beauty.hotpepper.jp')>-1){{
-    var m=href.match(/couponId=(CP\\d+)/);
-    gtag('event','cta_hotpepper',{{course:course,coupon:m?m[1]:'なし',link_url:href}});
+    gtag('event','cta_hotpepper',{{course:course,coupon:coupon?coupon[1]:'なし',link_url:href}});
     lead='hotpepper';
   }}
   // GA4の推奨イベント。これを送らないと、ビジネス目標「見込み顧客の発掘」に
