@@ -70,8 +70,16 @@ export function Upcoming({
                   {p.menu && <Badge>{p.menu}</Badge>}
                 </div>
                 <p className="text-[13px] font-medium leading-snug text-ink">{p.cover_title || "（表紙の記録なし）"}</p>
-                <TrialLine trial={p.trial} labels={labels} detail />
-                <EditsLine edits={p.edits} />
+                {p.needs_review ? (
+                  <p className="text-[11px] text-warn">
+                    ⚠ 校閲（review_post.py）を通った記録がありません。次の週次更新で校閲し直します
+                  </p>
+                ) : (
+                  <>
+                    <TrialLine trial={p.trial} labels={labels} detail />
+                    <EditsLine edits={p.edits} />
+                  </>
+                )}
                 {p.preview_url && (
                   <a
                     href={p.preview_url}

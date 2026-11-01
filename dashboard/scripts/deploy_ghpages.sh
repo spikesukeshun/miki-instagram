@@ -79,5 +79,10 @@ if git -C "$TMP" diff --cached --quiet; then
 fi
 
 git -C "$TMP" commit -q -m "deploy: ダッシュボード更新 $(date +%Y-%m-%d)${REVIEW_ON:+（振り返り $REVIEW_ON）}"
-git -C "$TMP" push origin HEAD:main >/dev/null 2>&1
+# 失敗したときはエラー全文を出す（週次タスクの報告に要る。成功時の出力は捨てる）
+if ! PUSH_OUT="$(git -C "$TMP" push origin HEAD:main 2>&1)"; then
+  echo "❌ push に失敗しました:" >&2
+  echo "$PUSH_OUT" >&2
+  exit 1
+fi
 echo "✅ デプロイ完了。数分後に反映されます: https://spikesukeshun.github.io/miki-instagram/"

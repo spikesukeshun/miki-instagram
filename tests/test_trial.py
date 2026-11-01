@@ -58,6 +58,12 @@ class TrialTest(unittest.TestCase):
             self.assertNotIn(lever, TRIAL_LEVERS)
             self.assertTrue(errors(with_trial(lever=lever)), lever)
 
+    def test_fixed_items_in_what_fail(self):
+        # lever が表紙でも、中身が投稿時刻・CTA なら止める
+        for what in ("18時に投稿する", "金曜に出す", "CTAの前に一言足す", "LPへの誘導を足す"):
+            self.assertTrue(errors(with_trial(what=what)), what)
+        self.assertEqual(errors(with_trial(what="夜のスキンケアの話題にする")), [])
+
     def test_bad_tag_and_metric_fail(self):
         self.assertTrue(errors(with_trial(tag="Cover Question")))
         self.assertTrue(errors(with_trial(metric="lp")))

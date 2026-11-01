@@ -76,6 +76,8 @@ def snapshot():
         row("2026-10-30-2200", cap_fri),
         row("2026-11-02-2200", cap_new),
         row("2026-11-09-2200", "来週の投稿の書き出し", status="確認待ち"),
+        row("2026-11-12-2100", "校閲前に止まった回", status="確認待ち"),       # 前回版が無い
+        row("2026-11-13-2200", "手動投稿のリール", status="手動投稿待ち"),     # リールは校閲しない
     ]
     records = {
         "2026-10-26-2200": {"cover_title": "4つ", "trial": trial(), "caption_sig": ri.caption_sig(cap_mon),
@@ -141,7 +143,9 @@ class DeriveTest(unittest.TestCase):
         stats = {t["tag"]: t for t in self.d["trial_stats"]}
         self.assertEqual((stats["cover-number"]["count"], stats["cover-number"]["judged"]), (2, 2))
         self.assertNotIn("cover-question", stats)  # まだ投稿されていない
-        self.assertEqual([u["slug"] for u in self.d["upcoming"]], ["2026-11-09-2200"])
+        self.assertEqual([u["slug"] for u in self.d["upcoming"]],
+                         ["2026-11-09-2200", "2026-11-12-2100", "2026-11-13-2200"])
+        self.assertEqual([u["slug"] for u in ri.unreviewed_upcoming(self.d["upcoming"])], ["2026-11-12-2100"])
         self.assertEqual(self.d["upcoming"][0]["edits"]["count"], 1)
         self.assertEqual(self.d["edits"]["edited"], 2)
 
@@ -170,6 +174,29 @@ class CheckReviewTest(unittest.TestCase):
         d = copy.deepcopy(self.DRAFT)
         d["next"][0]["what"] = "投稿時間を18時にする"
         self.assertTrue(self.errors(d))
+
+    def test_summary_needs_numbers(self):
+        d = copy.deepcopy(self.DRAFT)
+        d["summary"] = "先週はよかった。"
+        self.assertTrue(any("summary に数字" in m for m in self.errors(d)))
+
+    def test_request_text_must_not_be_copied_to_public_fields(self):
+        req = ["表紙の写真をもっと明るいものに変えてください。暗いと開かれない気がします"]
+        d = copy.deepcopy(self.DRAFT)
+        d["summary"] = "保存は4件。表紙の写真をもっと明るいものに変えてほしいと依頼があった。"
+        msgs = [m for ok, m in ri.check_review(d, [], {"cover-number"}, req) if not ok]
+        self.assertTrue(any("修正依頼の文" in m for m in msgs), msgs)
+        # 言い換えた標準は通る
+        d = copy.deepcopy(self.DRAFT)
+        d["standards"].append({"tag": "edit-bright-cover", "what": "表紙の写真は明るいものを選ぶ",
+                               "since": "2026-11-14", "source": "edits", "explicit": True,
+                               "based_on": ["2026-11-09-2200"]})
+        self.assertEqual([m for ok, m in ri.check_review(d, [], {"cover-number"}, req) if not ok], [])
+
+    def test_fixed_items_are_caught_even_when_reworded(self):
+        d = copy.deepcopy(self.DRAFT)
+        d["next"][0]["what"] = "18時に投稿する"   # lever は表紙のまま
+        self.assertTrue(any("変えられない" in m for m in self.errors(d)))
 
     def test_why_and_evidence_need_numbers(self):
         d = copy.deepcopy(self.DRAFT)

@@ -23,6 +23,7 @@ review_inputs.py
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
 import json
 import os
@@ -44,7 +45,8 @@ JST = timezone(timedelta(hours=9))
 
 sys.path.insert(0, str(WORKTREE_ROOT))
 # 変えてよい項目と狙う数字の正は review_post.py（同じ一覧を2か所に持たない）
-from review_post import TRIAL_LEVERS, TRIAL_METRICS, TRIAL_NONE, TRIAL_TAG_RE  # noqa: E402
+from review_post import (TRIAL_LEVERS, TRIAL_METRICS, TRIAL_NONE, TRIAL_TAG_RE,  # noqa: E402
+                         fixed_items_in)
 
 # 判定は投稿からこの日数がたってから。土曜朝の週次更新で、前の週の月・木・金の3本がそろって判定できる
 MATURE_DAYS = 7
@@ -74,12 +76,16 @@ EDITS_MIN_POSTS = 2
 FEED_TYPES = ("CAROUSEL_ALBUM", "IMAGE")
 # シートで「まだ投稿されていない」予定とみなすステータス
 UPCOMING_STATUSES = ("確認待ち", "承認済み", "未投稿", "手動投稿待ち")
+# このうち、校閲（review_post.py）を通っているはずのステータス。前回版が無ければ
+# 週次タスクが登録まで進んで校閲の途中で止まった名残（手動投稿のリールは対象外）
+REVIEW_NEEDED_STATUSES = ("確認待ち", "承認済み", "未投稿")
 POSTED_STATUS = "投稿済み"
 # trial.metric → 投稿の数字のキー
 METRIC_FIELDS = {"reach": "reach", "saved": "saved_rate",
                  "profile_visits": "pv_rate", "follows": "follows"}
-# 「次に試すこと」の what に出てきたら、投稿を作るときに変えられない項目とみなす言葉
-FIXED_WORDS = ("投稿時間", "投稿時刻", "曜日", "CTA", "プロフィール文", "リール", "LPを", "枚数の上限")
+# 振り返りの公開される欄に、修正依頼の文がこの文字数以上そのまま入っていたら止める
+# （依頼の文は digest にだけ出し、公開ページには載せない）
+LEAK_MIN_CHARS = 12
 CAPTION_KEY_CHARS = 40
 
 SCHEMA_HELP = """\
@@ -115,7 +121,7 @@ def caption_key(text) -> str:
     """キャプションの冒頭（空白・改行を除いた先頭40字）の指紋。シートと Instagram の投稿を結ぶ鍵。
 
     CLAUDE.md の「1〜2行目は毎回固有の一文」のルールで、投稿ごとに違う値になる。
-    まだ投稿していない回の文が公開ページに載らないよう、文そのものではなく指紋で持つ。
+    キャプションの本文を公開ページに載せないよう、文そのものではなく指紋で持つ。
     """
     head = _norm(text)[:CAPTION_KEY_CHARS]
     return hashlib.sha1(head.encode("utf-8")).hexdigest()[:12] if head else ""
@@ -592,6 +598,11 @@ def _edit_stats(rows: list, records: dict, now: datetime) -> dict:
     }
 
 
+def unreviewed_upcoming(upcoming: list) -> list:
+    """校閲を通った前回版が無い予定の枠（登録まで進んで、校閲の途中で止まった名残）。"""
+    return [u for u in upcoming if u.get("needs_review")]
+
+
 def _upcoming(rows: list, records: dict, now: datetime) -> list:
     """シートの予定行（まだ投稿されていない枠）を、修正後の最新の内容で。"""
     out = []
@@ -601,6 +612,7 @@ def _upcoming(rows: list, records: dict, now: datetime) -> list:
         dt = _parse_ts(r["post_datetime"])
         if dt < now - timedelta(days=3) or dt > now + timedelta(days=21):
             continue
+        rec = records.get(r["slug"])
         out.append({
             "slug": r["slug"],
             "post_datetime": r["post_datetime"],
@@ -608,7 +620,9 @@ def _upcoming(rows: list, records: dict, now: datetime) -> list:
             "status": r["status"],
             "menu": r.get("menu"),
             "preview_url": r.get("preview_url"),
-            **_record_view(records.get(r["slug"]), r.get("caption_sig") or ""),
+            # 校閲を通っているはずなのに前回版が無い（画面と digest が警告を出す）
+            "needs_review": rec is None and r["status"] in REVIEW_NEEDED_STATUSES,
+            **_record_view(rec, r.get("caption_sig") or ""),
         })
     out.sort(key=lambda x: x["post_datetime"])
     return out
@@ -891,6 +905,11 @@ def digest(data: dict) -> str:
                    f"（試すこと: {trial.get('tag') or trial.get('lever') or '記録なし'}）")
     if not d.get("upcoming"):
         out.append("  （なし）")
+    pending_review = unreviewed_upcoming(d.get("upcoming") or [])
+    if pending_review:
+        out.append("  ⚠ 校閲を通っていない予定の枠: " + "・".join(u["slug"] for u in pending_review))
+        out.append("    → 手順4で空き枠を作る前に、その枠の content を review_post.py --origin weekly で"
+                   "校閲し直す（❌ なら直して create_post.py から）")
     if d.get("sheet_error"):
         out.append(f"  ⚠ {d['sheet_error']}")
     out.append("")
@@ -926,8 +945,37 @@ def _has_digit(text) -> bool:
     return bool(re.search(r"[0-9０-９]", str(text or "")))
 
 
-def check_review(draft: dict, past: list, trial_tags: set) -> list:
-    """下書きを検査して (ok, msg) の並びを返す。past はコミット済みの振り返り（下書きの日付を除く）。"""
+def _leaked_request(text, requests) -> str | None:
+    """text に修正依頼の文が LEAK_MIN_CHARS 字以上そのまま入っていれば、その部分を返す。"""
+    t = _norm(text)
+    for req in requests:
+        r = _norm(req)
+        if len(r) < 6 or not t:
+            continue
+        need = min(LEAK_MIN_CHARS, len(r))
+        m = difflib.SequenceMatcher(None, t, r, autojunk=False).find_longest_match(0, len(t), 0, len(r))
+        if m.size >= need:
+            return r[m.b:m.b + m.size]
+    return None
+
+
+def _public_texts(draft: dict) -> list:
+    """振り返りのうち公開ページに出る文（どこの欄か, 文）。"""
+    out = [("summary", draft.get("summary"))]
+    for key, fields in (("verdicts", ("evidence", "note")), ("next", ("what", "why")),
+                        ("standards", ("what",)), ("stopped", ("what",))):
+        for x in draft.get(key) or []:
+            if isinstance(x, dict):
+                out += [(f"{key}[{x.get('tag')}].{f}", x.get(f)) for f in fields if x.get(f)]
+    return out
+
+
+def check_review(draft: dict, past: list, trial_tags: set, requests=()) -> list:
+    """下書きを検査して (ok, msg) の並びを返す。
+
+    past はコミット済みの振り返り（下書きの日付より前）。requests は手元の修正の記録にある
+    修正依頼の文（公開される欄にそのまま写していないかを見る）。
+    """
     res = []
     if not isinstance(draft, dict):
         return [(False, "下書きが JSON オブジェクトではありません")]
@@ -938,6 +986,13 @@ def check_review(draft: dict, past: list, trial_tags: set) -> list:
         res.append((False, "summary が空です"))
     elif len(summary) > 300:
         res.append((False, f"summary が長すぎます（{len(summary)}字・300字まで）"))
+    elif not _has_digit(summary):
+        res.append((False, "summary に数字を入れてください（何がどれだけだったか）"))
+    for where, text in _public_texts(draft):
+        leaked = _leaked_request(text, requests)
+        if leaked:
+            res.append((False, f"{where} に修正依頼の文がそのまま入っています（「{leaked[:20]}…」）。"
+                               "公開ページに出るので、言い換えてください"))
 
     def tag_ok(tag) -> bool:
         return bool(TRIAL_TAG_RE.fullmatch(str(tag or "")))
@@ -1026,7 +1081,7 @@ def check_review(draft: dict, past: list, trial_tags: set) -> list:
         what = str(x.get("what") or "")
         if not what.strip():
             res.append((False, f"next[{t}].what が空です"))
-        fixed = [w for w in FIXED_WORDS if w in what]
+        fixed = fixed_items_in(what)
         if fixed:
             res.append((False, f"next[{t}] は変えられない項目に見えます（{'・'.join(fixed)}）。"
                                "投稿を作るときに変えられることだけを書いてください"))
@@ -1046,6 +1101,17 @@ def check_review(draft: dict, past: list, trial_tags: set) -> list:
         res.append((True, f"振り返りの下書き: 判定{len(verdicts)}件・標準{len(standards)}件・"
                           f"やめたこと{len(stopped)}件・次に試すこと{len(nxt)}件 ✓"))
     return res
+
+
+def _local_requests(data: dict) -> list:
+    """手元の修正の記録にある修正依頼の文（スナップショットには入れていないので記録から直接読む）。"""
+    from content_baseline import load_history
+    out = []
+    for slug in (data.get("records") or {}):
+        for e in (load_history(slug) or {}).get("events") or []:
+            if str(e.get("request") or "").strip():
+                out.append(e["request"])
+    return out
 
 
 def _trial_tags(data: dict) -> set:
@@ -1073,9 +1139,8 @@ def main(argv=None) -> int:
         print(f"❌ 下書きを読めません: {e}")
         return 1
     past = [r for r in load_reviews(include_draft=False)
-            if str(r.get("written_on")) != str(draft.get("written_on"))
-            and str(r.get("written_on")) < str(draft.get("written_on"))]
-    results = check_review(draft, past, _trial_tags(data))
+            if str(r.get("written_on")) < str(draft.get("written_on"))]
+    results = check_review(draft, past, _trial_tags(data), _local_requests(data))
     errors = [m for ok, m in results if not ok]
     for ok, m in results:
         print(("  ✓ " if ok else "  ✗ ") + m)

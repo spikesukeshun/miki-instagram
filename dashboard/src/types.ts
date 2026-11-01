@@ -126,6 +126,8 @@ export interface Upcoming {
   status: string;
   menu: string | null;
   preview_url: string | null;
+  /** 校閲を通っているはずなのに前回版が無い（週次タスクが途中で止まった名残） */
+  needs_review: boolean;
   trial: Trial | null;
   cover_title: string;
   edits: Edits | null;

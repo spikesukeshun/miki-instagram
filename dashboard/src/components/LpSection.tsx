@@ -141,8 +141,10 @@ export function LpSection({ lp }: { lp: LpDerived }) {
                       </li>
                     ))}
                   </ul>
-                  {lp.courses.some((c) => c.course === "未選択") && (
-                    <p className="mt-0.5 text-[10px] text-muted">「未選択」はコースを選ばないままボタンを押した分</p>
+                  {lp.courses.some((c) => c.course === "未選択" || c.course === "（不明）") && (
+                    <p className="mt-0.5 text-[10px] text-muted">
+                      「未選択」はコースを選ばないままボタンを押した分、「（不明）」はコースが記録されなかった分
+                    </p>
                   )}
                 </>
               ) : (

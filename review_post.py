@@ -561,6 +561,27 @@ TRIAL_METRICS = {
     "profile_visits": "プロフィールを見た率",
     "follows": "フォロー",
 }
+# 投稿を作るときに変えられない項目の言い方。trial.what と振り返りの「次に試すこと」に出てきたら止める。
+# lever の列挙だけだと「lever は表紙、中身は『18時に投稿する』」のような抜け道が残るため
+# （dashboard/review_inputs.py の check もここを使う。同じ一覧を2か所に持たない）
+_WHEN = r"(\d{1,2}\s*時(台|半)?|朝|昼|夕方|夜|深夜|[月火水木金土日]曜日?|平日|週末)"
+FIXED_ITEM_PATTERNS = (
+    (re.compile(_WHEN + r"(に|の|から|ごろ|頃)?(投稿|配信|公開|出す|出し)"), "投稿の時間・曜日"),
+    (re.compile(r"投稿(する)?(時間|時刻|曜日|頻度|本数|間隔|日時)|(曜日|時間帯|時刻)を(変え|ずら|移)"), "投稿の時間・曜日"),
+    (re.compile(r"CTA|予約(導線|リンク|ボタン)|20\s*[%％]\s*(OFF|オフ)", re.IGNORECASE), "CTAの文言"),
+    (re.compile(r"プロフィール(文|の文|欄)|自己紹介文"), "プロフィール文"),
+    (re.compile(r"リール"), "リール"),
+    (re.compile(r"(?<![A-Za-z])LP(?![A-Za-z])|ランディング", re.IGNORECASE), "LP"),
+    (re.compile(r"枚数の上限|上限(を|より)(超え|増や|多く)"), "枚数の上限"),
+)
+
+
+def fixed_items_in(text) -> list[str]:
+    """text に出てくる「投稿を作るときに変えられない項目」の名前（重複なし）。"""
+    text = unicodedata.normalize("NFKC", str(text or ""))
+    return list(dict.fromkeys(label for pat, label in FIXED_ITEM_PATTERNS if pat.search(text)))
+
+
 # 同じ施策を週をまたいで数えるための短い名前（例: cover-question）
 TRIAL_TAG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 TRIAL_TAG_MAX = 40
@@ -614,6 +635,10 @@ def check_trial(content: dict) -> list[tuple[bool, str]]:
     for key in ("what", "why", "where"):
         if not str(trial.get(key) or "").strip():
             errors.append(f"trial.{key} が空です")
+    fixed = fixed_items_in(trial.get("what"))
+    if fixed:
+        errors.append(f"trial.what は投稿を作るときに変えられない項目に見えます（{'・'.join(fixed)}）"
+                      "— 変えられることだけを試してください")
     metric = str(trial.get("metric") or "").strip()
     if metric not in TRIAL_METRICS:
         errors.append(f"trial.metric=\"{metric}\" は不正です（{' / '.join(TRIAL_METRICS)} のみ）")
