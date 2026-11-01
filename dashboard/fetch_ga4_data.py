@@ -63,6 +63,13 @@ GSC_ENDPOINT = "https://searchconsole.googleapis.com/webmasters/v3/sites/{site}/
 
 # 予約導線のイベント。build_site.py の gtag('event', ...) と一致させること
 CTA_EVENTS = ("cta_dm", "cta_hotpepper", "generate_lead")
+# 週ごとに数えるイベント。hotpepper_bounced は「ホットペッパーへ行って3秒〜3分で
+# LPに戻ってきた」合図（build_site.py が送信済み。満席などで予約まで進めなかった人）
+LP_EVENTS = CTA_EVENTS + ("hotpepper_bounced",)
+# コース別に数えるボタン。course はイベントのパラメータで、GA4 の管理画面で
+# カスタムディメンション（範囲: イベント）として登録するまで API で読めない
+COURSE_EVENTS = ("cta_dm", "cta_hotpepper")
+COURSE_DIMENSION = "customEvent:course"
 
 
 def _session(scopes: list[str]):
@@ -88,12 +95,17 @@ def _monday(d: datetime) -> datetime:
 
 
 def _week_starts() -> list[str]:
-    """LP公開週から今週まで、月曜始まりJSTの week_start を古い順に返す。"""
+    """LP公開週から今週までのうち直近 MAX_WEEKS 週を、月曜始まりJSTで古い順に返す。
+
+    ⚠ 公開週から数えて MAX_WEEKS 週で打ち切ると、それ以降の週がいつまでも取れない
+      （2026-11-30 の週で起きるところだった）。新しい側を残す。
+    """
     now = datetime.now(JST)
     launch = datetime.strptime(LP_LAUNCH_DATE, "%Y-%m-%d").replace(tzinfo=JST)
-    first, this = _monday(launch), _monday(now)
+    this = _monday(now)
+    first = max(_monday(launch), this - timedelta(weeks=MAX_WEEKS - 1))
     out, cur = [], first
-    while cur <= this and len(out) < MAX_WEEKS:
+    while cur <= this:
         out.append(cur.strftime("%Y-%m-%d"))
         cur += timedelta(weeks=1)
     return out
@@ -154,7 +166,7 @@ def fetch_ga4(pid: str, start: str) -> dict | None:
         "dimensionFilter": {
             "filter": {
                 "fieldName": "eventName",
-                "inListFilter": {"values": list(CTA_EVENTS)},
+                "inListFilter": {"values": list(LP_EVENTS)},
             }
         },
         "limit": 10000,
@@ -162,7 +174,42 @@ def fetch_ga4(pid: str, start: str) -> dict | None:
     if "_error" in events:
         return {"error": events["_error"]}
 
-    return {"traffic": _rows(traffic), "events": _rows(events)}
+    out = {"traffic": _rows(traffic), "events": _rows(events)}
+
+    # ③ 端末と、初めてか再訪か（日 × 参照元/メディア × 端末 × 新規/再訪）。
+    #    ここから先は内訳なので、失敗しても①②（ファネル本体）は返す
+    audience = _run_report(sess, pid, {
+        "dateRanges": [{"startDate": start, "endDate": "today"}],
+        "dimensions": [{"name": "date"}, {"name": "sessionSourceMedium"},
+                       {"name": "deviceCategory"}, {"name": "newVsReturning"}],
+        "metrics": [{"name": "sessions"}],
+        "limit": 10000,
+    })
+    if "_error" in audience:
+        out["audience_error"] = audience["_error"]
+    else:
+        out["audience"] = _rows(audience)
+
+    # ④ コース別の予約ボタン（日 × 参照元/メディア × イベント名 × コース）。
+    #    course が未登録のあいだは 400 が返る → その項目だけ「未登録」として続ける
+    courses = _run_report(sess, pid, {
+        "dateRanges": [{"startDate": start, "endDate": "today"}],
+        "dimensions": [{"name": "date"}, {"name": "sessionSourceMedium"},
+                       {"name": "eventName"}, {"name": COURSE_DIMENSION}],
+        "metrics": [{"name": "eventCount"}],
+        "dimensionFilter": {
+            "filter": {
+                "fieldName": "eventName",
+                "inListFilter": {"values": list(COURSE_EVENTS)},
+            }
+        },
+        "limit": 10000,
+    })
+    if "_error" in courses:
+        out["courses_error"] = courses["_error"]
+    else:
+        out["courses"] = _rows(courses)
+    return out
 
 
 def fetch_search_console(site_url: str, start: str, end: str) -> dict | None:
@@ -207,12 +254,16 @@ def _aggregate(ga4: dict, week_starts: list[str]) -> tuple[list[dict], list[dict
     by_week = {
         w: {"week_start": w, "sessions": 0, "engaged_sessions": 0,
             "engagement_sec": 0, "instagram_sessions": 0,
-            "instagram_engaged_sessions": 0,
-            **{e: 0 for e in CTA_EVENTS},
-            **{f"instagram_{e}": 0 for e in CTA_EVENTS}}
+            "instagram_engaged_sessions": 0, "instagram_engagement_sec": 0,
+            **{e: 0 for e in LP_EVENTS},
+            **{f"instagram_{e}": 0 for e in LP_EVENTS},
+            # 以下は Instagram 経由だけの内訳（直近4週の合計を画面に出す）
+            "instagram_devices": {}, "instagram_new": 0, "instagram_returning": 0,
+            "sources": {}}
         for w in week_starts
     }
     by_source: dict[str, dict] = {}
+    courses: dict[str, dict] = {w: {} for w in week_starts}
 
     def week_of(yyyymmdd: str) -> str | None:
         try:
@@ -237,35 +288,72 @@ def _aggregate(ga4: dict, week_starts: list[str]) -> tuple[list[dict], list[dict
             b["sessions"] += sessions
             b["engaged_sessions"] += engaged
             b["engagement_sec"] += dur
+            src_w = b["sources"].setdefault(sm, {"sessions": 0, "engaged_sessions": 0})
+            src_w["sessions"] += sessions
+            src_w["engaged_sessions"] += engaged
             if _is_instagram(sm):
                 b["instagram_sessions"] += sessions
                 b["instagram_engaged_sessions"] += engaged
+                b["instagram_engagement_sec"] += dur
 
     for dims, mets in ga4.get("events", []):
         date, sm, ev = dims[0], dims[1], dims[2]
         count = int(float(mets[0]))
-        if ev not in CTA_EVENTS:
+        if ev not in LP_EVENTS:
             continue
         by_source.setdefault(sm, {
             "source_medium": sm, "sessions": 0, "engaged_sessions": 0,
-            "engagement_sec": 0, **{e: 0 for e in CTA_EVENTS}})[ev] += count
+            "engagement_sec": 0, **{e: 0 for e in CTA_EVENTS}})
+        if ev in CTA_EVENTS:
+            by_source[sm][ev] += count
         w = week_of(date)
         if w:
             by_week[w][ev] += count
             if _is_instagram(sm):
                 by_week[w][f"instagram_{ev}"] += count
 
+    for dims, mets in ga4.get("audience", []):
+        date, sm, device, visitor = dims[0], dims[1], dims[2], dims[3]
+        w = week_of(date)
+        if not w or not _is_instagram(sm):
+            continue
+        sessions = int(float(mets[0]))
+        b = by_week[w]
+        b["instagram_devices"][device] = b["instagram_devices"].get(device, 0) + sessions
+        if visitor == "new":
+            b["instagram_new"] += sessions
+        elif visitor == "returning":
+            b["instagram_returning"] += sessions
+
+    for dims, mets in ga4.get("courses", []):
+        date, sm, ev, course = dims[0], dims[1], dims[2], dims[3]
+        w = week_of(date)
+        if not w or not _is_instagram(sm) or ev not in COURSE_EVENTS:
+            continue
+        name = course if course and course != "(not set)" else "（不明）"
+        c = courses[w].setdefault(name, {"course": name, **{e: 0 for e in COURSE_EVENTS}})
+        c[ev] += int(float(mets[0]))
+
     def finish(d: dict) -> dict:
         s = d.pop("engagement_sec", 0)
         n = d.get("sessions", 0)
         d["avg_engagement_sec"] = round(s / n) if n else 0
+        if "instagram_engagement_sec" in d:
+            ig_s, ig_n = d.pop("instagram_engagement_sec"), d.get("instagram_sessions", 0)
+            d["instagram_avg_engagement_sec"] = round(ig_s / ig_n) if ig_n else 0
         return d
 
     now_week = _monday(datetime.now(JST)).strftime("%Y-%m-%d")
+    has_courses = "courses" in ga4
     weeks = []
     for w in week_starts:
         e = finish(by_week[w])
         e["partial"] = (w == now_week)
+        e["sources"] = sorted(({"source_medium": k, **v} for k, v in e["sources"].items()),
+                              key=lambda x: -x["sessions"])
+        if has_courses:
+            e["instagram_courses"] = sorted(courses[w].values(),
+                                            key=lambda x: -sum(x[k] for k in COURSE_EVENTS))
         weeks.append(e)
     sources = sorted((finish(v) for v in by_source.values()),
                      key=lambda x: -x["sessions"])
@@ -291,12 +379,19 @@ def fetch_lp_data() -> dict | None:
                 "error": ga4["error"]}
 
     weeks, sources = _aggregate(ga4, week_starts)
+    # 内訳の取得に失敗したとき・course が未登録のときは、その項目だけ出さない。
+    # エラー文は公開ページに埋め込まれるので載せず、ここで表示するだけにする
+    for key, label in (("audience_error", "端末・新規/再訪"), ("courses_error", "コース別")):
+        if ga4.get(key):
+            print(f"  ⚠ LPの{label}の内訳は取得できませんでした（他は続行）: {ga4[key]}")
+    # property_id も画面で使わず、公開ページに埋め込まれるだけなので載せない
     out = {
         "fetched_at": datetime.now(JST).isoformat(timespec="seconds"),
-        "property_id": pid,
         "since": start,
         "weeks": weeks,
         "sources": sources,
+        "audience_available": "audience" in ga4,
+        "courses_available": "courses" in ga4,
     }
 
     site = os.getenv("SEARCH_CONSOLE_SITE_URL")

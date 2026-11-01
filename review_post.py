@@ -538,6 +538,125 @@ def check_slides(slides: list, post_style: str = "standard") -> list[tuple[bool,
     return results
 
 
+# ───────── 試すこと（trial） ─────────
+# 投稿ごとに1つだけ「試すこと」を書く（2026-11-01〜）。ダッシュボードの振り返りが
+# 「何を試して、どの投稿のどこに入れて、結果どうだったか」をつなぐための項目。
+# 変えてよい項目（lever）はここが唯一の正。投稿を作るときに変えられないもの
+# （投稿時刻・CTAの文言・枚数の上限・プロフィール文・リール・LP）は項目自体を置かない
+# ＝提案できない。create_post.py と dashboard/fetch_dashboard_data.py はここを import する。
+TRIAL_LEVERS = {
+    "topic": "話題・テーマ",
+    "cover": "表紙",
+    "structure": "中身の構成",
+    "post_style": "投稿の型",
+    "caption": "キャプションの書き出し",
+    "photo": "写真（2枚目以降）",
+    "hashtags": "ハッシュタグ",
+}
+TRIAL_NONE = "none"
+# 狙う数字。LP は投稿ごとに分けられないので入れない（週単位でだけ見る）
+TRIAL_METRICS = {
+    "reach": "届いた人",
+    "saved": "保存率",
+    "profile_visits": "プロフィールを見た率",
+    "follows": "フォロー",
+}
+# 投稿を作るときに変えられない項目の言い方。trial.what と振り返りの「次に試すこと」に出てきたら止める。
+# lever の列挙だけだと「lever は表紙、中身は『18時に投稿する』」のような抜け道が残るため
+# （dashboard/review_inputs.py の check もここを使う。同じ一覧を2か所に持たない）
+_WHEN = r"(\d{1,2}\s*時(台|半)?|朝|昼|夕方|夜|深夜|[月火水木金土日]曜日?|平日|週末)"
+FIXED_ITEM_PATTERNS = (
+    (re.compile(_WHEN + r"(に|の|から|ごろ|頃)?(投稿|配信|公開|出す|出し)"), "投稿の時間・曜日"),
+    (re.compile(r"投稿(する)?(時間|時刻|曜日|頻度|本数|間隔|日時)|(曜日|時間帯|時刻)を(変え|ずら|移)"), "投稿の時間・曜日"),
+    (re.compile(r"CTA|予約(導線|リンク|ボタン)|20\s*[%％]\s*(OFF|オフ)", re.IGNORECASE), "CTAの文言"),
+    (re.compile(r"プロフィール(文|の文|欄)|自己紹介文"), "プロフィール文"),
+    (re.compile(r"リール"), "リール"),
+    (re.compile(r"(?<![A-Za-z])LP(?![A-Za-z])|ランディング", re.IGNORECASE), "LP"),
+    (re.compile(r"枚数の上限|上限(を|より)(超え|増や|多く)"), "枚数の上限"),
+)
+
+
+def fixed_items_in(text) -> list[str]:
+    """text に出てくる「投稿を作るときに変えられない項目」の名前（重複なし）。"""
+    text = unicodedata.normalize("NFKC", str(text or ""))
+    return list(dict.fromkeys(label for pat, label in FIXED_ITEM_PATTERNS if pat.search(text)))
+
+
+# 同じ施策を週をまたいで数えるための短い名前（例: cover-question）
+TRIAL_TAG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+TRIAL_TAG_MAX = 40
+_QUOTE_RE = re.compile(r"「([^」]+)」")
+
+
+def _trial_norm(text) -> str:
+    return re.sub(r"\s+", "", unicodedata.normalize("NFC", str(text or "")))
+
+
+def _trial_haystack(content: dict) -> str:
+    """trial.where の「」を探す範囲。読者に見える文字と、写真・投稿の型の指定。"""
+    parts = []
+    for s in content.get("slides") or []:
+        if isinstance(s, dict):
+            parts.extend(_displayed_strings(s))
+            parts.append(str(s.get("reuse_filename") or ""))
+            parts.append(os.path.basename(str(s.get("local_path") or "")))
+    parts += [str(content.get(k) or "") for k in ("caption", "hashtags")]
+    parts.append(content.get("post_style") or "standard")
+    # 区切りを入れて、フィールドのつなぎ目をまたいだ偶然の一致を防ぐ
+    return "\x00".join(_trial_norm(p) for p in parts)
+
+
+def check_trial(content: dict) -> list[tuple[bool, str]]:
+    """この投稿で試すこと（trial）を検査する。
+
+    where の「」の中の文言が今の内容に実在するかも見る。修正で表紙などを変えて
+    試した箇所が消えたのに trial が古いままだと、ダッシュボードの判定が
+    実際には入っていない施策の結果として数えてしまうため。
+    """
+    trial = content.get("trial")
+    if not isinstance(trial, dict):
+        return [(False, "trial（この投稿で試すこと）がありません— 試すことを1つ書いてください。"
+                        "施策を入れない投稿は {\"lever\": \"none\", \"why\": \"理由\"}"
+                        "（仕様は rules/content-schema.md）")]
+    lever = str(trial.get("lever") or "").strip()
+    if lever == TRIAL_NONE:
+        why = str(trial.get("why") or "").strip()
+        if not why:
+            return [(False, "trial.lever=\"none\" のときは why に理由を書いてください")]
+        return [(True, f"試すこと: なし（{why[:30]}）✓")]
+    if lever not in TRIAL_LEVERS:
+        return [(False, f"trial.lever=\"{lever}\" は投稿を作るときに変えられる項目ではありません"
+                        f"（{' / '.join(TRIAL_LEVERS)} / {TRIAL_NONE} のみ）")]
+
+    errors = []
+    tag = str(trial.get("tag") or "").strip()
+    if not (TRIAL_TAG_RE.fullmatch(tag) and len(tag) <= TRIAL_TAG_MAX):
+        errors.append(f"trial.tag=\"{tag}\" は英小文字・数字・ハイフンの短い名前にしてください（例: cover-question）")
+    for key in ("what", "why", "where"):
+        if not str(trial.get(key) or "").strip():
+            errors.append(f"trial.{key} が空です")
+    fixed = fixed_items_in(trial.get("what"))
+    if fixed:
+        errors.append(f"trial.what は投稿を作るときに変えられない項目に見えます（{'・'.join(fixed)}）"
+                      "— 変えられることだけを試してください")
+    metric = str(trial.get("metric") or "").strip()
+    if metric not in TRIAL_METRICS:
+        errors.append(f"trial.metric=\"{metric}\" は不正です（{' / '.join(TRIAL_METRICS)} のみ）")
+    where = str(trial.get("where") or "")
+    quotes = [q for q in _QUOTE_RE.findall(where) if _trial_norm(q)]
+    if where.strip() and not quotes:
+        errors.append("trial.where に、反映した箇所の文言を「」で1つ以上入れてください"
+                      "（例: スライド1の表紙タイトル「…」）")
+    haystack = _trial_haystack(content)
+    for q in quotes:
+        if _trial_norm(q) not in haystack:
+            errors.append(f"trial.where の「{q}」が今の内容に見つかりません— 修正で変わったなら trial も直してください")
+    if errors:
+        return [(False, e) for e in errors]
+    what = str(trial.get("what")).strip()
+    return [(True, f"試すこと: {TRIAL_LEVERS[lever]}｜{what[:30]}（狙い: {TRIAL_METRICS[metric]}）✓")]
+
+
 def check_alt_text(alt_text: str) -> tuple[bool, str]:
     if not alt_text or not alt_text.strip():
         return False, "alt_text が設定されていません"
@@ -683,7 +802,7 @@ def check_caption_follows_slides(content: dict, content_path: str = "") -> list[
     return results
 
 
-def run_review(content_path: str, revision_instruction: str = ""):
+def run_review(content_path: str, revision_instruction: str = "", origin: str = "chat"):
     with open(content_path, encoding="utf-8") as f:
         content = json.load(f)
 
@@ -726,6 +845,9 @@ def run_review(content_path: str, revision_instruction: str = ""):
     # alt_textチェック
     all_results.append(check_alt_text(alt_text))
 
+    # この投稿で試すこと（ダッシュボードの振り返りが結果と結びつける）
+    all_results.extend(check_trial(content))
+
     # 修正依頼反映チェック（指示がある場合のみ）
     if revision_instruction:
         body_texts = [s.get("text", "") + s.get("body", "") for s in slides]
@@ -758,16 +880,22 @@ def run_review(content_path: str, revision_instruction: str = ""):
     print("=" * 50 + "\n")
     if not errors:
         # 次の修正依頼で「スライドだけ直してキャプションが前回のまま」を検出する比較元
-        from content_baseline import save_baseline
-        save_baseline(content, content_path)
+        from content_baseline import load_baseline, record_history, save_baseline, slot_slug
+        prev = load_baseline(slot_slug(content, content_path))
+        if save_baseline(content, content_path):
+            # 自動作成のあとの修正を「どこが変わったか」と一緒に残す（ダッシュボードが読む）
+            record_history(prev, content, content_path, revision_instruction, origin)
     return len(errors) == 0
 
 
 if __name__ == "__main__":
+    from content_baseline import ORIGIN_CHAT, ORIGINS
     parser = argparse.ArgumentParser(description="投稿内容の校閲チェック")
     parser.add_argument("content_file", nargs="?", default="content.json", help="content.jsonのパス")
     parser.add_argument("--revision", default="", help="修正依頼文（修正依頼処理後に指定）")
+    parser.add_argument("--origin", choices=ORIGINS, default=ORIGIN_CHAT,
+                        help="誰の版か。週次タスクの自動作成は weekly（修正の記録で自動作成版とご本人の修正を分ける）")
     args = parser.parse_args()
 
-    ok = run_review(args.content_file, args.revision)
+    ok = run_review(args.content_file, args.revision, args.origin)
     sys.exit(0 if ok else 1)

@@ -39,6 +39,7 @@ Python 3.11+ / Meta Graph API / Google Sheets（gspread）/ Google Drive（背�
 | `register_post.py` | スプレッドシート書き込み（A:H 固定）|
 | `check_repo_sync.py` | ローカルが origin/main から遅れていないか検出 |
 | `check_week_slots.py` | 週の空き枠判定（作成済みの投稿を二重に作らない）|
+| `content_baseline.py` | 校閲を通った前回版と、修正の記録（どこを直したか）の保存 |
 | `get_recent_insights.py` / `insight_report.py` | インサイト取得・全期間集計 |
 | `preview_drive_images.py` | Drive候補をコンタクトシート化して目視確認 |
 | `deliver_reel.py` | リールをLINE配信（手動投稿用）|
@@ -107,7 +108,8 @@ python3 get_recent_insights.py
 python3 check_week_slots.py
 ```
 
-3. **`SKILL.md` と `rules/content-schema.md` を読んでから** content.json を書く（**省略不可**）
+3. **`SKILL.md` と `rules/content-schema.md` を読んでから** content.json を書く（**省略不可**）。
+   `trial`（この投稿で試すこと・1つ）は、最新の振り返りの「次に試すこと」から選ぶ（仕様は content-schema.md）
 4. 画像生成とシート登録：
 
 ```bash
@@ -161,6 +163,10 @@ python review_post.py content.json --revision "修正依頼の全文"
 ```
 
 4. `cleanup_backgrounds.py` を実行する（新規投稿時と同じ）
+
+校閲を通るたびに「どこを直したか」が `.git/content_history/` に自動で記録され、ダッシュボードの
+振り返りに出る（同じ種類の修正が続いたら、作り方の標準に取り入れる）。表紙などを直して
+`trial.where` の文言が消えたら `trial` も直す（校閲が止める）。
 
 ## リール動画は「手動投稿」
 

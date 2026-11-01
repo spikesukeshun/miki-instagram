@@ -1,49 +1,245 @@
-/** dashboard_data.json のスキーマ（fetch_dashboard_data.py の出力） */
-
-export interface MediaInsights {
-  reach?: number;
-  views?: number;
-  saved?: number;
-  shares?: number;
-  likes?: number;
-  comments?: number;
-  total_interactions?: number;
-  profile_visits?: number;
-  follows?: number;
-}
+/**
+ * dashboard_data.json のうち画面が使う部分の型。
+ * 数字はすべて dashboard/review_inputs.py の derive() が計算する（画面は表示するだけ）。
+ * 週次タスクの Claude も同じ数字を `review_inputs.py digest` で読むので、ここで計算し直さないこと。
+ */
 
 export type ThemeKey = "lifestyle" | "menu" | "bridal" | "reward" | "other";
 
-export interface RawPost {
-  media_id: string;
-  timestamp: string;
-  media_type: "CAROUSEL_ALBUM" | "IMAGE" | "VIDEO";
-  permalink: string;
-  caption_head: string;
-  slide_count: number;
-  likes: number;
-  comments: number;
-  theme: ThemeKey;
-  theme_source: "classified" | "heuristic" | "override";
-  insights: MediaInsights | null;
+/** いつもの範囲（直近の真ん中半分）との比較 */
+export type Verdict = "high" | "usual" | "low" | null;
+
+export interface Usual {
+  low: number;
+  median: number;
+  high: number;
+  n: number;
 }
 
-export interface AccountDaily {
-  date: string;
-  reach?: number;
-  follower_count?: number;
+export interface Labels {
+  levers: Record<string, string>;
+  metrics: Record<string, string>;
+  /** trial.metric → 投稿の数字のキー（saved → saved_rate など） */
+  metric_fields: Record<string, MetricField>;
+  decisions: Record<string, string>;
+  verdicts: Record<string, string>;
+  standard_sources: Record<string, string>;
 }
 
-export interface AccountWeekly {
+/* ───────── 1. 先週のまとめ ───────── */
+
+export interface WeekRow {
   week_start: string;
   partial: boolean;
-  error?: string;
-  profile_views?: number;
-  views?: number;
-  accounts_engaged?: number;
-  total_interactions?: number;
-  website_clicks?: number;
-  reach?: number;
+  posts: number;
+  reach: number | null;
+  profile_views: number | null;
+  pv_rate: number | null;
+  link_taps: number | null;
+  saved: number | null;
+  saved_rate: number | null;
+  lp_arrivals: number | null;
+  lp_engaged: number | null;
+  lp_cta_dm: number | null;
+  lp_cta_hotpepper: number | null;
+}
+
+export interface Tile {
+  key: "reach" | "saved" | "profile_views" | "lp";
+  label: string;
+  is_rate: boolean;
+  value: number | null;
+  /** 率のタイル（保存・プロフィール）で並べる件数 */
+  count: number | null;
+  usual: Usual | null;
+  verdict: Verdict;
+  spark: { week_start: string; value: number | null }[];
+}
+
+export interface Summary {
+  week_start: string;
+  tiles: Tile[];
+  current_week: WeekRow | null;
+  followers: number | null;
+  followers_gain: number | null;
+  followers_days: number;
+}
+
+/* ───────── 投稿・試すこと・修正 ───────── */
+
+export interface Trial {
+  tag?: string;
+  lever: string;
+  what?: string;
+  metric?: string;
+  why?: string;
+  where?: string;
+}
+
+export interface Edits {
+  count: number;
+  changes: string[];
+  base_origin: string | null;
+  last_at: string | null;
+  /** app = 投稿後にキャプションが書き換えられた / sheet = シートが校閲を通った版と違う */
+  direct: "app" | "sheet" | null;
+}
+
+export interface PostMetrics {
+  reach: number | null;
+  saved: number | null;
+  saved_rate: number | null;
+  profile_visits: number | null;
+  pv_rate: number | null;
+  follows: number | null;
+}
+
+export type MetricField = keyof PostMetrics;
+
+export interface Post {
+  media_id: string;
+  date: string;
+  week_start: string;
+  weekday: number;
+  media_type: "CAROUSEL_ALBUM" | "IMAGE" | "VIDEO";
+  permalink: string;
+  theme: ThemeKey;
+  title: string;
+  age_days: number;
+  mature: boolean;
+  metrics: PostMetrics;
+  usual: Partial<Record<MetricField, Usual | null>>;
+  vs: Partial<Record<MetricField, Verdict>>;
+  slug: string | null;
+  scheduled_at: string | null;
+  delay_min: number | null;
+  menu: string | null;
+  trial: Trial | null;
+  cover_title: string;
+  edits: Edits | null;
+}
+
+export interface Upcoming {
+  slug: string;
+  post_datetime: string;
+  weekday: number;
+  status: string;
+  menu: string | null;
+  preview_url: string | null;
+  /** 校閲を通っているはずなのに前回版が無い（週次タスクが途中で止まった名残） */
+  needs_review: boolean;
+  trial: Trial | null;
+  cover_title: string;
+  edits: Edits | null;
+}
+
+export interface TrialStat {
+  tag: string;
+  lever: string;
+  metric: string;
+  what: string;
+  count: number;
+  judged: number;
+  high: number;
+  usual: number;
+  low: number;
+  median_with: number | null;
+  median_without: number | null;
+  posts: string[];
+  last_posted: string;
+  decision: "standard" | "again" | "stop" | null;
+  again: number;
+}
+
+export interface EditStats {
+  weeks: number;
+  slots: number;
+  known: number;
+  edited: number;
+  top_changes: { label: string; count: number }[];
+}
+
+/* ───────── 2. 振り返り ───────── */
+
+export interface Review {
+  written_on: string;
+  summary: string;
+  verdicts?: { tag: string; decision: string; evidence: string; note?: string }[];
+  standards?: {
+    tag: string;
+    what: string;
+    since?: string;
+    source?: string;
+    based_on?: string[];
+    explicit?: boolean;
+  }[];
+  stopped?: { tag: string; what?: string; since?: string }[];
+  next?: { tag: string; lever: string; what: string; metric: string; why: string }[];
+  _draft?: boolean;
+}
+
+export interface ReviewView {
+  latest: Review | null;
+  history: { written_on: string; summary: string }[];
+  decisions: Record<string, { again: number; last: string | null }>;
+}
+
+/* ───────── 4. LP ───────── */
+
+export interface LpFunnel {
+  profile_views: number | null;
+  link_taps: number | null;
+  arrivals: number | null;
+  engaged: number | null;
+  cta_dm: number | null;
+  cta_hotpepper: number | null;
+  bounced: number | null;
+}
+
+export interface LpDerived {
+  available: boolean;
+  reason?: string;
+  period_weeks?: number;
+  period_start?: string | null;
+  since?: string;
+  funnel?: LpFunnel;
+  funnel_all?: LpFunnel;
+  trend?: {
+    week_start: string;
+    partial: boolean;
+    link_taps: number | null;
+    arrivals: number | null;
+    engaged: number | null;
+    cta: number;
+  }[];
+  avg_engagement_sec?: number | null;
+  devices?: { device: string; sessions: number }[] | null;
+  visitors?: { new: number; returning: number } | null;
+  courses?: { course: string; cta_dm: number; cta_hotpepper: number }[] | null;
+  courses_note?: string | null;
+  sources?: { source_medium: string; sessions: number; engaged_sessions: number }[];
+  sources_period?: "recent" | "all";
+  search?: { clicks: number; impressions: number; position: number } | null;
+}
+
+/* ───────── 全体 ───────── */
+
+export interface Derived {
+  generated_at: string;
+  mature_days: number;
+  usual_posts: number;
+  usual_weeks: number;
+  summary: Summary | null;
+  judged_week: string | null;
+  judged: Post[];
+  posts: Post[];
+  upcoming: Upcoming[];
+  trial_stats: TrialStat[];
+  edits: EditStats;
+  lp: LpDerived;
+  review: ReviewView;
+  sheet_error: string | null;
+  labels: Labels;
 }
 
 export interface DashboardData {
@@ -53,129 +249,6 @@ export interface DashboardData {
     followers_count: number;
     media_count: number;
   };
-  account_daily: AccountDaily[];
-  account_weekly: AccountWeekly[];
-  posts: RawPost[];
-  /** 実運用の投稿枠（0=月）。fetch_dashboard_data.py が check_week_slots.SLOTS から書き出す。
-   *  古いスナップショットには無いので optional。 */
-  posting_slots?: PostingSlot[];
-  /** コンバージョンLPのGA4実測。fetch_ga4_data.py 由来。
-   *  サービスアカウント未設定なら null（→ dashboard/GA4_SETUP.md）。 */
-  lp?: LpData | null;
-  claude_comment: string | null;
-}
-
-/** 曜日（0=月）と時（JST）。実運用の投稿枠1つぶん。 */
-export interface PostingSlot {
-  weekday: number;
-  hour: number;
-}
-
-/* ───────── コンバージョンLP（GA4 / Search Console） ───────── */
-
-export interface LpData {
-  fetched_at: string;
-  property_id?: string;
-  since?: string;
-  weeks?: LpWeek[];
-  sources?: LpSource[];
-  search_console?: LpSearchConsole;
-  /** 取得に失敗したときだけ入る（画面は素直にこの文言を出す） */
-  error?: string;
-}
-
-/** 月曜始まりJSTの週サマリ。account_weekly と同じ週の切り方に揃えてある。 */
-export interface LpWeek {
-  week_start: string;
-  partial: boolean;
-  sessions: number;
-  engaged_sessions: number;
-  avg_engagement_sec: number;
-  /** Instagram経由だけを抜いた数。ファネルはこちらを使う（Directには自動化アクセスが混ざるため） */
-  instagram_sessions: number;
-  instagram_engaged_sessions: number;
-  cta_dm: number;
-  cta_hotpepper: number;
-  generate_lead: number;
-  instagram_cta_dm: number;
-  instagram_cta_hotpepper: number;
-  instagram_generate_lead: number;
-}
-
-/** 参照元/メディア別の合計。実ユーザーと自動化アクセスを見分けるための行。 */
-export interface LpSource {
-  source_medium: string;
-  sessions: number;
-  engaged_sessions: number;
-  avg_engagement_sec: number;
-  cta_dm: number;
-  cta_hotpepper: number;
-  generate_lead: number;
-}
-
-export interface LpSearchConsole {
-  clicks: number;
-  impressions: number;
-  ctr: number;
-  position: number;
-  /** 表示回数が少ないとGoogleが匿名化して返さない。空配列は異常ではない。 */
-  queries: { query: string; clicks: number; impressions: number; position: number }[];
-}
-
-/* ───────── 分析後の派生型 ───────── */
-
-export interface ScorePart {
-  key: string;
-  label: string;
-  stars: number;
-  /** 0〜1 パーセンタイル（参照分布内での位置） */
-  percentile: number | null;
-  /** 表示用の実測値 */
-  value: number | null;
-  /** 率系メトリクスか */
-  isRate: boolean;
-}
-
-export interface ScoredPost extends RawPost {
-  date: Date;
-  weekStart: string; // YYYY-MM-DD（JST月曜）
-  weekday: number; // 0=月 … 6=日
-  hourJst: number;
-  saveRate: number | null;
-  pvRate: number | null;
-  followRate: number | null;
-  /** 0〜100 */
-  score: number;
-  /** インサイト欠損（古い投稿）による推定スコアか */
-  estimated: boolean;
-  parts: ScorePart[];
-  titleLine: string;
-}
-
-export interface ThemeStats {
-  theme: ThemeKey;
-  count: number;
-  avgReach: number | null;
-  avgSaveRate: number | null;
-  avgPvRate: number | null;
-  followsPerPost: number | null;
-  successRate: number; // score >= threshold の割合
-  avgScore: number;
-  recentAvgScore: number | null; // 直近8週
-  totalScore: number; // 総合順位用（星重み合成）
-}
-
-export interface WeekAgg {
-  weekStart: string;
-  label: string;
-  postCount: number;
-  avgScore: number | null;
-  reach: number | null; // アカウント週次
-  views: number | null;
-  profileViews: number | null;
-  pvRate: number | null; // profile_views / reach
-  saveRate: number | null; // 投稿ベース
-  websiteClicks: number | null;
-  followerGain: number | null; // 日次follower_countの合計（直近30日内のみ）
-  partial: boolean;
+  /** 古いスナップショット（2026-11 より前の形式）には無い */
+  derived?: Derived;
 }

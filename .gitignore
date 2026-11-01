@@ -31,6 +31,10 @@ token_drive.json
 # AIダッシュボード（dashboard/README.md 参照）
 dashboard/node_modules/
 dashboard/dist/
+# 振り返りの下書き（週次タスクが書く）。公開時に deploy_ghpages.sh --with-review が
+# dashboard/reviews/<日付>.json として main に入れる。ここで追跡すると、週次 worktree の
+# git merge --ff-only origin/main とぶつかる
+dashboard/data/review_draft.json
 
 # 分析用のデータキャッシュ（スクリプトが再生成する。大きいのでコミットしない）
 posts_cache.json
