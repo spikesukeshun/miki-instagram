@@ -967,15 +967,16 @@ def check_review(draft: dict, past: list, trial_tags: set) -> list:
     if both:
         res.append((False, f"標準とやめたことの両方に入っている tag があります: {', '.join(sorted(both))}"))
 
-    # 前回の標準・やめたことを黙って消していないか（消すなら判定で stop にする）
+    # 前回の標準・やめたことを黙って消していないか（外すなら stopped に移す）。
+    # 「これまでの型」（practice）は試した記録が無く verdicts で stop にできないので、stopped へ移せば外せる
     prev = past[-1] if past else None
     verdicts = draft.get("verdicts") or []
     decided = {v.get("tag"): v.get("decision") for v in verdicts if isinstance(v, dict)}
     if prev:
         for x in prev.get("standards") or []:
             t = x.get("tag")
-            if t and t not in std_tags and decided.get(t) != "stop":
-                res.append((False, f"前回の標準 [{t}] が消えています。続けるなら書き写し、やめるなら verdicts で stop にしてください"))
+            if t and t not in std_tags and t not in stop_tags:
+                res.append((False, f"前回の標準 [{t}] が消えています。続けるなら書き写し、やめるなら stopped に移してください"))
         for x in prev.get("stopped") or []:
             t = x.get("tag")
             if t and t not in stop_tags:

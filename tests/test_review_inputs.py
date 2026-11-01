@@ -196,6 +196,10 @@ class CheckReviewTest(unittest.TestCase):
     def test_dropping_a_standard_needs_a_stop(self):
         past = [{"written_on": "2026-11-07", "standards": [{"tag": "bright-cover"}, {"tag": "save-list"}]}]
         self.assertTrue(any("消えています" in m for m in self.errors(self.DRAFT, past)))
+        # stopped に移せば外せる（これまでの型は試した記録が無く、判定で stop にできないため）
+        d = copy.deepcopy(self.DRAFT)
+        d["stopped"] = [{"tag": "bright-cover", "what": "表紙は明るい写真", "since": "2026-11-14"}]
+        self.assertEqual(self.errors(d, past), [])
 
     def test_standard_from_edits_needs_two_posts(self):
         d = copy.deepcopy(self.DRAFT)
