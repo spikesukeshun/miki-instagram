@@ -49,6 +49,18 @@ DATA_URI_RE = re.compile(r"data:image/([\w+.-]+);base64,([A-Za-z0-9+/=]+)")
 IMG_TAG_RE = re.compile(r"""<img\b(?:[^>"']|"[^"]*"|'[^']*')*>""")
 QUOTED_ATTR_RE = re.compile(r""""[^"]*"|'[^']*'""")
 
+# 20%OFF の対象外（2026-10-30〜）。LPを直したときに注記が消えないよう、置き場所ごとに確かめる。
+# (場所の名前, 範囲の始まり, 範囲の終わり) … 始まりから最初の終わりまでに NOTICE_TEXT があること。
+NOTICE_TEXT = "ギフトチケット・ペアコース"
+NOTICE_MIN = 5
+NOTICE_SPOTS = [
+    ("料金の見かた（.pn-x）", 'class="pn-x"', "</span>"),
+    ("VIPカードの .price-incl", 'class="price-incl"', "</p>"),
+    ("FAQ「割引はありますか」の回答", "割引はありますか", "</div>"),
+    ("最後の予約欄の offer-pill 直下", 'class="offer-pill"', "</p>"),
+    ("フッター", "<footer", "</footer>"),
+]
+
 # OGP画像の文字に使う。macOS標準のものを順に探す。
 FONT_CANDIDATES = [
     "/System/Library/Fonts/Hiragino Sans GB.ttc",
@@ -978,6 +990,30 @@ def validate_conf(conf):
             raise SystemExit(f'site.json の "{field}" が空。埋めてからビルドすること')
 
 
+def check_discount_notice(html):
+    """20%OFF の対象外の注記（ギフトチケット・ペアコース）が全部の置き場所に残っているか確かめる。
+
+    2026-10-30 から対象外になり、5か所に書いた。LP を直すときに1か所でも消えると、
+    対象外のコースを割引だと思って予約されるので、足りなければ止める。
+    ⚠ dist を消す前に呼ぶこと（validate_conf と同じ理由）。
+    """
+    missing = []
+    for label, start, end in NOTICE_SPOTS:
+        i = html.find(start)
+        if i < 0:
+            missing.append(f"{label}（目印 {start!r} が見つからない）")
+            continue
+        j = html.find(end, i)
+        if NOTICE_TEXT not in html[i:j if j >= 0 else len(html)]:
+            missing.append(label)
+    count = html.count(NOTICE_TEXT)
+    if missing or count < NOTICE_MIN:
+        raise SystemExit(
+            f"lp/index.html の「{NOTICE_TEXT}」対象外の注記が足りない（{count}か所 / 必要 {NOTICE_MIN}か所）。"
+            + (f"\n  足りない場所: {' / '.join(missing)}" if missing else "")
+            + "\n  20%OFF の対象外の案内なので、戻してからビルドすること")
+
+
 def copy_extra_pages():
     """lp/extra/ のファイルを dist/ にそのまま置く（LP本体とは独立した補助ページ）。
 
@@ -1043,6 +1079,7 @@ def main():
     with open(SRC, encoding="utf-8") as f:
         html = f.read()
     src_bytes = len(html.encode())
+    check_discount_notice(html)
 
     # ⚠ lastmod をビルド日にすると、中身が変わっていなくても毎回「更新」の信号を出して
     #    クローラへのシグナルが濁る。ソースの内容ハッシュが変わったときだけ日付を進める。
