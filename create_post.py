@@ -21,7 +21,7 @@ from register_post import register
 from review_post import (VALID_REUSE_THEMES, EMPTY_REUSE_THEMES,
                          VALID_POST_STYLES, POST_STYLE_MAX_SLIDES,
                          NO_FOOTER_POST_STYLES, POST_STYLE_BODY_TYPES,
-                         MOSAIC_TILE_COUNT)
+                         MOSAIC_TILE_COUNT, check_trial)
 from load_env import load_from_zshrc
 load_from_zshrc()
 
@@ -508,6 +508,17 @@ def clear_stale_carousel_images() -> int:
     if stale:
         print(f"  generated/ の前回分 {len(stale)}枚を削除しました")
     return len(stale)
+
+
+def require_trial(content: dict) -> None:
+    """trial（この投稿で試すこと）を、背景を1枚も落とす前に確かめる。
+
+    review_post.py だけに置くと、create_post.py の後に回す校閲で初めて分かり、
+    シート登録とプレビュー作成が済んだあとの作り直しになる（resolve_post_style と同じ理由）。
+    """
+    errors = [msg for ok, msg in check_trial(content) if not ok]
+    if errors:
+        raise ValueError("trial（この投稿で試すこと）に問題があります:\n  " + "\n  ".join(errors))
 
 
 def resolve_post_style(content: dict) -> str:
@@ -1038,6 +1049,9 @@ def run(theme: str, menu: str, post_datetime: str, notes: str = "", content_file
 
     # post_style と枚数・末尾構成を、背景を1枚も落とす前に確定させる
     post_style = resolve_post_style(result)
+    if content_file:
+        # 試すことが無い・今の内容と合わない content も、ここで止める（Groq の旧経路には無い項目）
+        require_trial(result)
     # 前回の carousel_*.jpg を先に消す（失敗したら、何も落とさないうちに止まる）
     clear_stale_carousel_images()
 

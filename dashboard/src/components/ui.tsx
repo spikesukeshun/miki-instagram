@@ -1,9 +1,8 @@
-import { type HTMLAttributes, type ReactNode, useId } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cva, type VariantProps } from "class-variance-authority";
-import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
-import { fmtDeltaPct } from "../lib/format";
+import type { Verdict } from "../types";
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
@@ -21,22 +20,6 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   );
 }
 
-export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col gap-1 p-4 pb-2 sm:p-5 sm:pb-2", className)} {...props} />;
-}
-
-export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-sm font-semibold text-ink", className)} {...props} />;
-}
-
-export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-xs leading-relaxed text-muted", className)} {...props} />;
-}
-
-export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-4 pt-2 sm:p-5 sm:pt-2", className)} {...props} />;
-}
-
 /* ───────── Badge ───────── */
 
 const badgeVariants = cva(
@@ -47,6 +30,7 @@ const badgeVariants = cva(
         default: "border-line bg-surface-2 text-ink-2",
         accent: "border-transparent bg-[var(--accent-dim)] text-accent-strong",
         outline: "border-line-strong bg-transparent text-ink-2",
+        warn: "border-transparent bg-[color-mix(in_oklab,var(--warn)_16%,transparent)] text-warn",
       },
     },
     defaultVariants: { variant: "default" },
@@ -65,91 +49,61 @@ export function Badge({
 export function ThemeBadge({ cssVar, label }: { cssVar: string; label: string }) {
   return (
     <Badge>
-      <span
-        aria-hidden
-        className="size-2 rounded-full"
-        style={{ background: `var(${cssVar})` }}
-      />
+      <span aria-hidden className="size-2 rounded-full" style={{ background: `var(${cssVar})` }} />
       {label}
     </Badge>
   );
 }
 
-/* ───────── 前期比デルタ ───────── */
+/* ───────── いつもとの比較 ───────── */
 
-export function Delta({ value, invert = false }: { value: number | null; invert?: boolean }) {
-  if (value == null || !isFinite(value)) {
-    return (
-      <span className="inline-flex items-center gap-0.5 text-[11px] text-muted">
-        <Minus className="size-3" aria-hidden />
-        比較なし
-      </span>
-    );
-  }
-  const good = invert ? value < 0 : value > 0;
-  const Icon = value > 0 ? ArrowUpRight : value < 0 ? ArrowDownRight : Minus;
-  const cls = value === 0 ? "text-muted" : good ? "text-good" : "text-crit";
-  return (
-    <span className={cn("tnum inline-flex items-center gap-0.5 text-[11px] font-medium", cls)}>
-      <Icon className="size-3" aria-hidden />
-      {fmtDeltaPct(value)}
-    </span>
-  );
-}
+const VERDICT_STYLE: Record<"high" | "usual" | "low", string> = {
+  high: "text-good",
+  usual: "text-muted",
+  low: "text-serious",
+};
+const VERDICT_MARK: Record<"high" | "usual" | "low", string> = { high: "▲", usual: "―", low: "▼" };
 
-/* ───────── セグメント切替（タブ） ───────── */
-
-export function Segmented<T extends string>({
-  options,
-  value,
-  onChange,
-  label,
+/** 「多い／いつもどおり／少ない」。記号と文字の両方で示す（色だけに頼らない） */
+export function VerdictTag({
+  verdict,
+  labels,
+  className,
 }: {
-  options: { key: T; label: string }[];
-  value: T;
-  onChange: (v: T) => void;
-  label: string;
+  verdict: Verdict;
+  labels: Record<string, string>;
+  className?: string;
 }) {
-  const id = useId();
+  if (!verdict) return null;
   return (
-    <div
-      role="tablist"
-      aria-label={label}
-      className="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg border border-line bg-surface-2 p-0.5"
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 whitespace-nowrap text-[11px] font-medium",
+        VERDICT_STYLE[verdict],
+        className,
+      )}
     >
-      {options.map((o) => {
-        const active = o.key === value;
-        return (
-          <button
-            key={o.key}
-            id={`${id}-${o.key}`}
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(o.key)}
-            className={cn(
-              "whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              active ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink-2",
-            )}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
+      <span aria-hidden className="text-[9px]">
+        {VERDICT_MARK[verdict]}
+      </span>
+      {labels[verdict] ?? verdict}
+    </span>
   );
 }
 
 /* ───────── セクション見出し ───────── */
 
 export function SectionHeader({
+  id,
   index,
   title,
   desc,
   right,
 }: {
+  id: string;
   index: string;
   title: string;
-  desc?: string;
+  desc?: ReactNode;
   right?: ReactNode;
 }) {
   return (
@@ -159,7 +113,7 @@ export function SectionHeader({
           <span aria-hidden className="font-serif text-sm tracking-[0.2em] text-accent">
             {index}
           </span>
-          <h2 className="font-serif text-lg font-semibold tracking-wide text-ink sm:text-xl">
+          <h2 id={id} className="font-serif text-lg font-semibold tracking-wide text-ink sm:text-xl">
             {title}
           </h2>
         </div>
@@ -170,39 +124,17 @@ export function SectionHeader({
   );
 }
 
-/* ───────── スコアバー ───────── */
-
-export function ScoreBar({ score, className }: { score: number; className?: string }) {
-  const v = Math.round(score);
+/** 小見出し（セクション内のまとまり） */
+export function SubHeading({ children, note }: { children: ReactNode; note?: ReactNode }) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <div
-        role="meter"
-        aria-valuenow={v}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`スコア ${v}点`}
-        className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2"
-      >
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${Math.min(100, Math.max(2, v))}%`,
-            background: "var(--accent)",
-          }}
-        />
-      </div>
-      <span className="tnum w-9 shrink-0 text-right text-sm font-semibold text-ink">{v}</span>
+    <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      <h3 className="text-sm font-semibold text-ink">{children}</h3>
+      {note && <span className="text-[11px] text-muted">{note}</span>}
     </div>
   );
 }
 
-/** 星の重要度表示 */
-export function Stars({ n }: { n: number }) {
-  return (
-    <span aria-label={`重要度 星${n}`} className="text-[10px] tracking-tight text-accent">
-      {"★".repeat(n)}
-      <span className="text-line-strong">{"★".repeat(5 - n)}</span>
-    </span>
-  );
+/** 空のときの一言 */
+export function Empty({ children }: { children: ReactNode }) {
+  return <p className="rounded-lg border border-dashed border-line px-3 py-3 text-xs text-muted">{children}</p>;
 }

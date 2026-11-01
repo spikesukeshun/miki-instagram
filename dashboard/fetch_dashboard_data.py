@@ -11,9 +11,15 @@ AIマーケティングダッシュボード用のデータスナップショッ
   - アカウント日次インサイト（リーチ・フォロワー増減、直近30日）
   - アカウント週次合計（プロフィール閲覧・視聴・エンゲージ、直近16週）
   - テーマ分類（post_classifications.json + キーワードヒューリスティック）
+  - シートの枠（ステータス・予定日時・プレビューURL。投稿メモと本文は載せない）
+  - 最後に校閲を通った版と修正の記録（.git/content_baselines / content_history。修正依頼の文は載せない）
+  - 振り返り（dashboard/reviews/*.json と下書き dashboard/data/review_draft.json）
+  - 画面と週次タスクが使う派生値 derived（dashboard/review_inputs.py が計算する）
 
 実行:
-  /usr/bin/python3 dashboard/fetch_dashboard_data.py
+  /usr/bin/python3 dashboard/fetch_dashboard_data.py               # 全部取り直す（約2分）
+  /usr/bin/python3 dashboard/fetch_dashboard_data.py --local-only  # シート・記録・振り返りだけ読み直す
+                                                                   # （Instagram / GA4 の API は呼ばない）
 
 API仕様メモ（2026-07 実測）:
   - impressions は v22+ で廃止 → views を使う
@@ -73,6 +79,10 @@ try:
 except Exception as e:  # pragma: no cover - 環境依存
     print(f"⚠️ check_week_slots.SLOTS を読めませんでした（posting_slots は省略）: {e}")
     _RAW_SLOTS = None
+
+# 振り返りの数字（derived）と、シート・修正の記録・振り返りの読み込み。
+# 画面と週次タスクの digest が同じ数字を見るよう、計算はここ1か所でする
+import review_inputs  # noqa: E402
 
 # コンバージョンLPのGA4計測（fetch_ga4_data.py）。サービスアカウント未設定なら None を返す。
 # ⚠ LPは後付けの計測なので、ここで落ちて Instagram 側の週次更新まで止めないこと。
@@ -297,11 +307,52 @@ def posting_slots():  # -> list[dict] | None（/usr/bin/python3 が 3.9 のた�
     ]
 
 
+def attach_local(output: dict) -> dict:
+    """シート・修正の記録・振り返りを読み、派生値 derived を計算して output に足す。
+
+    どれも読めなくても週次更新は止めない（画面はその項目だけ「読めませんでした」と出す）。
+    """
+    from review_post import TRIAL_LEVERS, TRIAL_METRICS
+    output["trial_levers"] = TRIAL_LEVERS
+    output["trial_metrics"] = TRIAL_METRICS
+
+    print("シートの枠を読み込み中...")
+    rows, error = review_inputs.load_sheet_rows()
+    output["sheet"] = {"rows": rows, "error": error}
+    print(f"  {len(rows)}行" if rows is not None else f"  ⚠️ {error}")
+
+    records = review_inputs.load_records()
+    output["records"] = records
+    edited = sum(1 for r in records.values() if r.get("revisions"))
+    print(f"前回版と修正の記録: {len(records)}枠（修正あり{edited}枠）")
+
+    reviews = review_inputs.load_reviews()
+    output["reviews"] = reviews
+    print(f"振り返り: {len(reviews)}件" + ("（最新は下書き）" if reviews and reviews[-1].get("_draft") else ""))
+
+    output["derived"] = review_inputs.derive(output)
+    output.pop("claude_comment", None)  # 旧「AI分析」の所見欄（振り返りに置き換えた）
+    return output
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--insights-since", default=INSIGHTS_SINCE,
                         help="この日付以降の投稿はインサイトも取得（YYYY-MM-DD）")
+    parser.add_argument("--local-only", action="store_true",
+                        help="Instagram / GA4 は取り直さず、シート・修正の記録・振り返りだけ読み直す"
+                             "（週次タスクが投稿を作ったあと、公開の直前に使う）")
     args = parser.parse_args()
+
+    if args.local_only:
+        if not OUTPUT_FILE.exists():
+            print(f"❌ {OUTPUT_FILE} がありません。先に --local-only なしで実行してください")
+            sys.exit(1)
+        output = json.loads(OUTPUT_FILE.read_text(encoding="utf-8"))
+        attach_local(output)
+        OUTPUT_FILE.write_text(json.dumps(output, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"\n✅ 保存完了（--local-only）: {OUTPUT_FILE}")
+        return
 
     if not TOKEN or not ACCOUNT_ID:
         print("❌ INSTAGRAM_ACCESS_TOKEN / INSTAGRAM_BUSINESS_ACCOUNT_ID が未設定です")
@@ -345,6 +396,9 @@ def main():
             "media_type": m.get("media_type"),
             "permalink": m.get("permalink"),
             "caption_head": caption[:120].replace("\n", " "),
+            # シートの枠と結ぶ鍵と、アプリやシートでの書き換えを見つける指紋（本文そのものは載せない）
+            "caption_key": review_inputs.caption_key(caption),
+            "caption_sig": review_inputs.caption_sig(caption),
             "slide_count": len(children) if m.get("media_type") == "CAROUSEL_ALBUM" else 1,
             "likes": m.get("like_count", 0),
             "comments": m.get("comments_count", 0),
@@ -382,11 +436,10 @@ def main():
         "posts": sorted(posts, key=lambda p: p["timestamp"] or "", reverse=True),
         # 実運用の投稿枠（check_week_slots.py の SLOTS 由来）。画面の「来週の投稿戦略」が読む。
         "posting_slots": posting_slots(),
-        # コンバージョンLPのGA4/Search Console実測。未設定なら None（画面はセクションごと出さない）。
+        # コンバージョンLPのGA4/Search Console実測。未設定なら None（画面はその項目だけ出さない）。
         "lp": lp_data(),
-        # 毎週の更新時に Claude Code が本物の所見を書き込むための欄（任意）
-        "claude_comment": None,
     }
+    attach_local(output)
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_FILE.write_text(json.dumps(output, ensure_ascii=False, indent=1), encoding="utf-8")

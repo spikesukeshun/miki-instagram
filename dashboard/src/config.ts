@@ -1,33 +1,12 @@
-import type { PostingSlot, ThemeKey } from "./types";
+import type { ThemeKey } from "./types";
 
 /**
- * ダッシュボード全体の設定。
- * スコア重み・閾値・テーマ定義・ファネル推定係数はすべてここに集約する
- * （コンポーネント側にマジックナンバーを書かない）。
+ * 画面の設定（テーマの表示名と色）。
+ * 判定の数え方・指標や施策の名前は dashboard/review_inputs.py と review_post.py が正で、
+ * スナップショットの derived.labels で渡ってくる（ここに同じ一覧を書かない）。
  */
 
-/** KPI重要度（ユーザー指定の星数）
- *  方針: DMにつながらないリーチは価値が低く、
- *  プロフィールに来る人が多い投稿ほど価値が高い。
- *  DM率はAPI非提供のためスコア構成からは除外（ファネルで手入力）。 */
-export const METRIC_WEIGHTS = [
-  { key: "pvRate", label: "プロフィール誘導率", stars: 5, isRate: true },
-  { key: "saveRate", label: "保存率", stars: 5, isRate: true },
-  { key: "follows", label: "フォロワー増加", stars: 5, isRate: false },
-  { key: "reach", label: "リーチ", stars: 4, isRate: false },
-  { key: "views", label: "インプレッション", stars: 4, isRate: false },
-  { key: "comments", label: "コメント", stars: 3, isRate: false },
-  { key: "likes", label: "いいね", stars: 3, isRate: false },
-  { key: "shares", label: "シェア", stars: 2, isRate: false },
-] as const;
-
-export type MetricKey = (typeof METRIC_WEIGHTS)[number]["key"];
-
-/** 投稿を「成功」とみなすスコア閾値（自アカウント内相対評価） */
-export const SUCCESS_SCORE = 60;
-
-/** テーマ定義（表示名・チャート色スロット）
- *  配列順がカテゴリカル色の固定スロット順（CVD検証済みの並び） */
+/** テーマ定義（表示名・色スロット）。配列順がカテゴリカル色の固定スロット順（CVD検証済みの並び） */
 export const THEMES: { key: ThemeKey; label: string; short: string; cssVar: string }[] = [
   { key: "bridal", label: "ブライダル", short: "ブライダル", cssVar: "--s-bridal" },
   { key: "menu", label: "メニュー・サービス", short: "メニュー", cssVar: "--s-menu" },
@@ -36,45 +15,8 @@ export const THEMES: { key: ThemeKey; label: string; short: string; cssVar: stri
   { key: "other", label: "その他", short: "その他", cssVar: "--s-other" },
 ];
 
-export const themeDef = (key: ThemeKey) =>
+export const themeDef = (key: ThemeKey | string | null | undefined) =>
   THEMES.find((t) => t.key === key) ?? THEMES[THEMES.length - 1];
 
-/** 週次推移などで参照する分析ウィンドウ */
-export const ANALYSIS = {
-  /** 推移グラフ・週次比較に使う週数（アカウント週次データの範囲） */
-  trendWeeks: 16,
-  /** テーマ「直近」判定のウィンドウ（週） */
-  recentWeeks: 8,
-  /** スコアの参照分布に使う最大投稿数（新しい順） */
-  referencePool: 140,
-  /** 改善レポートに表示する投稿数 */
-  reportPosts: 12,
-  /** ランキングに表示する投稿数（折りたたみを開いたときの総数） */
-  rankingPosts: 10,
-  /** ランキングで常時見せる件数。これ以降は折りたたむ */
-  rankingVisible: 3,
-  /** ランキングの対象期間（ヶ月）。古い投稿が上位を占め続けるのを防ぐ */
-  rankingWindowMonths: 6,
-} as const;
-
-/** ファネルのDM・予約が未入力のときに使う推定係数
- *  （プロフィール閲覧→DM、DM→予約の想定転換率。実測が貯まったら調整） */
-export const FUNNEL_ESTIMATES = {
-  dmPerProfileView: 0.05,
-  bookingPerDm: 0.4,
-} as const;
-
-/** 手入力値（DM・予約）の localStorage キー */
-export const STORAGE_KEY = "miki-ig-dashboard-manual-v1";
-
-/** 想定値レンジの幅（trailing平均 ×(1±この値)） */
-export const FORECAST_MARGIN = 0.25;
-
-/** 投稿枠のフォールバック（月22:00 / 木21:00 / 金22:00）。
- *  正は check_week_slots.py の SLOTS で、通常は dashboard_data.json の posting_slots に
- *  載って渡ってくる。ここは posting_slots を持たない古いスナップショット用。 */
-export const DEFAULT_POSTING_SLOTS: PostingSlot[] = [
-  { weekday: 0, hour: 22 },
-  { weekday: 3, hour: 21 },
-  { weekday: 4, hour: 22 },
-];
+/** 予定より遅れたと見なす分数（これを超えたら投稿一覧に遅れを出す） */
+export const DELAY_NOTICE_MIN = 60;
