@@ -1,0 +1,22 @@
+{
+  "written_on": "2026-11-08",
+  "summary": "先週（10/26の週）は届いた人428・保存率1.7%（いつも0.6〜0.8%）で、保存の多い週でした。一方で3本とも届いた人は65〜102と少なめで、10/26のブライダルはプロフィール率0.0%。保存率がいちばん高かったのは、疑問形の表紙で1つの質問を深掘りした10/30（2.9%）でした。",
+  "verdicts": [],
+  "standards": [
+    {"tag": "save-list", "what": "保存用のリスト（チェックリスト・〇つの形）を1枚入れる", "since": "2026-11-08", "source": "practice"},
+    {"tag": "cover-number", "what": "表紙タイトルに数字か読者の悩み言葉を入れる", "since": "2026-11-08", "source": "practice"},
+    {"tag": "slot-theme", "what": "枠の割り当て: 月=ブライダル／木=美容情報のQ&A・早見／金=MIKI本人の話", "since": "2026-11-08", "source": "practice"},
+    {"tag": "my-view-paragraph", "what": "スライドかキャプションに「私」の体験・視点の段落を1つ入れる", "since": "2026-11-08", "source": "practice"},
+    {"tag": "who-we-help", "what": "キャプションに、誰のどんな悩みをお手伝いしているかを一文で書く", "since": "2026-11-08", "source": "practice"},
+    {"tag": "humor-hook", "what": "笑える実話か軽いオチを1か所入れて、次のスライドへ引っぱる", "since": "2026-11-08", "source": "practice"}
+  ],
+  "stopped": [],
+  "next": [
+    {"tag": "photo-miki-self", "lever": "photo", "what": "2枚目以降にMIKI本人が写る写真を1枚入れる", "metric": "profile_visits",
+     "why": "本人の話（lifestyle）はプロフィール率2.6%、bridalは0.7%・menuは1.1%。本人が写らなかった10/26のブライダルは0.0%"},
+    {"tag": "one-question-deep", "lever": "structure", "what": "質問を何問も並べず、1つの質問に絞って深掘りする", "metric": "saved",
+     "why": "1問を深掘りした10/30は保存率2.9%（いつも0.6〜1.3%）"},
+    {"tag": "cover-question", "lever": "cover", "what": "表紙タイトルを、読者が実際に口にする疑問形にする", "metric": "saved",
+     "why": "疑問形の表紙だった10/30は保存率2.9%（いつも0.6〜1.3%）"}
+  ]
+}
